@@ -5104,7 +5104,7 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
         printf("+%lx z=%d ", m_bookmark.pointer.offset[z], z);
       printf("\n\n");
       m_pointer_found++;
-      return; // consider don't return to find more
+      // return; // consider don't return to find more
     };
     if (PS_depth == m_max_depth)
     {
