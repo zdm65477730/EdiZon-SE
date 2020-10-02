@@ -1382,7 +1382,7 @@ void GuiCheats::drawSearchRAMMenu()
       switch (dataTypeSizes[m_searchType])
       {
       case 1:
-        ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u8;
+        ss << "0x" << std::uppercase << std::hex << (m_searchValue[0]._u16 & 0x00FF);
         break;
       case 2:
         ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u16;
@@ -3125,12 +3125,13 @@ static std::string _getAddressDisplayString(u64 address, Debugger *debugger, sea
   searchValue_t searchValue;
   searchValue._u64 = debugger->peekMemory(address);
   // start mod for address content display
+  u16 k = searchValue._u8;
   if (m_searchValueFormat == FORMAT_HEX)
   {
     switch (dataTypeSizes[searchType])
     {
     case 1:
-      ss << "0x" << std::uppercase << std::hex << searchValue._u8;
+      ss << "0x" << std::uppercase << std::hex << k;
       break;
     case 2:
       ss << "0x" << std::uppercase << std::hex << searchValue._u16;
@@ -3200,7 +3201,7 @@ static std::string _getValueDisplayString(searchValue_t searchValue, searchType_
     switch (dataTypeSizes[searchType])
     {
     case 1:
-      ss << "0x" << std::uppercase << std::hex << searchValue._u8;
+      ss << "0x" << std::uppercase << std::hex << (searchValue._u16 & 0x00FF);
       break;
     case 2:
       ss << "0x" << std::uppercase << std::hex << searchValue._u16;
