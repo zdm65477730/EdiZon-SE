@@ -633,7 +633,7 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.7";
+  ss << "EdiZon SE : 3.7.8";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -5889,8 +5889,8 @@ void GuiCheats::iconloadcheck()
 bool GuiCheats::autoattachcheck()
 {
   std::stringstream filenoiconStr;
-  filenoiconStr << EDIZON_DIR "/autoattach.txt";
-  if (access(filenoiconStr.str().c_str(), F_OK) == 0)
+  filenoiconStr << EDIZON_DIR "/noautoattach.txt";
+  if (access(filenoiconStr.str().c_str(), F_OK) != 0)
   {
     if (m_debugger->m_dmnt)
     dmntchtForceOpenCheatProcess();
