@@ -475,7 +475,7 @@ if (!(m_debugger->m_dmnt)){
 
   ss << "BID: ";
   for (u8 i = 0; i < 8; i++)
-    ss << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
+    ss << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
 
   buildIDStr = ss.str();
 
@@ -2589,7 +2589,7 @@ void GuiCheats::onInput(u32 kdown)
         // cheatListOffset = 0;
       }
       printf("%s\n", "Y key pressed");
-      printf("%s\n", titleNameStr.c_str());
+      printf("%s\n", Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str());
       printf("%s\n", tidStr.c_str());
       printf("%s\n", buildIDStr.c_str());
       //make sure not using bookmark
@@ -3287,10 +3287,10 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
     if (searchRegion == SEARCH_REGION_HEAP && meminfo.type != MemType_Heap)
       continue;
     else if (searchRegion == SEARCH_REGION_MAIN &&
-             (meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable && meminfo.type != MemType_CodeStatic))
+             (((meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable && meminfo.type != MemType_CodeStatic) || !(meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
       continue;
     else if (searchRegion == SEARCH_REGION_HEAP_AND_MAIN &&
-             (meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable))
+             (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
       continue;
     else if ( (meminfo.perm & Perm_Rw) != Perm_Rw) //searchRegion == SEARCH_REGION_RAM &&
       continue;
@@ -4589,7 +4589,7 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
         }
         break;
       case SEARCH_MODE_DIFF:
-        if ((value._s64 != oldvalue._s64) && (value._u64 <= m_heapBaseAddr || value._u64 >= (m_heapEnd)))
+        if ((value._s64 != oldvalue._s64))// && (value._u64 <= m_heapBaseAddr || value._u64 >= (m_heapEnd)))
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newvalueDump->addData((u8 *)&value, sizeof(u64));
@@ -6299,10 +6299,11 @@ void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t 
     if (searchRegion == SEARCH_REGION_HEAP && meminfo.type != MemType_Heap)
       continue;
     else if (searchRegion == SEARCH_REGION_MAIN &&
-             (meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable))
+             ((meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable) || (meminfo.addr >= m_mainend) || (meminfo.addr < m_mainBaseAddr)))
       continue;
     else if (searchRegion == SEARCH_REGION_HEAP_AND_MAIN &&
-             (meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable))
+             (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
+      //  (meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable))
       continue;
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
@@ -6442,6 +6443,7 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
       {
         std::stringstream filebuildIDStr;
         filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".bmk";
+        if (access(filebuildIDStr.str().c_str(), F_OK) != 0)  rename( "DirectTransfer.bmk", filebuildIDStr.str().c_str());
         MemoryDump *bmkdump;
         bmkdump = new MemoryDump(filebuildIDStr.str().c_str(), DumpType::ADDR, false);
         if (bmkdump->size() > 0)
