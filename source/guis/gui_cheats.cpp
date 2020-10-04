@@ -633,13 +633,18 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.8";
+  ss << "EdiZon SE : 3.7.8.1";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
   ss.str("");
-  ss << "BASE  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_addressSpaceBaseAddr; //metadata.address_space_extents.size
-  ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_addressSpaceBaseAddr + m_addressSpaceSize;
+  if (m_debugger->m_dmnt)
+  {
+    ss << "BASE  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_addressSpaceBaseAddr; //metadata.address_space_extents.size
+    ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_addressSpaceBaseAddr + m_addressSpaceSize;
+  }
+  else
+    ss << "dmnt not attached to game process";
   Gui::drawTextAligned(font14, 900, 92, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
   ss.str("");
   ss << "HEAP  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapBaseAddr;
@@ -650,7 +655,10 @@ void GuiCheats::draw()
   ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_mainend;
   Gui::drawTextAligned(font14, 900, 152, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
 
-  Gui::drawRectangle(256, 50, 394, 137, COLOR_WHITE);
+  if (m_memoryDump1 != nullptr)
+    Gui::drawRectangle(256, 50, 394, 137, COLOR_LIGHTGREEN);
+  else
+    Gui::drawRectangle(256, 50, 394, 137, COLOR_WHITE);
 
   Gui::drawTextAligned(font20, 280, 70, COLOR_BLACK, titleNameStr.c_str(), ALIGNED_LEFT);
   Gui::drawTextAligned(font14, 290, 110, COLOR_BLACK, tidStr.c_str(), ALIGNED_LEFT);
@@ -717,186 +725,186 @@ void GuiCheats::draw()
       ss << " " << dataTypes[bookmark.type];
       Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
     }
-  }
-
-  if (m_cheatCnt > 0)
-  {
-    Gui::drawRectangle(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40, currTheme.textColor);
-    Gui::drawTextAligned(font14, 375, 262, currTheme.backgroundColor, "Cheats", ALIGNED_CENTER);
-    Gui::drawShadow(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40);
-
-    for (u8 line = cheatListOffset; line < 8 + cheatListOffset; line++)
-    {
-      if (line >= m_cheatCnt)
-        break;
-      // WIP
-      ss.str("");
-      ss << "\uE070  " << buttonStr(m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
-
-      Gui::drawRectangle(52, 300 + (line - cheatListOffset) * 40, 646, 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
-      Gui::drawTextAligned(font14, 70, 305 + (line - cheatListOffset) * 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-
-      if (!m_cheats[line].enabled)
-      {
-        color_t highlightColor = currTheme.highlightColor;
-        highlightColor.a = 0xFF;
-
-        Gui::drawRectangled(74, 313 + (line - cheatListOffset) * 40, 10, 10, (m_selectedEntry == line && m_menuLocation == CHEATS) ? highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
-      }
     }
-  }
-  else if (m_mainBaseAddr == 0)
-    Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_CENTER);
-  else if (m_cheatsPresent && m_memoryDump->size() == 0)
-    Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Cheats for this game present but title version or region doesn't match!", ALIGNED_CENTER);
 
-  if (m_memoryDump->getDumpInfo().dumpType == DumpType::DATA)
-  {
-    if (m_memoryDump->size() > 0)
+    if (m_cheatCnt > 0)
     {
-      Gui::drawRectangle(Gui::g_framebuffer_width - 552, 256, 500, 366, currTheme.textColor);
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, "Found candidates", ALIGNED_CENTER);
-      Gui::drawShadow(Gui::g_framebuffer_width - 552, 256, 500, 366 * 40);
-      Gui::drawRectangle(Gui::g_framebuffer_width - 550, 300, 496, 320, currTheme.separatorColor);
+      Gui::drawRectangle(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40, currTheme.textColor);
+      Gui::drawTextAligned(font14, 375, 262, currTheme.backgroundColor, "Cheats", ALIGNED_CENTER);
+      Gui::drawShadow(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40);
 
-      ss.str("");
-      ss << (static_cast<double>(m_memoryDump->size()) / (0x100000)) << "MB dumped";
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 302, 450, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
-    }
-  }
-  else if (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
-  {
-    if (m_memoryDump->size() > 0)
-    {
-      if (m_memoryDump1 == nullptr)
+      for (u8 line = cheatListOffset; line < 8 + cheatListOffset; line++)
       {
-        Gui::drawRectangle(Gui::g_framebuffer_width - 552, 256, 500, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40, currTheme.textColor);
-        ss.str("");
-        ss << "Found candidates   " << std::dec << (((m_menuLocation == CANDIDATES) ? m_selectedEntry : 0) + m_addresslist_offset + 1) << " / " << std::dec << ((m_memoryDump->size() / sizeof(u64)));
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, ss.str().c_str(), ALIGNED_CENTER);
-        Gui::drawShadow(Gui::g_framebuffer_width - 552, 256, 500, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40);
-      }
-      else
-      {
-        Gui::drawRectangle(Gui::g_framebuffer_width - 557, 256, 549, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40, currTheme.textColor);
-        ss.str("");
-        ss << "   Book Marks   " << std::dec << (((m_menuLocation == CANDIDATES) ? m_selectedEntry : 0) + m_addresslist_offset + 1) << " / " << std::dec << ((m_memoryDump->size() / sizeof(u64)));
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, ss.str().c_str(), ALIGNED_CENTER);
-        // Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, "Book Marks", ALIGNED_CENTER);
-        Gui::drawShadow(Gui::g_framebuffer_width - 557, 256, 549, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40);
-      }
-    }
-    // mod start memory line offset
-
-    if (m_memoryDump1 == nullptr)
-      for (u8 line = 0; line < 8; line++)
-      {
-        if ((line + m_addresslist_offset) >= (m_memoryDump->size() / sizeof(u64)))
+        if (line >= m_cheatCnt)
           break;
+        // WIP
+        ss.str("");
+        ss << "\uE070  " << buttonStr(m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
+
+        Gui::drawRectangle(52, 300 + (line - cheatListOffset) * 40, 646, 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
+        Gui::drawTextAligned(font14, 70, 305 + (line - cheatListOffset) * 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+
+        if (!m_cheats[line].enabled)
+        {
+          color_t highlightColor = currTheme.highlightColor;
+          highlightColor.a = 0xFF;
+
+          Gui::drawRectangled(74, 313 + (line - cheatListOffset) * 40, 10, 10, (m_selectedEntry == line && m_menuLocation == CHEATS) ? highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
+        }
+      }
+    }
+    else if (m_mainBaseAddr == 0)
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_CENTER);
+    else if (m_cheatsPresent && m_memoryDump->size() == 0)
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Cheats for this game present but title version or region doesn't match!", ALIGNED_CENTER);
+
+    if (m_memoryDump->getDumpInfo().dumpType == DumpType::DATA)
+    {
+      if (m_memoryDump->size() > 0)
+      {
+        Gui::drawRectangle(Gui::g_framebuffer_width - 552, 256, 500, 366, currTheme.textColor);
+        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, "Found candidates", ALIGNED_CENTER);
+        Gui::drawShadow(Gui::g_framebuffer_width - 552, 256, 500, 366 * 40);
+        Gui::drawRectangle(Gui::g_framebuffer_width - 550, 300, 496, 320, currTheme.separatorColor);
 
         ss.str("");
-
-        if (line < 8) // && (m_memoryDump->size() / sizeof(u64)) != 8)
+        ss << (static_cast<double>(m_memoryDump->size()) / (0x100000)) << "MB dumped";
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 302, 450, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+      }
+    }
+    else if (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
+    {
+      if (m_memoryDump->size() > 0)
+      {
+        if (m_memoryDump1 == nullptr)
         {
-          u64 address = 0;
-          m_memoryDump->getData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
-          // candidate display
-          if (address >= m_heapBaseAddr && address < m_heapEnd)
-            ss << "[ HEAP + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_heapBaseAddr) << " ]";
-          else if (address >= m_mainBaseAddr && address < m_mainend)
-            ss << "[ MAIN + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_mainBaseAddr) << " ]";
-          else
-            ss << "[ BASE + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_memoryDump->getDumpInfo().addrSpaceBaseAddress) << " ]";
-
-          ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)m_searchType) << " )";
-
-          if (m_frozenAddresses.find(address) != m_frozenAddresses.end())
-            ss << "   \uE130";
+          Gui::drawRectangle(Gui::g_framebuffer_width - 552, 256, 500, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40, currTheme.textColor);
+          ss.str("");
+          ss << "Found candidates   " << std::dec << (((m_menuLocation == CANDIDATES) ? m_selectedEntry : 0) + m_addresslist_offset + 1) << " / " << std::dec << ((m_memoryDump->size() / sizeof(u64)));
+          Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, ss.str().c_str(), ALIGNED_CENTER);
+          Gui::drawShadow(Gui::g_framebuffer_width - 552, 256, 500, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40);
         }
         else
-          ss << "And " << std::dec << ((m_memoryDump->size() / sizeof(u64)) - 8) << " others...";
-
-        Gui::drawRectangle(Gui::g_framebuffer_width - 550, 300 + line * 40, 496, 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 530, 305 + line * 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-      }
-    else // Bookmark screen
-      for (u8 line = 0; line < 8; line++)
-      {
-        if ((line + m_addresslist_offset) >= (m_memoryDump->size() / sizeof(u64)))
-          break;
-
-        ss.str("");
-
-        bookmark_t bookmark;
-        if (line < 8) // && (m_memoryDump->size() / sizeof(u64)) != 8)
         {
-          u64 address = 0;
-          m_memoryDump->getData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
-          m_AttributeDumpBookmark->getData((line + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-          // if (false)
-          if (bookmark.pointer.depth > 0) // check if pointer chain point to valid address update address if necessary
+          Gui::drawRectangle(Gui::g_framebuffer_width - 557, 256, 549, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40, currTheme.textColor);
+          ss.str("");
+          ss << "   Book Marks   " << std::dec << (((m_menuLocation == CANDIDATES) ? m_selectedEntry : 0) + m_addresslist_offset + 1) << " / " << std::dec << ((m_memoryDump->size() / sizeof(u64)));
+          Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, ss.str().c_str(), ALIGNED_CENTER);
+          // Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, "Book Marks", ALIGNED_CENTER);
+          Gui::drawShadow(Gui::g_framebuffer_width - 557, 256, 549, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40);
+        }
+      }
+      // mod start memory line offset
+
+      if (m_memoryDump1 == nullptr)
+        for (u8 line = 0; line < 8; line++)
+        {
+          if ((line + m_addresslist_offset) >= (m_memoryDump->size() / sizeof(u64)))
+            break;
+
+          ss.str("");
+
+          if (line < 8) // && (m_memoryDump->size() / sizeof(u64)) != 8)
           {
-            bool updateaddress = true;
-            u64 nextaddress = m_mainBaseAddr;
-            for (int z = bookmark.pointer.depth; z >= 0; z--)
+            u64 address = 0;
+            m_memoryDump->getData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+            // candidate display
+            if (address >= m_heapBaseAddr && address < m_heapEnd)
+              ss << "[ HEAP + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_heapBaseAddr) << " ]";
+            else if (address >= m_mainBaseAddr && address < m_mainend)
+              ss << "[ MAIN + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_mainBaseAddr) << " ]";
+            else
+              ss << "[ BASE + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_memoryDump->getDumpInfo().addrSpaceBaseAddress) << " ]";
+
+            ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)m_searchType) << " )";
+
+            if (m_frozenAddresses.find(address) != m_frozenAddresses.end())
+              ss << "   \uE130";
+          }
+          else
+            ss << "And " << std::dec << ((m_memoryDump->size() / sizeof(u64)) - 8) << " others...";
+
+          Gui::drawRectangle(Gui::g_framebuffer_width - 550, 300 + line * 40, 496, 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
+          Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 530, 305 + line * 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+        }
+      else // Bookmark screen
+        for (u8 line = 0; line < 8; line++)
+        {
+          if ((line + m_addresslist_offset) >= (m_memoryDump->size() / sizeof(u64)))
+            break;
+
+          ss.str("");
+
+          bookmark_t bookmark;
+          if (line < 8) // && (m_memoryDump->size() / sizeof(u64)) != 8)
+          {
+            u64 address = 0;
+            m_memoryDump->getData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+            m_AttributeDumpBookmark->getData((line + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+            // if (false)
+            if (bookmark.pointer.depth > 0) // check if pointer chain point to valid address update address if necessary
             {
-              nextaddress += bookmark.pointer.offset[z];
-              MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
-              if (meminfo.perm == Perm_Rw)
-                if (z == 0)
-                {
-                  if (address == nextaddress)
-                    updateaddress = false;
-                  else
-                  {
-                    address = nextaddress;
-                  }
-                }
-                else
-                  m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
-              else
+              bool updateaddress = true;
+              u64 nextaddress = m_mainBaseAddr;
+              for (int z = bookmark.pointer.depth; z >= 0; z--)
               {
-                updateaddress = false;
-                break;
+                nextaddress += bookmark.pointer.offset[z];
+                MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
+                if (meminfo.perm == Perm_Rw)
+                  if (z == 0)
+                  {
+                    if (address == nextaddress)
+                      updateaddress = false;
+                    else
+                    {
+                      address = nextaddress;
+                    }
+                  }
+                  else
+                    m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
+                else
+                {
+                  updateaddress = false;
+                  break;
+                }
+              }
+              if (updateaddress)
+              {
+                m_memoryDump->putData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+                m_memoryDump->flushBuffer();
               }
             }
-            if (updateaddress)
-            {
-              m_memoryDump->putData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
-              m_memoryDump->flushBuffer();
-            }
+            // bookmark display
+            ss << "[0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address) << "]"; //<< std::left << std::setfill(' ') << std::setw(18) << bookmark.label <<
+
+            ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)bookmark.type) << " )";
+
+            if (m_frozenAddresses.find(address) != m_frozenAddresses.end())
+              ss << " \uE130";
+            if (bookmark.pointer.depth > 0) // have pointer
+              ss << " *";
           }
-          // bookmark display
-          ss << "[0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address) << "]"; //<< std::left << std::setfill(' ') << std::setw(18) << bookmark.label <<
+          else
+            ss << "And " << std::dec << ((m_memoryDump->size() / sizeof(u64)) - 8) << " others...";
 
-          ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)bookmark.type) << " )";
-
-          if (m_frozenAddresses.find(address) != m_frozenAddresses.end())
-            ss << " \uE130";
-          if (bookmark.pointer.depth > 0) // have pointer
-            ss << " *";
+          Gui::drawRectangle(Gui::g_framebuffer_width - 555, 300 + line * 40, 545, 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
+          Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 545, 305 + line * 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? COLOR_BLACK : currTheme.textColor, bookmark.deleted ? "To be deleted" : bookmark.label, ALIGNED_LEFT);
+          Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 340, 305 + line * 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
         }
-        else
-          ss << "And " << std::dec << ((m_memoryDump->size() / sizeof(u64)) - 8) << " others...";
+    }
 
-        Gui::drawRectangle(Gui::g_framebuffer_width - 555, 300 + line * 40, 545, 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 545, 305 + line * 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? COLOR_BLACK : currTheme.textColor, bookmark.deleted ? "To be deleted" : bookmark.label, ALIGNED_LEFT);
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 340, 305 + line * 40, (m_selectedEntry == line && m_menuLocation == CANDIDATES) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-      }
+    Gui::drawShadow(0, 0, Gui::g_framebuffer_width, 256);
+    Gui::drawShadow(256, 50, Gui::g_framebuffer_width, 136);
+
+    for (u16 x = 0; x < 1024; x++)
+      Gui::drawRectangle(256 + x, 0, 2, 50, m_memory[x]);
+
+    drawSearchRAMMenu();
+    drawEditRAMMenu();
+    drawEditRAMMenu2();
+    drawSearchPointerMenu();
+    Gui::endDraw();
   }
-
-  Gui::drawShadow(0, 0, Gui::g_framebuffer_width, 256);
-  Gui::drawShadow(256, 50, Gui::g_framebuffer_width, 136);
-
-  for (u16 x = 0; x < 1024; x++)
-    Gui::drawRectangle(256 + x, 0, 2, 50, m_memory[x]);
-
-  drawSearchRAMMenu();
-  drawEditRAMMenu();
-  drawEditRAMMenu2();
-  drawSearchPointerMenu();
-  Gui::endDraw();
-}
 // BM2
 
 void GuiCheats::drawSearchPointerMenu()
@@ -1511,7 +1519,10 @@ void GuiCheats::onInput(u32 kdown)
           printf("force open called\n");
         }
         else
+        {
           dmntchtForceCloseCheatProcess();
+          m_debugger->m_dmnt = false;
+        }
         printf("dmnt toggled \n");
         if (autoexitcheck()) Gui::g_requestExit = true;
         return;
@@ -6476,12 +6487,14 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
             tempdump->addData((u8 *)&bookmark, sizeof(bookmark_t));
           }
           printf("found %d good ones\n", goodcount);
+          (new Snackbar("Bookmark file imported"))->show();
         }
         else
         {
           printf("bookmark file %s missing \n", filebuildIDStr.str().c_str());
           (new Snackbar("Bookmark file to import from is missing"))->show();
         }
+        delete bmkdump;
       };
     }
     tempdump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
