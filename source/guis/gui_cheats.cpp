@@ -1513,6 +1513,7 @@ void GuiCheats::onInput(u32 kdown)
         else
           dmntchtForceCloseCheatProcess();
         printf("dmnt toggled \n");
+        if (autoexitcheck()) Gui::g_requestExit = true;
         return;
       };
       Gui::g_requestExit = true;
@@ -5899,6 +5900,17 @@ bool GuiCheats::autoattachcheck()
   else
     return false;
   // testlz();
+}
+bool GuiCheats::autoexitcheck()
+{
+  std::stringstream filenoiconStr;
+  filenoiconStr << EDIZON_DIR "/noautoexit.txt";
+  if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  {
+    return true;
+  }
+  else
+    return false;
 }
 void GuiCheats::testlz()
 {

@@ -144,6 +144,7 @@ private:
   bool m_havesave = true;
   void iconloadcheck();
   bool autoattachcheck();
+  bool autoexitcheck();
   void testlz(); 
   struct PointerSearch_state
   {
