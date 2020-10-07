@@ -446,9 +446,12 @@ if (!(m_debugger->m_dmnt)){
     m_AttributeDumpBookmark->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
   }
   else
+  {
     m_memoryDumpBookmark->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
+    m_AttributeDumpBookmark->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
+  }
   // end mod
-
+  // updatebookmark(false, false);
   std::stringstream ss;
 
   // check this
@@ -6419,7 +6422,8 @@ void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t 
 void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
 {
   std::stringstream filebuildIDStr;
-  std::stringstream buildIDStr;
+  std::stringstream buildIDStr, tempstr;
+  char import[]="import";
   for (u8 i = 0; i < 8; i++)
     buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
   filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
@@ -6427,7 +6431,7 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
   MemoryDump *tempdump;
   tempdump = new MemoryDump(EDIZON_DIR "/tempbookmark.dat", DumpType::ADDR, true);
   m_memoryDumpBookmark->clear();
-  delete m_memoryDumpBookmark;
+  if (m_memoryDumpBookmark!=nullptr) delete m_memoryDumpBookmark;
   m_memoryDumpBookmark = new MemoryDump(EDIZON_DIR "/memdumpbookmark.dat", DumpType::ADDR, true);
   if (m_AttributeDumpBookmark->size() > 0)
   {
@@ -6442,6 +6446,13 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
       {
         if (unresolved(bookmark.pointer))
           continue;
+      }
+      if (importbookmark)
+      {
+        tempstr.str("");
+        tempstr << bookmark.label;
+        if (tempstr.str() == "import")
+        continue;
       }
       if (bookmark.heap)
       {
@@ -6462,11 +6473,17 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
     {
       bookmark_t bookmark;
       bookmark.type = m_searchType;
-      if (Gui::requestKeyboardInput("Import Bookmark", "Enter Label for bookmark to be imported from file.", bookmark.label, SwkbdType_QWERTY, bookmark.label, 18))
+      // if (Gui::requestKeyboardInput("Import Bookmark", "Enter Label for bookmark to be imported from file.", bookmark.label, SwkbdType_QWERTY, bookmark.label, 18))
+      memcpy(&bookmark.label, import, sizeof(import));
+      // bookmark.label = "import";
       {
         std::stringstream filebuildIDStr;
-        filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".bmk";
-        if (access(filebuildIDStr.str().c_str(), F_OK) != 0)  rename( "DirectTransfer.bmk", filebuildIDStr.str().c_str());
+        filebuildIDStr << EDIZON_DIR "/" << "DirectTransfer.bmk";
+        if (access(filebuildIDStr.str().c_str(), F_OK) != 0)  // rename( "DirectTransfer.bmk", filebuildIDStr.str().c_str());
+        {
+          filebuildIDStr.str("");
+          filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".bmk";
+        }
         MemoryDump *bmkdump;
         bmkdump = new MemoryDump(filebuildIDStr.str().c_str(), DumpType::ADDR, false);
         if (bmkdump->size() > 0)
@@ -6495,7 +6512,11 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
           (new Snackbar("Bookmark file to import from is missing"))->show();
         }
         delete bmkdump;
+        remove(filebuildIDStr.str().c_str());
       };
+      // filebuildIDStr << EDIZON_DIR "/"
+      //                << "DirectTransfer.bmk";
+      // if (access(filebuildIDStr.str().c_str(), F_OK) == 0)
     }
     tempdump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
     tempdump->flushBuffer();
