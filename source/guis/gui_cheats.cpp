@@ -636,7 +636,7 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.8.1";
+  ss << "EdiZon SE : 3.7.9";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
