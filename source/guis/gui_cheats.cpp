@@ -636,7 +636,7 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.9";
+  ss << "EdiZon SE : 3.7.10";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -791,7 +791,7 @@ void GuiCheats::draw()
         {
           Gui::drawRectangle(Gui::g_framebuffer_width - 557, 256, 549, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40, currTheme.textColor);
           ss.str("");
-          ss << "   Book Marks   " << std::dec << (((m_menuLocation == CANDIDATES) ? m_selectedEntry : 0) + m_addresslist_offset + 1) << " / " << std::dec << ((m_memoryDump->size() / sizeof(u64)));
+          ss << "   Bookmarks   " << std::dec << (((m_menuLocation == CANDIDATES) ? m_selectedEntry : 0) + m_addresslist_offset + 1) << " / " << std::dec << ((m_memoryDump->size() / sizeof(u64)));
           Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, ss.str().c_str(), ALIGNED_CENTER);
           // Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 302, 262, currTheme.backgroundColor, "Book Marks", ALIGNED_CENTER);
           Gui::drawShadow(Gui::g_framebuffer_width - 557, 256, 549, 46 + std::min(static_cast<u32>(m_memoryDump->size() / sizeof(u64)), 8U) * 40);
