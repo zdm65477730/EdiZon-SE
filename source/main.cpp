@@ -14,6 +14,7 @@
 #include "guis/gui_main.hpp"
 #include "guis/gui_editor.hpp"
 #include "guis/gui_tx_warning.hpp"
+#include "guis/gui_choose_mission.hpp"
 #include "guis/gui_cheats.hpp"
 #include "guis/gui_about.hpp"
 #include "guis/gui_guide.hpp"
@@ -30,7 +31,7 @@
 char *g_edizonPath;
 
 static int debugOutputFile;
-
+std::string m_edizon_dir = "/switch/EdiZon";
 static bool updateThreadRunning = false;
 static Mutex mutexCurrGui;
 static Gui *currGui = nullptr;
@@ -104,6 +105,17 @@ void update()
   }
 }
 
+bool multimissioncheck()
+{
+  std::stringstream filenoiconStr;
+  filenoiconStr << EDIZON_DIR "/nomultimission.txt";
+  if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  {
+    return true;
+  }
+  else
+    return false;
+}
 void createFolders()
 {
   printf(EDIZON_DIR "/saves\n");
@@ -116,6 +128,13 @@ void createFolders()
   mkdir(EDIZON_DIR "/editor/scripts", 0777);
   mkdir(EDIZON_DIR "/editor/scripts/lib", 0777);
   mkdir(EDIZON_DIR "/editor/scripts/lib/python3.5", 0777);
+  if (multimissioncheck())
+  {
+    mkdir(EDIZON_DIR "/1", 0777);
+    mkdir(EDIZON_DIR "/2", 0777);
+    mkdir(EDIZON_DIR "/3", 0777);
+    mkdir(EDIZON_DIR "/4", 0777);
+  };
 }
 
 void requestDraw()
@@ -185,7 +204,6 @@ void redirectStdio()
     dup2(debugOutputFile, STDERR_FILENO);
   }
 }
-
 int main(int argc, char **argv)
 {
   void *haddr;
@@ -205,7 +223,10 @@ int main(int argc, char **argv)
   if (l_debugger->getRunningApplicationPID() != 0)
   {
     Gui::g_splashDisplayed = true;
-    Gui::g_nextGui = GUI_CHEATS;
+    if (multimissioncheck())
+      Gui::g_nextGui = GUI_CHOOSE_MISSION;
+    else
+      Gui::g_nextGui = GUI_CHEATS;
   }
 
   if (!Gui::g_splashDisplayed)
@@ -216,8 +237,23 @@ int main(int argc, char **argv)
 
   Config::readConfig(); 
   initTitles();
-
-  printf("%s\n", EDIZON_DIR);
+  // while (!(kheld & KEY_ZL))
+  // {
+  //   hidScanInput();
+  //   kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
+  //   kdown = hidKeysDown(CONTROLLER_PLAYER_1)|hidKeysDown(CONTROLLER_HANDHELD);
+  //   Gui::beginDraw();
+  //   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);
+  //   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, currTheme.textColor, "\uE12C", ALIGNED_CENTER);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, currTheme.textColor, "Use L and R to choose your sessoin press ZL to continue", ALIGNED_CENTER);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 Back", ALIGNED_RIGHT);
+  //   Gui::endDraw();
+  // }
+  // if (kheld & KEY_ZR)
+  //   m_edizon_dir = "/switch/EdiZon1";
+  // if (kheld & KEY_L)
+  //   m_edizon_dir = "/switch/EdiZon2";
+  // printf("%s\n", m_edizon_dir.c_str());
 
   createFolders();
 
@@ -271,6 +307,9 @@ int main(int argc, char **argv)
           break;
         case GUI_ABOUT:
           currGui = new GuiAbout();
+          break;
+        case GUI_CHOOSE_MISSION:
+          currGui = new GuiChooseMission();
           break;
 
         case GUI_INVALID:

@@ -31,7 +31,11 @@ MemoryDump::MemoryDump(std::string filePath, DumpType dumpType, bool discardFile
   m_dataHeader.searchDataType = SEARCH_TYPE_NONE;
   m_dataHeader.searchMode = SEARCH_MODE_NONE;
   m_dataHeader.searchRegion = SEARCH_REGION_NONE;
-
+  if (filePath.compare("/switch/EdiZon/memdump1.dat") == 0 || filePath.compare("/switch/EdiZon/memdump1a.dat") == 0 || filePath.compare("/switch/EdiZon/datadump2.dat") == 0)
+  {
+    filePath.replace(0, sizeof(EDIZON_DIR)-1, m_edizon_dir);
+    printf("%s\n", filePath.c_str());
+  };
   m_dumpFile = fopen(filePath.c_str(), "r");
 
   if (m_dumpFile == nullptr)

@@ -31,7 +31,8 @@ enum gui_t {
   GUI_TX_WARNING,
   GUI_CHEATS,
   GUI_GUIDE,
-  GUI_ABOUT
+  GUI_ABOUT,
+  GUI_CHOOSE_MISSION
 };
 
 class Gui {
