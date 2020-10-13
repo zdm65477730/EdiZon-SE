@@ -2378,10 +2378,10 @@ void GuiCheats::onInput(u32 kdown)
           else
           {
             m_memoryDump->clear();
-            remove(EDIZON_DIR "/memdump1.dat");
-            remove(EDIZON_DIR "/memdump1a.dat");
-            remove(EDIZON_DIR "/memdump2.dat");
-            remove(EDIZON_DIR "/memdump3.dat");
+            // remove(EDIZON_DIR "/memdump1.dat");
+            // remove(EDIZON_DIR "/memdump1a.dat");
+            // remove(EDIZON_DIR "/memdump2.dat");
+            // remove(EDIZON_DIR "/memdump3.dat");
 
             // m_searchType = SEARCH_TYPE_NONE;
             // m_searchMode = SEARCH_MODE_NONE;
@@ -2977,7 +2977,8 @@ void GuiCheats::onInput(u32 kdown)
                 // remove(EDIZON_DIR "/memdump1.dat");
                 // rename(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
                 // printf("%s\n", "renaming");
-                REPLACEFILE(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat")
+                std::string s = m_edizon_dir + "/memdump1.dat";
+                REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
                 m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
               }
               else if (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
@@ -2990,12 +2991,15 @@ void GuiCheats::onInput(u32 kdown)
                   // remove(EDIZON_DIR "/memdump1a.dat");
                   // rename(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
                   // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat");
-                  REPLACEFILE(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
-                  REPLACEFILE(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat");
+                  std::string s = m_edizon_dir + "/memdump1.dat";
+                  REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
+                  s = m_edizon_dir + "/memdump1a.dat";
+                  REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
                   m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
                   // remove(EDIZON_DIR "/datadump2.dat");
                   // rename(EDIZON_DIR "/datadump4.dat", EDIZON_DIR "/datadump2.dat");
-                  REPLACEFILE(EDIZON_DIR "/datadump4.dat", EDIZON_DIR "/datadump2.dat");
+                  s = m_edizon_dir + "/datadump2.dat";
+                  REPLACEFILE(EDIZON_DIR "/datadump4.dat",s.c_str() );
                   // // rename B to A
                   // remove(EDIZON_DIR "/datadumpA.dat");
                   // rename(EDIZON_DIR "/datadumpAa.dat", EDIZON_DIR "/datadumpA.dat");
@@ -3032,7 +3036,8 @@ void GuiCheats::onInput(u32 kdown)
                 {
                   // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
                   // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
-                  REPLACEFILE(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat");
+                  std::string s = m_edizon_dir + "/memdump1a.dat";
+                  REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
                 }
               }
             }
@@ -3798,7 +3803,8 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
   // helper init
   MemoryDump *helperDump = new MemoryDump(EDIZON_DIR "/memdump1a.dat", DumpType::HELPER, false);   // has address, size, count for fetching buffer from memory
   MemoryDump *newhelperDump = new MemoryDump(EDIZON_DIR "/memdump3a.dat", DumpType::HELPER, true); // has address, size, count for fetching buffer from memory
-  REPLACEFILE(EDIZON_DIR "/datadump2.dat", EDIZON_DIR "/predatadump2.dat");
+  std::string s = m_edizon_dir + "/datadump2.dat";
+  REPLACEFILE(s.c_str(), EDIZON_DIR "/predatadump2.dat");
   MemoryDump *predataDump = new MemoryDump(EDIZON_DIR "/predatadump2.dat", DumpType::DATA, false);
   MemoryDump *newdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, true);
   // MemoryDump *debugdump1 = new MemoryDump(EDIZON_DIR "/debugdump1.dat", DumpType::HELPER, true);
