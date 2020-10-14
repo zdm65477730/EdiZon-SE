@@ -107,14 +107,19 @@ void update()
 
 bool multimissioncheck()
 {
-  std::stringstream filenoiconStr;
-  filenoiconStr << EDIZON_DIR "/nomultimission.txt";
-  if (access(filenoiconStr.str().c_str(), F_OK) != 0)
-  {
+  Config::readConfig();
+  if (Config::getConfig()->option_once || (Config::getConfig()->options[2] == 0))
     return true;
-  }
   else
     return false;
+  // std::stringstream filenoiconStr;
+  // filenoiconStr << EDIZON_DIR "/nomultimission.txt";
+  // if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  // {
+  //   return true;
+  // }
+  // else
+  //   return false;
 }
 void createFolders()
 {
@@ -223,6 +228,10 @@ int main(int argc, char **argv)
   if (l_debugger->getRunningApplicationPID() != 0)
   {
     Gui::g_splashDisplayed = true;
+    Config::readConfig();
+    m_edizon_dir = Config::getConfig()->edizon_dir;
+    if (m_edizon_dir.compare(0, sizeof(EDIZON_DIR)-1, EDIZON_DIR) != 0)
+      m_edizon_dir = EDIZON_DIR;
     if (multimissioncheck())
       Gui::g_nextGui = GUI_CHOOSE_MISSION;
     else

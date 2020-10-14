@@ -11,7 +11,10 @@ namespace Config {
   typedef struct ConfigData {
     char magic[8];
     bool hideSX;
+    bool option_once;
+    bool options[3];
     char latestCommit[40];
+    char edizon_dir[40];
     u64 lasttitle = 0;
   } config_data_t;
 

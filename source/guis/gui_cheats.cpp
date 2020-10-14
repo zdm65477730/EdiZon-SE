@@ -636,7 +636,7 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.11";
+  ss << "EdiZon SE : 3.7.12";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -1517,6 +1517,11 @@ void GuiCheats::onInput(u32 kdown)
     {
       // Gui::g_nextGui = GUI_MAIN;
       PSsaveSTATE();
+      if (kheld & KEY_R)
+      {
+        Config::getConfig()->option_once = true;
+        Config::writeConfig();
+      }
       if (kheld & KEY_ZL)
       {
         if (!m_debugger -> m_dmnt)
@@ -5920,28 +5925,44 @@ void GuiCheats::iconloadcheck()
 }
 bool GuiCheats::autoattachcheck()
 {
-  std::stringstream filenoiconStr;
-  filenoiconStr << EDIZON_DIR "/noautoattach.txt";
-  if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  if (Config::getConfig()->options[0] == 0)
   {
+    Config::readConfig();
     if (m_debugger->m_dmnt)
-    dmntchtForceOpenCheatProcess();
+      dmntchtForceOpenCheatProcess();
     return true;
   }
   else
     return false;
+  // std::stringstream filenoiconStr;
+  // filenoiconStr << EDIZON_DIR "/noautoattach.txt";
+  // if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  // {
+  //   if (m_debugger->m_dmnt)
+  //   dmntchtForceOpenCheatProcess();
+  //   return true;
+  // }
+  // else
+  //   return false;
   // testlz();
 }
 bool GuiCheats::autoexitcheck()
 {
-  std::stringstream filenoiconStr;
-  filenoiconStr << EDIZON_DIR "/noautoexit.txt";
-  if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  Config::readConfig();
+  if (Config::getConfig()->options[1] == 0)
   {
     return true;
   }
   else
     return false;
+  // std::stringstream filenoiconStr;
+  // filenoiconStr << EDIZON_DIR "/noautoexit.txt";
+  // if (access(filenoiconStr.str().c_str(), F_OK) != 0)
+  // {
+  //   return true;
+  // }
+  // else
+  //   return false;
 }
 void GuiCheats::testlz()
 {
