@@ -636,7 +636,7 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.10";
+  ss << "EdiZon SE : 3.7.11";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -1317,9 +1317,10 @@ void GuiCheats::drawSearchRAMMenu()
 
   static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "void*"};
   static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR"};
+  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "StateA", "A..B", "", "Unknown", "?+", "?-", "PTR"};
   static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
 
-  switch (m_searchMenuLocation)
+  switch (m_searchMenuLocation) // search menu
   {
   case SEARCH_TYPE:
     for (u8 i = 0; i < 11; i++)
@@ -1348,7 +1349,7 @@ void GuiCheats::drawSearchRAMMenu()
         Gui::drawRectangled(356 + (i / 2) * 100, 220 + (i % 2) * 100, 90, 90, m_searchMode == static_cast<searchMode_t>(i) ? currTheme.selectedColor : currTheme.highlightColor);
 
       Gui::drawRectangled(361 + (i / 2) * 100, 225 + (i % 2) * 100, 80, 80, currTheme.separatorColor);
-      Gui::drawTextAligned(font20, 400 + (i / 2) * 100, 250 + (i % 2) * 100, currTheme.textColor, modeNames[i], ALIGNED_CENTER);
+      Gui::drawTextAligned(font20, 400 + (i / 2) * 100, 250 + (i % 2) * 100, currTheme.textColor, (m_memoryDump->size() == 0) ? modeNames1[i] : modeNames[i], ALIGNED_CENTER);
     }
 
     Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the mode you want to use for finding values. With these modes EdiZon will search for values that are equal to [==], \n"
@@ -1385,56 +1386,58 @@ void GuiCheats::drawSearchRAMMenu()
                          ALIGNED_CENTER);
 
     //Gui::drawRectangle(300, 250, Gui::g_framebuffer_width - 600, 80, currTheme.separatorColor);
-    Gui::drawRectangle(300, 327, Gui::g_framebuffer_width - 600, 3, currTheme.textColor);
-    if (m_searchValueFormat == FORMAT_DEC)
-      ss << _getValueDisplayString(m_searchValue[0], m_searchType);
-    else if (m_searchValueFormat == FORMAT_HEX)
+    if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {m_selectedEntry = 1;} else
     {
-      switch (dataTypeSizes[m_searchType])
-      {
-      case 1:
-        ss << "0x" << std::uppercase << std::hex << (m_searchValue[0]._u16 & 0x00FF);
-        break;
-      case 2:
-        ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u16;
-        break;
-      default:
-      case 4:
-        ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u32;
-        break;
-      case 8:
-        ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u64;
-        break;
-      }
-    }
-
-    Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
-    Gui::drawTextAligned(font20, 310, 285, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-
-    //	Start Mod for search Range display
-    if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 0))
-      Gui::drawRectangled(312 + strWidth, 285, 3, 35, currTheme.highlightColor);
-
-    if (m_searchMode == SEARCH_MODE_RANGE)
-    {
-      ss.str("");
+      Gui::drawRectangle(300, 327, Gui::g_framebuffer_width - 600, 3, currTheme.textColor);
       if (m_searchValueFormat == FORMAT_DEC)
-        ss << _getValueDisplayString(m_searchValue[1], m_searchType);
+        ss << _getValueDisplayString(m_searchValue[0], m_searchType);
       else if (m_searchValueFormat == FORMAT_HEX)
-        ss << "0x" << std::uppercase << std::hex << m_searchValue[1]._u64;
+      {
+        switch (dataTypeSizes[m_searchType])
+        {
+        case 1:
+          ss << "0x" << std::uppercase << std::hex << (m_searchValue[0]._u16 & 0x00FF);
+          break;
+        case 2:
+          ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u16;
+          break;
+        default:
+        case 4:
+          ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u32;
+          break;
+        case 8:
+          ss << "0x" << std::uppercase << std::hex << m_searchValue[0]._u64;
+          break;
+        }
+      }
+
       Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
-      Gui::drawTextAligned(font20, 650, 285, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-    }
+      Gui::drawTextAligned(font20, 310, 285, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
 
-    if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 1))
-      Gui::drawRectangled(652 + strWidth, 285, 3, 35, currTheme.highlightColor);
-    //	End Mod
+      //	Start Mod for search Range display
+      if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 0))
+        Gui::drawRectangled(312 + strWidth, 285, 3, 35, currTheme.highlightColor);
 
-    if (m_searchValueFormat == FORMAT_DEC)
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E2 Hexadecimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
-    else if (m_searchValueFormat == FORMAT_HEX)
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+      if (m_searchMode == SEARCH_MODE_RANGE)
+      {
+        ss.str("");
+        if (m_searchValueFormat == FORMAT_DEC)
+          ss << _getValueDisplayString(m_searchValue[1], m_searchType);
+        else if (m_searchValueFormat == FORMAT_HEX)
+          ss << "0x" << std::uppercase << std::hex << m_searchValue[1]._u64;
+        Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
+        Gui::drawTextAligned(font20, 650, 285, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+      }
 
+      if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 1))
+        Gui::drawRectangled(652 + strWidth, 285, 3, 35, currTheme.highlightColor);
+      //	End Mod
+
+      if (m_searchValueFormat == FORMAT_DEC)
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E2 Hexadecimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+      else if (m_searchValueFormat == FORMAT_HEX)
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+    };
     if (m_selectedEntry == 1)
       Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 155, 345, 310, 90, currTheme.highlightColor);
 
@@ -1507,6 +1510,7 @@ void GuiCheats::onInput(u32 kdown)
   }
   if (kdown & KEY_B)
   {
+    u8 saveE = m_selectedEntry;
     m_selectedEntry = 0;
 
     if (m_searchMenuLocation == SEARCH_NONE)
@@ -1548,14 +1552,20 @@ void GuiCheats::onInput(u32 kdown)
     else if (m_searchMenuLocation == SEARCH_TYPE)
     {
       if (m_searchType != SEARCH_TYPE_NONE && m_memoryDump->size() == 0)
+      {
         m_searchType = SEARCH_TYPE_NONE;
+        m_selectedEntry = saveE;
+      }
       else
         m_searchMenuLocation = SEARCH_NONE;
     }
     else if (m_searchMenuLocation == SEARCH_MODE)
     {
       if (m_searchMode != SEARCH_MODE_NONE)
+      {
         m_searchMode = SEARCH_MODE_NONE;
+        m_selectedEntry = saveE;
+      }
       else
         m_searchMenuLocation = SEARCH_NONE;
     }
@@ -2582,7 +2592,8 @@ void GuiCheats::onInput(u32 kdown)
         else if (m_searchMode == SEARCH_MODE_NONE)
         {
           m_searchMenuLocation = SEARCH_MODE;
-          m_selectedEntry = 0;
+          if (m_selectedEntry > 11)
+            m_selectedEntry = 0;
           // m_selectedEntry = m_searchType == SEARCH_TYPE_NONE ? 0 : m_searchType;
         }
         else
@@ -2951,7 +2962,7 @@ void GuiCheats::onInput(u32 kdown)
               }
             }
           }
-          else if (m_selectedEntry == 1)
+          else if (m_selectedEntry == 1) // search
           {
             (new MessageBox("Traversing title memory.\n \nThis may take a while...", MessageBox::NONE))->show();
             requestDraw();

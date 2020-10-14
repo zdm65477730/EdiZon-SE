@@ -196,7 +196,7 @@ private:
     searchType_t type;
     pointer_chain_t pointer;
     bool heap = true;
-    u32 offset = 0;
+    u64 offset = 0;
     bool deleted = false;
   };
   bookmark_t m_bookmark;      //global for use in pointer search , target address to be updated dynamically by display routine TBD
