@@ -5,17 +5,18 @@
 #include <stdio.h>
 #include <cstring>
 
-#define CONFIG_PATH EDIZON_DIR "/config.dat"
+#define CONFIG_PATH EDIZON_DIR "/seconfig.dat"
 
 namespace Config {
   typedef struct ConfigData {
     char magic[8];
     bool hideSX;
+    char latestCommit[40];
     bool option_once;
     bool options[3];
-    char latestCommit[40];
     char edizon_dir[40];
     u64 lasttitle = 0;
+    char version[40];
   } config_data_t;
 
   void readConfig();

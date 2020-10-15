@@ -179,7 +179,7 @@ static void getVersionInfoAsync(void* args) {
     remoteVersion = "???";
   Config::readConfig();
   // std::string version = Config::getConfig()->version;
-  if (remoteVersion.compare(0, 6, VERSION_STRING) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
+  if (remoteVersion.compare(0, 6, Config::getConfig()->version) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
   {
     updateAvailable = false;
   }
