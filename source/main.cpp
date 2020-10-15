@@ -224,6 +224,11 @@ int main(int argc, char **argv)
   setsysGetColorSetId(&colorSetId);
   setTheme(colorSetId);
 
+  Config::readConfig();
+  memcpy(Config::getConfig()->version, VERSION_STRING, sizeof(VERSION_STRING));
+  Config::getConfig()->version[sizeof(VERSION_STRING)] = 0;
+  Config::writeConfig();
+
   Debugger *l_debugger = new Debugger(); //Debugger *m_debugger;
   if (l_debugger->getRunningApplicationPID() != 0)
   {
