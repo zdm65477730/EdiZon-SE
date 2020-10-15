@@ -23,6 +23,7 @@ void GuiChooseMission::draw() {
     // Gui::drawRectangled((Gui::g_framebuffer_width / 4) * (i + 1), Gui::g_framebuffer_height / 2 + 270, 300, 60, currTheme.separatorColor);
     Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 4) * (i + 1), Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->options[i] ? COLOR_WHITE : currTheme.textColor, optionNames[i], ALIGNED_CENTER);
   }
+  Gui::drawTextAligned(font20, 65, Gui::g_framebuffer_height / 2 + 300, currTheme.textColor, "About \uE0B3", ALIGNED_CENTER);
   Gui::endDraw();
 }
 void GuiChooseMission::onInput(u32 kdown)
@@ -58,6 +59,10 @@ void GuiChooseMission::onInput(u32 kdown)
   else if (kdown & KEY_MINUS)
   {
     Config::getConfig()->options[2] = !Config::getConfig()->options[2];
+  }
+  else if (kdown & KEY_PLUS)
+  {
+    Gui::g_nextGui = GUI_ABOUT;
   }
   else if (kdown & KEY_A)
   {

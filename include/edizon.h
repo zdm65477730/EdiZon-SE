@@ -15,3 +15,6 @@
 
 /* Web API URL */
 #define EDIZON_URL "http://api.edizon.werwolv.net/" API_VERSION 
+// #define AMS_URL     "https://api.github.com/repos/tomvita/EdiZon-SE/releases"
+// #define EDIZON_URL  "https://api.github.com/repos/tomvita/EdiZon-SE/releases/latest"
+// #define APP_URL     "https://github.com/tomvita/EdiZon-SE/releases/latest/download/EdiZon.nro"
