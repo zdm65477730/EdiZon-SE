@@ -30,12 +30,12 @@ include $(DEVKITPRO)/libnx/switch_rules
 #     - icon.jpg
 #     - <libnx folder>/default_icon.jpg
 #---------------------------------------------------------------------------------
-VERSION_MAJOR := 3
-VERSION_MINOR := 7
-VERSION_MICRO := 12
+VERSION_MAJOR := 1
+VERSION_MINOR := 0
+VERSION_MICRO := 0
 NIGHTLY		  := 
 
-APP_TITLE	:=	EdiZon SE
+APP_TITLE	:=	SE updater
 APP_AUTHOR	:=	Tomvita
 
 ifeq ($(NIGHTLY), 1)
@@ -176,7 +176,7 @@ $(BUILD):
 #--------------------------------------------------------------------------------
 run: $(BUILD)
 	@echo Starting nxlink
-	@nxlink $(OUTPUT).nro -s -p "EdiZon/EdiZon.nro"
+	@nxlink $(OUTPUT).nro -s -p "EdiZon/updater.nro"
 	
 #---------------------------------------------------------------------------------
 clean:

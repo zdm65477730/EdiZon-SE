@@ -50,12 +50,12 @@ void GuiAbout::draw() {
   Gui::drawTextAligned(fontTitle, 70, 60, currTheme.textColor, "\uE017", ALIGNED_LEFT);
   Gui::drawTextAligned(font24, 70, 23, currTheme.textColor, "        About", ALIGNED_LEFT);
 
-  // if (updateAvailable)
-  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Install update     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
-  // else
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+  if (updateAvailable)
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Install update     \uE0E1 Exit     \uE0E0 OK", ALIGNED_RIGHT);
+  else
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Exit     \uE0E0 OK", ALIGNED_RIGHT);
 
-  Gui::drawTextAligned(fontHuge, 100, 180, Gui::makeColor(0xFB, 0xA6, 0x15, 0xFF), "EdiZon SE v" VERSION_STRING, ALIGNED_LEFT);
+  Gui::drawTextAligned(fontHuge, 100, 180, Gui::makeColor(0xFB, 0xA6, 0x15, 0xFF), "SE Updater v" VERSION_STRING, ALIGNED_LEFT);
   Gui::drawTextAligned(font20, 130, 190, currTheme.separatorColor, "by Tomvita", ALIGNED_LEFT);
 
   Gui::drawTextAligned(font14, 120, 250, currTheme.textColor, "Special thank to WerWolv who made the original EdiZon and the help and advise he gave.", ALIGNED_LEFT);
@@ -93,14 +93,14 @@ void GuiAbout::onInput(u32 kdown) {
       threadClose(&networkThread);
       threadRunning = false;
     }
-    Debugger *l_debugger = new Debugger();
-    if (l_debugger->getRunningApplicationPID() != 0)
-      Gui::g_nextGui = GUI_CHOOSE_MISSION;
-    else
-      Gui::g_nextGui = GUI_MAIN;
+    // Debugger *l_debugger = new Debugger();
+    // if (l_debugger->getRunningApplicationPID() != 0)
+    //   Gui::g_nextGui = GUI_CHOOSE_MISSION;
+    // else
+      Gui::g_requestExit = true;
   }
 
-  if (kdown & KEY_MINUS && updateAvailable && false) {
+  if (kdown & KEY_MINUS && updateAvailable)  {
 
     (new MessageBox("Updating EdiZon.\n \nThis may take a while...", MessageBox::NONE))->show();
     requestDraw();
@@ -132,7 +132,6 @@ void GuiAbout::onInput(u32 kdown) {
       fclose(fp);
       curl_easy_cleanup(curl);
     }
-    
   }
 }
 
@@ -178,8 +177,9 @@ static void getVersionInfoAsync(void* args) {
   remoteVersion = "";
   if (curl_easy_perform(curl) != CURLE_OK)
     remoteVersion = "???";
-
-  if (remoteVersion.compare(0, sizeof(VERSION_STRING), VERSION_STRING) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
+  Config::readConfig();
+  // std::string version = Config::getConfig()->version;
+  if (remoteVersion.compare(0, 6, VERSION_STRING) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
   {
     updateAvailable = false;
   }

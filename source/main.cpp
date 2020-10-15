@@ -224,20 +224,20 @@ int main(int argc, char **argv)
   setsysGetColorSetId(&colorSetId);
   setTheme(colorSetId);
 
-  Debugger *l_debugger = new Debugger(); //Debugger *m_debugger;
-  if (l_debugger->getRunningApplicationPID() != 0)
-  {
-    Gui::g_splashDisplayed = true;
-    Config::readConfig();
-    m_edizon_dir = Config::getConfig()->edizon_dir;
-    if (m_edizon_dir.compare(0, sizeof(EDIZON_DIR)-1, EDIZON_DIR) != 0)
-      m_edizon_dir = EDIZON_DIR;
-    if (multimissioncheck())
-      Gui::g_nextGui = GUI_CHOOSE_MISSION;
-    else
-      Gui::g_nextGui = GUI_CHEATS;
-  }
-
+  // Debugger *l_debugger = new Debugger(); //Debugger *m_debugger;
+  // if (l_debugger->getRunningApplicationPID() != 0)
+  // {
+  //   Gui::g_splashDisplayed = true;
+  //   Config::readConfig();
+  //   m_edizon_dir = Config::getConfig()->edizon_dir;
+  //   if (m_edizon_dir.compare(0, sizeof(EDIZON_DIR)-1, EDIZON_DIR) != 0)
+  //     m_edizon_dir = EDIZON_DIR;
+  //   if (multimissioncheck())
+  //     Gui::g_nextGui = GUI_CHOOSE_MISSION;
+  //   else
+  //     Gui::g_nextGui = GUI_CHEATS;
+  // }
+  Gui::g_nextGui = GUI_ABOUT;
   if (!Gui::g_splashDisplayed)
   {
     currGui = new GuiMain();
