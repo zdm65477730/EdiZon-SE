@@ -179,7 +179,7 @@ static void getVersionInfoAsync(void* args) {
   if (curl_easy_perform(curl) != CURLE_OK)
     remoteVersion = "???";
 
-  if (remoteVersion.compare(0, sizeof(VERSION_STRING), VERSION_STRING) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
+  if (remoteVersion.compare(0, 6, VERSION_STRING) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
   {
     updateAvailable = false;
   }
