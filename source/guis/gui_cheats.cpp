@@ -605,7 +605,7 @@ void GuiCheats::draw()
       if (m_memoryDump->size() > 0)
       {
         Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 Detach debugger  \uE0E4 BM toggle \uE0E5 Hex Mode  \uE0EF BM add \uE0F0 Reset search \uE0E3 Search again \uE0E2 Freeze value  \uE0E0 Edit value   \uE0E1 Quit", ALIGNED_RIGHT);
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E5+\uE0E1 Show Option on next Launch \uE0E6+\uE0E2 Preparation for pointer Search  \uE0E6+\uE0E7 Page Up  \uE0E7 Page Down  \uE105 Memory Editor", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Type  \uE0E5+\uE0E1 Show Option on next Launch \uE0E6+\uE0E2 Preparation for pointer Search  \uE0E6+\uE0E7 Page Up  \uE0E7 Page Down  \uE105 Memory Editor", ALIGNED_RIGHT);
       }
       else
         Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0F0 Reset search     \uE0E1 Quit", ALIGNED_RIGHT);
@@ -615,7 +615,7 @@ void GuiCheats::draw()
   {
     if (m_memoryDumpBookmark->size() > 0)
     {
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 Detach  \uE0E4 BM toggle   \uE0E5 Hex Mode  \uE0EF BM label  \uE0E3 Add Cheat  \uE0F0 Delete BM   \uE0E2 Freeze value  \uE0E7 Page Down  \uE0E0 Edit value  \uE0E1 Quit", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 Detach  \uE0E4 BM toggle   \uE0E5 Hex Mode  \uE0EF BM label  \uE0E6+\uE0E0 Add Cheat  \uE0F0 Delete BM   \uE0E2 Freeze value  \uE0E7 Page Down  \uE0E0 Edit value  \uE0E1 Quit", ALIGNED_RIGHT);
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0F0 Refresh Bookmark  \uE0E6+\uE0EF Import Bookmark  \uE0E6+\uE0E3 Pointer Search  \uE0E6+\uE0E7 Page Up  \uE105 Memory Editor", ALIGNED_RIGHT);
       //
     }
@@ -736,8 +736,17 @@ void GuiCheats::draw()
       ss << " " << dataTypes[bookmark.type];
       Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
     }
-    }
-
+  }
+  else 
+  {
+      static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR"};
+      ss.str("");
+      ss << "Search Type [ " << dataTypes[m_searchType] << " ]";
+      ss << "   Search Mode [ " << modeNames[m_searchMode] << " ]";
+      ss << "   Search Region [ " << regionNames[m_searchRegion] << " ]";
+      Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+  }
     if (m_cheatCnt > 0)
     {
       Gui::drawRectangle(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40, currTheme.textColor);
@@ -1450,9 +1459,9 @@ void GuiCheats::drawSearchRAMMenu()
       //	End Mod
 
       if (m_searchValueFormat == FORMAT_DEC)
-        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E2 Hexadecimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6 --  \uE0E7 ++  \uE0E2 Hexadecimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
       else if (m_searchValueFormat == FORMAT_HEX)
-        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6 --  \uE0E7 ++  \uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
     };
     if (m_selectedEntry == 1)
       Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 155, 345, 310, 90, currTheme.highlightColor);
@@ -2196,7 +2205,35 @@ void GuiCheats::onInput(u32 kdown)
           // m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
         }
         // end
-        if (kdown & KEY_A && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
+        if ((kdown & KEY_A) && (kheld & KEY_ZL))
+        {
+          if (m_memoryDump1 != nullptr)
+          { // in bookmark mode
+            m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+            // m_searchMenuLocation = SEARCH_POINTER;
+            // m_showpointermenu = true;
+            if (m_menuLocation == CANDIDATES && m_memoryDumpBookmark->size() != 0)
+            {
+              bookmark_t bookmark;
+              m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+              // printf("m_selectedEntry + m_addresslist_offset %ld\n", m_selectedEntry + m_addresslist_offset);
+              // u64 index = m_selectedEntry + m_addresslist_offset;
+              if (bookmark.pointer.depth > 0)
+              {
+                addcodetofile(m_selectedEntry + m_addresslist_offset);
+              }
+              else
+              {
+                addstaticcodetofile(m_selectedEntry + m_addresslist_offset);
+              }
+              m_searchMenuLocation = SEARCH_NONE;
+              (new Snackbar("Coded added to cheat file, reload to take effect"))->show();
+            }
+            // pointercheck();
+            // (new Snackbar("Searching pointer "))->show();
+          }
+        }
+        else if (kdown & KEY_A && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
         {
           searchType_t savetype = m_searchType;
           if (m_memoryDump1 != nullptr)
@@ -2451,7 +2488,15 @@ void GuiCheats::onInput(u32 kdown)
         }
         m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
         m_AttributeDumpBookmark->flushBuffer();
-      };
+      }
+      else if (m_menuLocation == CANDIDATES && m_memoryDump1 == nullptr) // change type
+      {
+        if (m_searchType < SEARCH_TYPE_FLOAT_64BIT)
+        {
+          u8 i = static_cast<u8>(m_searchType) + 1;
+          m_searchType = static_cast<searchType_t>(i);
+        }
+      }
     };
 
     if ((kdown & KEY_L) && (kheld & KEY_ZL))
@@ -2466,7 +2511,15 @@ void GuiCheats::onInput(u32 kdown)
         }
         m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
         m_AttributeDumpBookmark->flushBuffer();
-      };
+      }
+      else if (m_menuLocation == CANDIDATES && m_memoryDump1 == nullptr) // Chang type
+      {
+        if (m_searchType > SEARCH_TYPE_UNSIGNED_8BIT)
+        {
+          u8 i = static_cast<u8>(m_searchType) - 1;
+          m_searchType = static_cast<searchType_t>(i);
+        }
+      }
     };
 
     if ((kdown & KEY_R) && !(kheld & KEY_ZL))
@@ -2585,32 +2638,7 @@ void GuiCheats::onInput(u32 kdown)
     {
       if (m_searchMenuLocation == SEARCH_NONE)
       {
-        if (m_memoryDump1 != nullptr)
-        { // in bookmark mode
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
-          // m_searchMenuLocation = SEARCH_POINTER;
-          // m_showpointermenu = true;
-          if (m_menuLocation == CANDIDATES && m_memoryDumpBookmark->size() != 0)
-          {
-            bookmark_t bookmark;
-            m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-            // printf("m_selectedEntry + m_addresslist_offset %ld\n", m_selectedEntry + m_addresslist_offset);
-            // u64 index = m_selectedEntry + m_addresslist_offset;
-            if (bookmark.pointer.depth > 0)
-            {
-              addcodetofile(m_selectedEntry + m_addresslist_offset);
-            }
-            else
-            {
-              addstaticcodetofile(m_selectedEntry + m_addresslist_offset);
-            }
-            m_searchMenuLocation = SEARCH_NONE;
-            (new Snackbar("Coded added to cheat file, reload to take effect"))->show();
-          }
-          // pointercheck();
-          // (new Snackbar("Searching pointer "))->show();
-        }
-        else if (m_searchMode == SEARCH_MODE_NONE)
+        if (m_searchMode == SEARCH_MODE_NONE) 
         {
           m_searchMenuLocation = SEARCH_MODE;
           if (m_selectedEntry > 11)
@@ -2867,14 +2895,34 @@ void GuiCheats::onInput(u32 kdown)
       }
 
       // inc and dec search value
-      if ((kdown & KEY_ZR) && (m_searchMenuLocation == SEARCH_VALUE) && (m_searchType == SEARCH_TYPE_UNSIGNED_32BIT))
+      if ((kdown & KEY_ZR) && (m_searchMenuLocation == SEARCH_VALUE))
       {
-        m_searchValue[0]._u32++;
+        switch (m_searchType)
+        {
+        case SEARCH_TYPE_FLOAT_32BIT:
+          m_searchValue[m_searchValueIndex]._f32++;
+          break;
+        case SEARCH_TYPE_FLOAT_64BIT:
+          m_searchValue[m_searchValueIndex]._f64++;
+          break;
+        default:
+          m_searchValue[m_searchValueIndex]._u64++;
+        }
         m_selectedEntry = 1;
       };
-      if ((kdown & KEY_ZL) && (m_searchMenuLocation == SEARCH_VALUE) && (m_searchType == SEARCH_TYPE_UNSIGNED_32BIT))
+      if ((kdown & KEY_ZL) && (m_searchMenuLocation == SEARCH_VALUE))
       {
-        m_searchValue[0]._u32--;
+        switch (m_searchType)
+        {
+        case SEARCH_TYPE_FLOAT_32BIT:
+          m_searchValue[m_searchValueIndex]._f32--;
+          break;
+        case SEARCH_TYPE_FLOAT_64BIT:
+          m_searchValue[m_searchValueIndex]._f64--;
+          break;
+        default:
+          m_searchValue[m_searchValueIndex]._u64--;
+        }
         m_selectedEntry = 1;
       };
 
