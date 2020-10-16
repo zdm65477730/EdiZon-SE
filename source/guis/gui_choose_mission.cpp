@@ -17,6 +17,7 @@ void GuiChooseMission::draw() {
   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "Welcome", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, currTheme.textColor, "Use L, R, ZL, ZR and B to choose storage directory for your search press A to continue", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2+60, currTheme.textColor, "Use X, Y, - to toggle options, if you disable this screen use R+B to exit will show this on next launch", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2+250, Config::getConfig()->deletebookmark ? COLOR_WHITE : currTheme.textColor, "\uE0C4 clear all bookmarks", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, m_edizon_dir.c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
   for (u8 i = 0; i < 3; i++)
   {
@@ -26,6 +27,7 @@ void GuiChooseMission::draw() {
   Gui::drawTextAligned(font20, 65, Gui::g_framebuffer_height / 2 + 300, currTheme.textColor, "About \uE0B3", ALIGNED_CENTER);
   Gui::endDraw();
 }
+// u32 kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
 void GuiChooseMission::onInput(u32 kdown)
 {
   if (kdown & KEY_L)
@@ -63,6 +65,10 @@ void GuiChooseMission::onInput(u32 kdown)
   else if (kdown & KEY_PLUS)
   {
     Gui::g_nextGui = GUI_ABOUT;
+  }
+  else if (kdown & KEY_LSTICK) 
+  {
+    Config::getConfig()->deletebookmark = !Config::getConfig()->deletebookmark;
   }
   else if (kdown & KEY_A)
   {

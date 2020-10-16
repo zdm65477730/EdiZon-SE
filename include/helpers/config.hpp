@@ -17,6 +17,7 @@ namespace Config {
     char edizon_dir[40];
     u64 lasttitle = 0;
     char version[40];
+    bool deletebookmark;
   } config_data_t;
 
   void readConfig();

@@ -71,7 +71,8 @@ static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 
 GuiCheats::GuiCheats() : Gui()
 {
-
+  if (Config::getConfig()->deletebookmark)
+    remove(EDIZON_DIR "/memdumpbookmark.dat");
   // Check if dmnt:cht is running and we're not on sxos
   m_sysmodulePresent = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
 
@@ -327,7 +328,14 @@ if (!(m_debugger->m_dmnt)){
     filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
     m_PCDump_filename << EDIZON_DIR "/" << buildIDStr.str() << ".dmp1";
   }
-
+  if (Config::getConfig()->deletebookmark)
+  {
+    std::stringstream savebookmark;
+    savebookmark << filebuildIDStr.str() << "1";
+    REPLACEFILE(filebuildIDStr.str().c_str(), savebookmark.str().c_str());
+    Config::getConfig()->deletebookmark = false;
+    Config::writeConfig();
+  }
   m_AttributeDumpBookmark = new MemoryDump(filebuildIDStr.str().c_str(), DumpType::ADDR, false);
   if (m_debugger->getRunningApplicationPID() == 0 || m_memoryDumpBookmark->getDumpInfo().heapBaseAddress != m_heapBaseAddr)
   // is a different run need to refresh the list
@@ -573,12 +581,12 @@ void GuiCheats::draw()
     if (m_memoryDump1 == nullptr)
     {
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE105 Modify  \uE0F2 Delete  \uE0E6+\uE104 Write to File  \uE0E6+\uE0E1 Detach  \uE0E4 BM toggle   \uE0E3 Search RAM   \uE0E0 Cheat on/off   \uE0E1 Quit", ALIGNED_RIGHT);
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE105 Remove condition key  \uE0E6+\uE0E2 Preparation for pointer Search", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E5+\uE0E1 Show Option on next Launch \uE0E6+\uE105 Remove condition key  \uE0E6+\uE0E2 Preparation for pointer Search", ALIGNED_RIGHT);
     }
     else
     {
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0EF BM add   \uE105 Modify  \uE0F2 Delete  \uE0E6+\uE104 Write to File  \uE0E6+\uE0E1 Detach  \uE0E4 BM toggle   \uE0E3 Search RAM   \uE0E0 Cheat on/off   \uE0E1 Quit", ALIGNED_RIGHT);
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE105 Remove condition key  \uE0E6+\uE0E2 Preparation for pointer Search", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E5+\uE0E1 Show Option on next Launch \uE0E6+\uE105 Remove condition key  \uE0E6+\uE0E2 Preparation for pointer Search", ALIGNED_RIGHT);
     }
   }
   else if (m_memoryDump1 == nullptr)
@@ -636,7 +644,7 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : 3.7.13";
+  ss << "EdiZon SE : 3.7.14";
   if (m_32bitmode)
     ss << "     32 bit pointer mode";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -1317,7 +1325,7 @@ void GuiCheats::drawSearchRAMMenu()
 
   static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "void*"};
   static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR"};
-  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "StateA", "A..B", "", "Unknown", "?+", "?-", "PTR"};
+  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR"};
   static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
 
   switch (m_searchMenuLocation) // search menu
@@ -1352,12 +1360,20 @@ void GuiCheats::drawSearchRAMMenu()
       Gui::drawTextAligned(font20, 400 + (i / 2) * 100, 250 + (i % 2) * 100, currTheme.textColor, (m_memoryDump->size() == 0) ? modeNames1[i] : modeNames[i], ALIGNED_CENTER);
     }
 
-    Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the mode you want to use for finding values. With these modes EdiZon will search for values that are equal to [==], \n"
-                                                                                         "not equal to [!=], greater than [>], greater than or equal to [>=], less than [<], or less than or equal to [<=] the value \n"
-                                                                                         "that you input. [A : B] allows you to set a (min : max) range of values, SAME and DIFF search allows you to find values that \n"
-                                                                                         "stayed the same or changed since the last search, [+ +] and [- -] checks for values that increased or decreased since the \n"
-                                                                                         "previous search.",
-                         ALIGNED_CENTER);
+    if (m_memoryDump->size() == 0)
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the mode you want to use for finding values. With these modes EdiZon will search for known values that are equal to [==], \n"
+                                                                                           "not equal to [!=], greater than [>] or less than [<] that you input. \n"
+                                                                                           "For unknown value [A : B] allows you to set a (min : max) range of values, Choose [Unknown] if to search find values that \n"
+                                                                                           "will be different, [? +] and [? -] for value that will increased or decreased \n"
+                                                                                           "[StateA] let you capture state A to be compared with state B in next search. ",
+                           ALIGNED_CENTER);
+    else
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the mode you want to use for finding values. With these modes EdiZon will search for known values that are equal to [==], \n"
+                                                                                           "not equal to [!=], greater than [>] or less than [<] that you input. \n"
+                                                                                           "For unknown value [A : B] allows you to set a (min : max) range of values, SAME and DIFF search allows you to find values that \n"
+                                                                                           "stayed the same or changed since the previous search, [+ +] and [- -] checks for values that increased or decreased since the \n"
+                                                                                           "previous search. [StateA] and [StateB] let you search for value that are mutually exclusive between two states. ",
+                           ALIGNED_CENTER);
 
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
     break;
