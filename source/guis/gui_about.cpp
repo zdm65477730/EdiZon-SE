@@ -31,7 +31,7 @@ GuiAbout::GuiAbout() : Gui() {
     threadCreate(&networkThread, getVersionInfoAsync, nullptr, nullptr, 0x2000, 0x2C, -2);
     threadStart(&networkThread);
   }
-}
+} 
 
 GuiAbout::~GuiAbout() {
 

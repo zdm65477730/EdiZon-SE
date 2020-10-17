@@ -122,7 +122,7 @@ void GuiMain::draw() {
       x = floor(++currItem / 2.0F) * 256;
     }
   }
-
+ 
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, 32, currTheme.selectedButtonColor);
   Gui::drawShadow(0, 0, Gui::g_framebuffer_width, 32);
 
