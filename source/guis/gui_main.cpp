@@ -13,7 +13,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <numeric>
-
+#include "version.h"
 #include "helpers/util.h"
 
 static s64 xOffset, xOffsetNext;
