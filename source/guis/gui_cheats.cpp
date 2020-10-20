@@ -3096,7 +3096,8 @@ void GuiCheats::onInput(u32 kdown)
                   {
                     // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
                     // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
-                    REPLACEFILE(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat");
+                    std::string s = m_edizon_dir + "/memdump1a.dat";
+                    REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
                   }
                 }
               }
