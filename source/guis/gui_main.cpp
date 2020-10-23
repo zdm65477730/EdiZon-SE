@@ -22,7 +22,7 @@ static bool finishedDrawing = true;
 static s64 startOffset = 0;
  
 static color_t arrowColor;
-
+static bool lastgamenotfound = false;
 GuiMain::GuiMain() : Gui() {
   updateEditableTitlesList();
 
@@ -83,7 +83,8 @@ void GuiMain::draw() {
 
   if (Title::g_titles.size() == 0) {
     Config::readConfig();
-    if (Config::getConfig()->lasttitle != 0)
+    if ((Config::getConfig()->lasttitle) != 0) lastgamenotfound = true;
+    if (lastgamenotfound)
       Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "Game save for last game title not found on this system! Please press \uE0E1 to exit EdiZon!", ALIGNED_CENTER);
     else
       Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "No games or saves found on this system! Please press \uE0E1 to exit EdiZon!", ALIGNED_CENTER);
