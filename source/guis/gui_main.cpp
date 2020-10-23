@@ -82,9 +82,12 @@ void GuiMain::draw() {
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);
 
   if (Title::g_titles.size() == 0) {
-    Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "No games or saves found on this system! Please press \uE0E1 to exit EdiZon!", ALIGNED_CENTER);
-    Gui::endDraw();
     Config::readConfig();
+    if (Config::getConfig()->lasttitle != 0)
+      Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "Game save for last game title not found on this system! Please press \uE0E1 to exit EdiZon!", ALIGNED_CENTER);
+    else
+      Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "No games or saves found on this system! Please press \uE0E1 to exit EdiZon!", ALIGNED_CENTER);
+    Gui::endDraw();
     Config::getConfig()->lasttitle = 0;
     Config::writeConfig();
     return;
