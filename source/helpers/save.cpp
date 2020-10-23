@@ -167,7 +167,7 @@ Result _getSaveList(std::vector<FsSaveDataInfo> &saveInfoList)
     printf("fsOpenSaveDataIterator() failed: 0x%x\n", rc);
     return rc;
   }
-
+  Config::readConfig();
   rc = fsSaveDataInfoReaderRead(&iterator, &info, 1, &total_entries); //See libnx fs.h.
   if (R_FAILED(rc))
     return rc;
@@ -183,9 +183,9 @@ Result _getSaveList(std::vector<FsSaveDataInfo> &saveInfoList)
       saveInfoList.push_back(info);
       break;
     }
-    else if ((info.save_data_type == FsSaveDataType_Account) && (Config::getConfig()->lasttitle) != 0 )
+    else if ((info.save_data_type == FsSaveDataType_Account) && (Config::getConfig()->lasttitle) != 0 && !(Config::getConfig()->showallsaves)) 
     {
-      if (info.application_id == Config::getConfig()->lasttitle)
+      if (info.application_id == (Config::getConfig()->lasttitle & 0xFFFFFFFFFFFFFF00)) // fix super mario 3d 
       {
         saveInfoList.push_back(info);
         break;

@@ -15,6 +15,7 @@
 #include <numeric>
 #include "version.h"
 #include "helpers/util.h"
+#include "helpers/config.hpp"
 
 static s64 xOffset, xOffsetNext;
 static bool finishedDrawing = true;
@@ -83,6 +84,9 @@ void GuiMain::draw() {
   if (Title::g_titles.size() == 0) {
     Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "No games or saves found on this system! Please press \uE0E1 to exit EdiZon!", ALIGNED_CENTER);
     Gui::endDraw();
+    Config::readConfig();
+    Config::getConfig()->lasttitle = 0;
+    Config::writeConfig();
     return;
   }
 

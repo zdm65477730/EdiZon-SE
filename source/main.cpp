@@ -121,6 +121,24 @@ bool multimissioncheck()
   // else
   //   return false;
 }
+bool showallgamesavecheck()
+{
+  Config::readConfig();
+  std::stringstream filenoiconStr;
+  filenoiconStr << EDIZON_DIR "/showallsaves.txt";
+  if (access(filenoiconStr.str().c_str(), F_OK) == 0)
+  {
+    Config::getConfig()->showallsaves = true;
+    Config::writeConfig();
+    return true;
+  }
+  else
+  {
+    Config::getConfig()->showallsaves = false;
+    Config::writeConfig();
+    return false;
+  }
+}
 void createFolders()
 {
   printf(EDIZON_DIR "/saves\n");
@@ -216,7 +234,7 @@ int main(int argc, char **argv)
   serviceInitialize();
 
   redirectStdio();
-
+  showallgamesavecheck();
   framebufferCreate(&Gui::g_fb_obj, nwindowGetDefault(), 1280, 720, PIXEL_FORMAT_RGBA_8888, 2);
   framebufferMakeLinear(&Gui::g_fb_obj);
 

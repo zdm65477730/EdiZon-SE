@@ -18,6 +18,7 @@ namespace Config {
     u64 lasttitle = 0;
     char version[40];
     bool deletebookmark;
+    bool showallsaves;
   } config_data_t;
 
   void readConfig();
