@@ -11,6 +11,7 @@
 #include "helpers/config.hpp"
 #include "edizon_logo_bin.h"
 #include "lz.h"
+#include "version.h"
 // #define checkheap
 // #define printpointerchain
 #define MAX_BUFFER_SIZE 0x1000000 // increase size for faster speed
@@ -2665,7 +2666,8 @@ void GuiCheats::onInput(u32 kdown)
         // cheatListOffset = 0;
       }
       printf("%s\n", "Y key pressed");
-      printf("%s\n", Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str());
+      if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
+        printf("%s\n", Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str());
       printf("%s\n", tidStr.c_str());
       printf("%s\n", buildIDStr.c_str());
       //make sure not using bookmark
