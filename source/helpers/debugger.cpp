@@ -77,7 +77,22 @@ Result Debugger::pokeMemory(size_t varSize, u64 address, u64 value) {
   }
   
 }
-
+Result Debugger::pause() {
+  if (m_dmnt)
+  return dmntchtPauseCheatProcess();
+  else
+  {
+    return svcBreakDebugProcess(m_debugHandle);
+  }  
+}
+Result Debugger::resume() {
+  if (m_dmnt)
+  return dmntchtResumeCheatProcess();
+  else
+  {
+    return svcContinueDebugEvent(m_debugHandle, 4 | 2 | 1, 0, 0);
+  }
+}
 Result Debugger::readMemory(void *buffer, size_t bufferSize, u64 address) {
   if (m_dmnt)
     return dmntchtReadCheatProcessMemory(address, buffer, bufferSize);

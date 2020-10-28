@@ -97,7 +97,7 @@ GuiCheats::GuiCheats() : Gui()
   m_searchType = SEARCH_TYPE_NONE;
   m_searchMode = SEARCH_MODE_NONE;
   m_searchRegion = SEARCH_REGION_NONE;
-
+  freeze();
   m_cheatCnt = 0;
 
   if (!m_sysmodulePresent)
@@ -500,7 +500,7 @@ if (!(m_debugger->m_dmnt)){
 
 GuiCheats::~GuiCheats()
 {
-
+  unfreeze();
   // dmntchtResumeCheatProcess();
   if (m_debugger != nullptr)
   {
@@ -1549,6 +1549,7 @@ void GuiCheats::onInput(u32 kdown)
       }
       if (kheld & KEY_ZL)
       {
+        unfreeze();
         if (!m_debugger -> m_dmnt)
         {
           m_debugger->detatch();
@@ -5988,11 +5989,33 @@ void GuiCheats::iconloadcheck()
     m_havesave = false;
   }
 }
+bool GuiCheats::freeze()
+{
+  Config::readConfig();
+  if (Config::getConfig()->freeze)
+  {
+    m_debugger->pause();
+    return true;
+  }
+  else
+    return false;
+}
+bool GuiCheats::unfreeze()
+{
+  Config::readConfig();
+  if (Config::getConfig()->freeze)
+  {
+    m_debugger->resume();
+    return true;
+  }
+  else
+    return false;
+}
 bool GuiCheats::autoattachcheck()
 {
+  Config::readConfig();
   if (Config::getConfig()->options[0] == 0)
   {
-    Config::readConfig();
     if (m_debugger->m_dmnt)
       dmntchtForceOpenCheatProcess();
     return true;

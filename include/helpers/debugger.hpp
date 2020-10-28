@@ -8,6 +8,8 @@ public:
   ~Debugger();
 
   Result attachToProcess();
+  Result pause();
+  Result resume();
   void detatch();
   u64 getRunningApplicationTID();
   u64 getRunningApplicationPID();
