@@ -19,6 +19,7 @@ namespace Config {
     char version[40];
     bool deletebookmark;
     bool showallsaves;
+    bool freeze;
   } config_data_t;
 
   void readConfig();
