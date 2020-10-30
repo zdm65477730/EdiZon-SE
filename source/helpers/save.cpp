@@ -177,11 +177,12 @@ Result _getSaveList(std::vector<FsSaveDataInfo> &saveInfoList)
   for (; R_SUCCEEDED(rc) && total_entries > 0;
        rc = fsSaveDataInfoReaderRead(&iterator, &info, 1, &total_entries))
   {
-    if ((info.save_data_type == FsSaveDataType_Account) && (l_debugger->getRunningApplicationTID() != 0)) // hacked to get only the running title
+    if ((info.save_data_type == FsSaveDataType_Account) && (info.application_id == l_debugger->getRunningApplicationTID())) 
+    // if ((info.save_data_type == FsSaveDataType_Account) && (l_debugger->getRunningApplicationTID() != 0)) // hacked to get only the running title
     {
-      info.application_id = l_debugger->getRunningApplicationTID();
+      // info.application_id = l_debugger->getRunningApplicationTID();
       saveInfoList.push_back(info);
-      break;
+      // break;
     }
     else if ((info.save_data_type == FsSaveDataType_Account) && (Config::getConfig()->lasttitle) != 0 && !(Config::getConfig()->showallsaves)) 
     {
