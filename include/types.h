@@ -85,7 +85,6 @@ typedef union {
 
 typedef enum
 {
-  SEARCH_TYPE_NONE = -1,
   SEARCH_TYPE_UNSIGNED_8BIT,
   SEARCH_TYPE_SIGNED_8BIT,
   SEARCH_TYPE_UNSIGNED_16BIT,
@@ -96,12 +95,12 @@ typedef enum
   SEARCH_TYPE_SIGNED_64BIT,
   SEARCH_TYPE_FLOAT_32BIT,
   SEARCH_TYPE_FLOAT_64BIT,
-  SEARCH_TYPE_POINTER
+  SEARCH_TYPE_POINTER,
+  SEARCH_TYPE_NONE
 } searchType_t;
 
 typedef enum
 {
-  SEARCH_MODE_NONE = -1,
   SEARCH_MODE_EQ,
   SEARCH_MODE_NEQ,
   SEARCH_MODE_GT,
@@ -113,16 +112,17 @@ typedef enum
   SEARCH_MODE_DIFF,
   SEARCH_MODE_INC,
   SEARCH_MODE_DEC,
-  SEARCH_MODE_POINTER
+  SEARCH_MODE_POINTER,
+  SEARCH_MODE_NONE
 } searchMode_t;
 
 typedef enum
 {
-  SEARCH_REGION_NONE = -1,
   SEARCH_REGION_HEAP,
   SEARCH_REGION_MAIN,
   SEARCH_REGION_HEAP_AND_MAIN,
-  SEARCH_REGION_RAM
+  SEARCH_REGION_RAM,
+  SEARCH_REGION_NONE
 } searchRegion_t;
 
 typedef enum DumpType
@@ -151,6 +151,7 @@ typedef struct DataHeader
   u64 max_depth;
   u64 numoffset;
   u64 maxrange;
+  bool use_range;
   u8 buildID[0x20];
   u8 endOfHeader; // '@' - Signals the end of the header
 } __attribute__((packed)) data_header_t;

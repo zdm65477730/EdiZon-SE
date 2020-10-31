@@ -26,7 +26,7 @@
       return static_cast<::ams::Result>(res); \
     }                                         \
   })
-static const std::vector<std::string> dataTypes = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "f32", "f64", "ptr"};
+static const std::vector<std::string> dataTypes = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "f32", "f64", "ptr", "  "};
 static const std::vector<u8> dataTypeSizes = {1, 1, 2, 2, 4, 4, 8, 8, 4, 8, 8};
 static const std::vector<std::string> buttonNames = {"\uE0A0 ", "\uE0A1 ", "\uE0A2 ", "\uE0A3 ", "\uE0C4 ", "\uE0C5 ", "\uE0A4 ", "\uE0A5 ", "\uE0A6 ", "\uE0A7 ", "\uE0B3 ", "\uE0B4 ", "\uE0B1 ", "\uE0AF ", "\uE0B2 ", "\uE0B0 ", "\uE091 ", "\uE092 ", "\uE090 ", "\uE093 ", "\uE145 ", "\uE143 ", "\uE146 ", "\uE144 "};
 // static const std::vector<std::string> buttonNames = {"\uE0A0", "\uE0A1", "\uE0A2", "\uE0A3", "\uE0C4", "\uE0C5", "\uE0A4", "\uE0A5", "\uE0A6", "\uE0A7", "\uE0B3", "\uE0B4", "\uE0B1", "\uE0AF", "\uE0B2", "\uE0B0"};
@@ -95,9 +95,9 @@ GuiCheats::GuiCheats() : Gui()
 
   m_searchValue[0]._u64 = 0;
   m_searchValue[1]._u64 = 0;
-  m_searchType = SEARCH_TYPE_NONE;
-  m_searchMode = SEARCH_MODE_NONE;
-  m_searchRegion = SEARCH_REGION_NONE;
+  m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+  m_searchMode = SEARCH_MODE_EQ;
+  m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
   freeze();
   m_cheatCnt = 0;
 
@@ -313,6 +313,7 @@ if (!(m_debugger->m_dmnt)){
     m_searchType = m_memoryDump->getDumpInfo().searchDataType;
     m_searchRegion = m_memoryDump->getDumpInfo().searchRegion;
     m_searchMode = m_memoryDump->getDumpInfo().searchMode;
+    m_use_range = m_memoryDump->getDumpInfo().use_range;
     m_searchValue[0] = m_memoryDump->getDumpInfo().searchValue[0];
     m_searchValue[1] = m_memoryDump->getDumpInfo().searchValue[1];
   }
@@ -740,12 +741,14 @@ void GuiCheats::draw()
   }
   else 
   {
-      static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR"};
+      static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  "};
       ss.str("");
       ss << "Search Type [ " << dataTypes[m_searchType] << " ]";
       ss << "   Search Mode [ " << modeNames[m_searchMode] << " ]";
       ss << "   Search Region [ " << regionNames[m_searchRegion] << " ]";
+      if (m_use_range) 
+      ss << "   [ " << _getValueDisplayString(m_searchValue[0], m_searchType) << " .. " << _getValueDisplayString(m_searchValue[1], m_searchType) << " ]";
       Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
   }
     if (m_cheatCnt > 0)
@@ -1323,7 +1326,19 @@ void GuiCheats::drawSearchRAMMenu()
 
   Gui::drawRectangle(50, 50, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
-  Gui::drawText(font24, 120, 70, currTheme.textColor, "\uE132   Search Memory");
+  {
+      static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  "};
+      ss.str("");
+      ss << "\uE132   Search Memory";
+      ss << "   [ " << dataTypes[m_searchType] << " ]";
+      ss << "   [ " << modeNames[m_searchMode] << " ]";
+      ss << "   [ " << regionNames[m_searchRegion] << " ]";
+      if (m_use_range)
+      ss << "   [ used range ]";
+  }
+  Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
+  ss.str("");
 
   Gui::drawTextAligned(font20, 100, 160, currTheme.textColor, "\uE149 \uE0A4", ALIGNED_LEFT);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, 160, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT);
@@ -1412,7 +1427,8 @@ void GuiCheats::drawSearchRAMMenu()
                          ALIGNED_CENTER);
 
     //Gui::drawRectangle(300, 250, Gui::g_framebuffer_width - 600, 80, currTheme.separatorColor);
-    if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {m_selectedEntry = 1;} else
+    if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {m_selectedEntry = 1;};
+    if (!(m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) || m_use_range)
     {
       Gui::drawRectangle(300, 327, Gui::g_framebuffer_width - 600, 3, currTheme.textColor);
       if (m_searchValueFormat == FORMAT_DEC)
@@ -1444,7 +1460,7 @@ void GuiCheats::drawSearchRAMMenu()
       if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 0))
         Gui::drawRectangled(312 + strWidth, 285, 3, 35, currTheme.highlightColor);
 
-      if (m_searchMode == SEARCH_MODE_RANGE)
+      if (m_searchMode == SEARCH_MODE_RANGE || m_use_range)
       {
         ss.str("");
         if (m_searchValueFormat == FORMAT_DEC)
@@ -2795,7 +2811,7 @@ void GuiCheats::onInput(u32 kdown)
         case SEARCH_REGION:
           break;
         case SEARCH_VALUE:
-          if (m_searchValueIndex == 0 && m_searchMode == SEARCH_MODE_RANGE)
+          if (m_searchValueIndex == 0 && (m_searchMode == SEARCH_MODE_RANGE || m_use_range))
             m_searchValueIndex++;
           break;
         case SEARCH_NONE:
@@ -2928,7 +2944,22 @@ void GuiCheats::onInput(u32 kdown)
         }
         m_selectedEntry = 1;
       };
-
+      if (kdown & KEY_DUP)
+      {
+        m_searchMode = SEARCH_MODE_SAME;
+      }
+      else if (kdown & KEY_DDOWN)
+      {
+        m_searchMode = SEARCH_MODE_DIFF;
+      }
+      else if (kdown & KEY_DLEFT)
+      {
+        m_searchMode = SEARCH_MODE_DEC;
+      }
+      else if (kdown & KEY_DRIGHT)
+      {
+        m_searchMode = SEARCH_MODE_INC;
+      };
       if (kdown & KEY_A)
       {
         if (m_searchMenuLocation == SEARCH_editRAM)
@@ -3049,6 +3080,7 @@ void GuiCheats::onInput(u32 kdown)
               if (m_memoryDump->size() == 0)
               {
                 delete m_memoryDump;
+                m_use_range = false;
                 GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
                 printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
               }
@@ -3068,7 +3100,7 @@ void GuiCheats::onInput(u32 kdown)
               {
                 if (m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
                 {
-                  GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                  GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_memoryInfo);
                   delete m_memoryDump;
                   // remove(EDIZON_DIR "/memdump1.dat");
                   // remove(EDIZON_DIR "/memdump1a.dat");
@@ -3115,7 +3147,7 @@ void GuiCheats::onInput(u32 kdown)
               else
               {
                 m_nothingchanged = false;
-                GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
+                GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
                 if (m_nothingchanged == false)
                 {
                   // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
@@ -3370,7 +3402,8 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
 {
   (*displayDump) = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, true);
   (*displayDump)->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
-  (*displayDump)->setSearchParams(searchType, searchMode, searchRegion, searchValue1, searchValue2);
+  m_use_range = (searchMode == SEARCH_MODE_RANGE);
+  (*displayDump)->setSearchParams(searchType, searchMode, searchRegion, searchValue1, searchValue2, m_use_range);
 
   MemoryDump *helperDump = new MemoryDump(EDIZON_DIR "/memdump1a.dat", DumpType::HELPER, true); // has address, size, count for fetching buffer from memory
   MemoryDump *newdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, true);
@@ -3597,14 +3630,18 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
 }
 //
 
-void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, MemoryDump **displayDump)
+void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, bool use_range, MemoryDump **displayDump)
 {
   MemoryDump *newDump = new MemoryDump(EDIZON_DIR "/memdump2.dat", DumpType::ADDR, true);
   bool ledOn = false;
   //begin
   time_t unixTime1 = time(NULL);
   printf("%s%lx\n", "Start Time Secondary search", unixTime1);
-
+  if (searchMode == SEARCH_MODE_RANGE)
+  {
+    m_use_range = true;
+    use_range = true;
+  };
   u64 offset = 0;
   u64 bufferSize = MAX_BUFFER_SIZE; // this is for file access going for 1M
   u8 *buffer = new u8[bufferSize];
@@ -3831,7 +3868,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
     // remove(EDIZON_DIR "/memdump1.dat");
     // rename(EDIZON_DIR "/memdump2.dat", EDIZON_DIR "/memdump2.dat");
     (*displayDump)->clear();
-    (*displayDump)->setSearchParams(searchType, searchMode, (*displayDump)->getDumpInfo().searchRegion, searchValue1, searchValue2);
+    (*displayDump)->setSearchParams(searchType, searchMode, (*displayDump)->getDumpInfo().searchRegion, searchValue1, searchValue2, use_range);
     (*displayDump)->setDumpType(DumpType::ADDR);
 
     // begin copy
@@ -3878,7 +3915,8 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
   //begin
   time_t unixTime1 = time(NULL);
   printf("%s%lx\n", "Start Time Secondary search", unixTime1);
-
+  if (searchMode == SEARCH_MODE_RANGE)
+    m_use_range = true;
   u64 offset = 0;
   u64 bufferSize = MAX_BUFFER_SIZE; // this is for file access going for 1M
   u8 *buffer = new u8[bufferSize];
@@ -4058,7 +4096,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         }
         break;
       case SEARCH_MODE_SAME:
-        if (value._s64 == prevalue._s64)
+        if ((value._s64 == prevalue._s64) && ((value._s64 >= searchValue1._s64 && value._s64 <= searchValue2._s64) || !m_use_range))
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newdataDump->addData((u8 *)&value, sizeof(u64));
@@ -4066,7 +4104,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         }
         break;
       case SEARCH_MODE_DIFF:
-        if (value._s64 != prevalue._s64)
+        if ((value._s64 != prevalue._s64) && ((value._s64 >= searchValue1._s64 && value._s64 <= searchValue2._s64) || !m_use_range))
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newdataDump->addData((u8 *)&value, sizeof(u64));
@@ -4074,7 +4112,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         }
         break;
       case SEARCH_MODE_INC:
-        if (value._s64 > prevalue._s64)
+        if ((value._s64 > prevalue._s64)&& ((value._s64 >= searchValue1._s64 && value._s64 <= searchValue2._s64) || !m_use_range))
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newdataDump->addData((u8 *)&value, sizeof(u64));
@@ -4082,7 +4120,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         }
         break;
       case SEARCH_MODE_DEC:
-        if (value._s64 < prevalue._s64)
+        if ((value._s64 < prevalue._s64)&& ((value._s64 >= searchValue1._s64 && value._s64 <= searchValue2._s64) || !m_use_range))
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newdataDump->addData((u8 *)&value, sizeof(u64));
@@ -4118,7 +4156,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
     // remove(EDIZON_DIR "/memdump1.dat");
     // rename(EDIZON_DIR "/memdump2.dat", EDIZON_DIR "/memdump2.dat");
     (*displayDump)->clear();
-    (*displayDump)->setSearchParams(searchType, searchMode, (*displayDump)->getDumpInfo().searchRegion, searchValue1, searchValue2);
+    (*displayDump)->setSearchParams(searchType, searchMode, (*displayDump)->getDumpInfo().searchRegion, searchValue1, searchValue2, m_use_range);
     (*displayDump)->setDumpType(DumpType::ADDR);
 
     // begin copy
@@ -4182,7 +4220,7 @@ void GuiCheats::searchMemoryValuesPrimary(Debugger *debugger, searchType_t searc
   (new Snackbar("Dumping memory"))->show();
   (*displayDump) = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::DATA, true);
   (*displayDump)->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
-  (*displayDump)->setSearchParams(searchType, searchMode, searchRegion, {0}, {0});
+  (*displayDump)->setSearchParams(searchType, searchMode, searchRegion, {0}, {0}, false);
   // start time
   time_t unixTime1 = time(NULL);
   printf("%s%lx\n", "Start Time ", unixTime1);
@@ -4243,7 +4281,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
   MemoryDump *newMemDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, true); // Store Current value
   MemoryDump *addrDump = new MemoryDump(EDIZON_DIR "/memdump3.dat", DumpType::ADDR, true);
   addrDump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
-  addrDump->setSearchParams(searchType, searchMode, searchRegion, {0}, {0});
+  addrDump->setSearchParams(searchType, searchMode, searchRegion, {0}, {0}, false);
 
   // work in progress
   // if (searchMode == SEARCH_MODE_DIFFA)
@@ -4468,7 +4506,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
   printf("%s%ld\n", "Total Time in decimal seconds  ", unixTime2 - unixTime1);
 }
 
-void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
+void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, bool use_range, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
 {
   MemoryDump *oldvalueDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, false); //file with previous value
   MemoryDump *newvalueDump = new MemoryDump(EDIZON_DIR "/datadump4.dat", DumpType::DATA, true);  // file to put new value
@@ -4502,7 +4540,7 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
   //end work in progress
   MemoryDump *newDump = new MemoryDump(EDIZON_DIR "/memdump3.dat", DumpType::ADDR, true); //file to put new candidates
   newDump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
-  newDump->setSearchParams(searchType, searchMode, searchRegion, {0}, {0});
+  newDump->setSearchParams(searchType, searchMode, searchRegion, {0}, {0}, use_range);
   bool ledOn = false;
   //begin
   time_t unixTime1 = time(NULL);

@@ -93,14 +93,14 @@ void MemoryDump::setBaseAddresses(u64 addrSpaceBase, u64 heapBase, u64 mainBase,
   MemoryDump::writeHeader();
 }
 
-void MemoryDump::setSearchParams(searchType_t searchDataType, searchMode_t searchMode, searchRegion_t searchRegion, searchValue_t searchValue1, searchValue_t searchValue2)
+void MemoryDump::setSearchParams(searchType_t searchDataType, searchMode_t searchMode, searchRegion_t searchRegion, searchValue_t searchValue1, searchValue_t searchValue2, bool use_range)
 {
   m_dataHeader.searchDataType = searchDataType;
   m_dataHeader.searchMode = searchMode;
   m_dataHeader.searchRegion = searchRegion;
   m_dataHeader.searchValue[0] = searchValue1;
   m_dataHeader.searchValue[1] = searchValue2;
-
+  m_dataHeader.use_range = use_range;
   MemoryDump::writeHeader();
 }
 

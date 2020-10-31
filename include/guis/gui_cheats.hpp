@@ -104,7 +104,7 @@ private:
   u64 m_pointer_found = 0;
   bool m_abort = false;
   bool m_showpointermenu = false;
-
+  bool m_use_range = false;
   std::map<u64, u64> m_frozenAddresses;
 
   bool m_cheatsPresent = false;
@@ -268,7 +268,7 @@ private:
 
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,
-                                      searchMode_t searchMode, MemoryDump **displayDump);
+                                      searchMode_t searchMode, bool use_range, MemoryDump **displayDump);
 
   void searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_t searchValue1,
                                        searchValue_t searchValue2, searchType_t searchType,
@@ -283,6 +283,6 @@ private:
 
   void searchMemoryValuesTertiary(Debugger *debugger, searchValue_t searchValue1,
                                   searchValue_t searchValue2, searchType_t searchType,
-                                  searchMode_t searchMode, searchRegion_t searchRegion,
+                                  searchMode_t searchMode, searchRegion_t searchRegion, bool use_range,
                                   MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
 };

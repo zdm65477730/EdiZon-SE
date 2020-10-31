@@ -14,7 +14,7 @@ public:
 	~MemoryDump();
 
 	void setBaseAddresses(u64 addrSpaceBase, u64 heapBase, u64 mainBase, u64 heapSize, u64 mainSize);
-	void setSearchParams(searchType_t searchDataType, searchMode_t searchMode, searchRegion_t searchRegion, searchValue_t searchValue1, searchValue_t searchValue2);
+	void setSearchParams(searchType_t searchDataType, searchMode_t searchMode, searchRegion_t searchRegion, searchValue_t searchValue1, searchValue_t searchValue2, bool use_range);
 	void setPointerSearchParams(u64 max_depth, u64 numoffset, u64 maxrange, u8 buildID[0x20]);
 	void addData(u8 *buffer, size_t bufferSize);
 	size_t size();
