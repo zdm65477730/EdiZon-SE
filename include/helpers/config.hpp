@@ -20,6 +20,7 @@ namespace Config {
     bool deletebookmark;
     bool showallsaves;
     bool freeze;
+    bool disablerangeonunknown;
   } config_data_t;
 
   void readConfig();

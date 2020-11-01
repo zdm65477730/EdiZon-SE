@@ -317,6 +317,8 @@ if (!(m_debugger->m_dmnt)){
     m_searchRegion = m_memoryDump->getDumpInfo().searchRegion;
     m_searchMode = m_memoryDump->getDumpInfo().searchMode;
     m_use_range = m_memoryDump->getDumpInfo().use_range;
+    Config::readConfig();
+    if (Config::getConfig()->disablerangeonunknown) m_use_range = false;
     m_searchValue[0] = m_memoryDump->getDumpInfo().searchValue[0];
     m_searchValue[1] = m_memoryDump->getDumpInfo().searchValue[1];
   }
@@ -1426,7 +1428,7 @@ void GuiCheats::drawSearchRAMMenu()
   case SEARCH_VALUE:
     Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the value you want to search for. The value(s) you enter here will depend on what options you've chosen in the \n"
                                                                                          "first three sections. Either it's the exact integer you want to search for, a floating point number or even two values that \n"
-                                                                                         "will be used as range.",
+                                                                                         "will be used as range. Use quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==",
                          ALIGNED_CENTER);
 
     //Gui::drawRectangle(300, 250, Gui::g_framebuffer_width - 600, 80, currTheme.separatorColor);
@@ -1479,9 +1481,9 @@ void GuiCheats::drawSearchRAMMenu()
       //	End Mod
 
       if (m_searchValueFormat == FORMAT_DEC)
-        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6 --  \uE0E7 ++  \uE0E2 Hexadecimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0EA \uE0EF \uE0F0 Quick Set Search Mode    \uE0E6 -   \uE0E7 +   \uE0E2 Hexadecimal view  \uE0E1 Back  \uE0E0 OK", ALIGNED_RIGHT);
       else if (m_searchValueFormat == FORMAT_HEX)
-        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6 --  \uE0E7 ++  \uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0EF A..B \uE0F0 == \uE0E6 - \uE0E7 + \uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
     };
     if (m_selectedEntry == 1)
       Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 155, 345, 310, 90, currTheme.highlightColor);
@@ -2966,10 +2968,14 @@ void GuiCheats::onInput(u32 kdown)
         else if (kdown & KEY_DRIGHT)
         {
           m_searchMode = SEARCH_MODE_INC;
-        }        
+        }
         else if (kdown & KEY_PLUS)
         {
           m_searchMode = SEARCH_MODE_RANGE;
+        }   
+        else if (kdown & KEY_MINUS)
+        {
+          m_searchMode = SEARCH_MODE_EQ;
         };
       }
       if (kdown & KEY_A)

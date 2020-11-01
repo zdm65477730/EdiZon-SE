@@ -15,6 +15,7 @@
 #include "guis/gui_editor.hpp"
 #include "guis/gui_tx_warning.hpp"
 #include "guis/gui_choose_mission.hpp"
+#include "guis/gui_more.hpp"
 #include "guis/gui_cheats.hpp"
 #include "guis/gui_about.hpp"
 #include "guis/gui_guide.hpp"
@@ -343,7 +344,9 @@ int main(int argc, char **argv)
         case GUI_CHOOSE_MISSION:
           currGui = new GuiChooseMission();
           break;
-
+        case GUI_MORE:
+          currGui = new GuiMore();
+          break;
         case GUI_INVALID:
           [[fallthrough]] default : break;
         }

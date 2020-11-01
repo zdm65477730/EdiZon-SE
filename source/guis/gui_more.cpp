@@ -1,23 +1,22 @@
-#include "guis/gui_choose_mission.hpp"
+#include "guis/gui_More.hpp"
 #include "helpers/config.hpp"
 
-GuiChooseMission::GuiChooseMission() : Gui() {
+GuiMore::GuiMore() : Gui() {
   Config::getConfig()->option_once = false;
   // m_edizon_dir = Config::getConfig()->edizon_dir;
 }
-GuiChooseMission::~GuiChooseMission() {
+GuiMore::~GuiMore() {
 }
-void GuiChooseMission::update() {
+void GuiMore::update() {
   Gui::update();
 }
 static const char *const optionNames[] = {"No Auto Attach \uE0A2", "No Auto Exit after detach \uE0A3", "Disable this screen \uE0B4"};
-void GuiChooseMission::draw() {
+void GuiMore::draw() {
   Gui::beginDraw();
-  Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x00, 0x39, 0x29, 0xFF));
-  Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "Welcome", ALIGNED_CENTER);
+  Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x30, 0x39, 0x29, 0xFF));
+  Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "More options", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, COLOR_BLACK, "Use L, R, ZL, ZR and B to choose storage directory for your search press A to continue", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2+60, COLOR_BLACK, "Use X, Y, - to toggle options, if you disable this screen use R+B to exit will show this on next launch", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2+200, Config::getConfig()->disablerangeonunknown ? COLOR_WHITE : COLOR_BLACK, "\uE0AF Disable Range on Unknown", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2+250, Config::getConfig()->deletebookmark ? COLOR_WHITE : COLOR_BLACK, "\uE0C4 clear all bookmarks", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, Gui::g_framebuffer_height / 2+250, Config::getConfig()->freeze ? COLOR_WHITE : COLOR_BLACK, "\uE0C5 freeze game", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, m_edizon_dir.c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
@@ -30,7 +29,7 @@ void GuiChooseMission::draw() {
   Gui::endDraw();
 }
 // u32 kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
-void GuiChooseMission::onInput(u32 kdown)
+void GuiMore::onInput(u32 kdown)
 {
   if (kdown & KEY_L)
   {
@@ -64,10 +63,6 @@ void GuiChooseMission::onInput(u32 kdown)
   {
     Config::getConfig()->options[2] = !Config::getConfig()->options[2];
   }
-  else if (kdown & KEY_DUP)
-  {
-    Config::getConfig()->disablerangeonunknown = !Config::getConfig()->disablerangeonunknown;
-  }
   else if (kdown & KEY_PLUS)
   {
     Gui::g_nextGui = GUI_ABOUT;
@@ -89,13 +84,13 @@ void GuiChooseMission::onInput(u32 kdown)
   }
 }
 
-void GuiChooseMission::onTouch(touchPosition &touch) {
+void GuiMore::onTouch(touchPosition &touch) {
   if (touch.px > 400 && touch.px < 900 && touch.py > 600 && touch.py < 660) {
     Config::getConfig()->hideSX = !Config::getConfig()->hideSX;
     Config::writeConfig();
   }
 }
 
-void GuiChooseMission::onGesture(touchPosition startPosition, touchPosition endPosition, bool finish) {
+void GuiMore::onGesture(touchPosition startPosition, touchPosition endPosition, bool finish) {
 
 }
