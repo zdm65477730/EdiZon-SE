@@ -105,6 +105,7 @@ private:
   bool m_abort = false;
   bool m_showpointermenu = false;
   bool m_use_range = false;
+  bool m_searched = false;
   std::map<u64, u64> m_frozenAddresses;
 
   bool m_cheatsPresent = false;
@@ -143,6 +144,8 @@ private:
 #define HAVESAVE (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr) //m_havesave
   bool m_havesave = true;
   void iconloadcheck();
+  void removef(std::string filePath);
+  void renamef(std::string filePath1,std::string filePath2);
   bool autoattachcheck();
   bool freeze();
   bool unfreeze();

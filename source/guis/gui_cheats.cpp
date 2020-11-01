@@ -303,8 +303,11 @@ if (!(m_debugger->m_dmnt)){
     remove(EDIZON_DIR "/memdump2.dat");
     remove(EDIZON_DIR "/memdump3.dat");
 
-    m_searchType = SEARCH_TYPE_NONE;
-    m_searchRegion = SEARCH_REGION_NONE;
+    // m_searchType = SEARCH_TYPE_NONE;
+    // m_searchRegion = SEARCH_REGION_NONE;
+    m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+    m_searchMode = SEARCH_MODE_EQ;
+    m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
     m_searchValue[0]._u64 = 0;
     m_searchValue[1]._u64 = 0;
   }
@@ -1335,7 +1338,7 @@ void GuiCheats::drawSearchRAMMenu()
       ss << "   [ " << modeNames[m_searchMode] << " ]";
       ss << "   [ " << regionNames[m_searchRegion] << " ]";
       if (m_use_range)
-      ss << "   [ used range ]";
+      ss << "   [ using range ]";
   }
   Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
   ss.str("");
@@ -1460,7 +1463,7 @@ void GuiCheats::drawSearchRAMMenu()
       if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 0))
         Gui::drawRectangled(312 + strWidth, 285, 3, 35, currTheme.highlightColor);
 
-      if (m_searchMode == SEARCH_MODE_RANGE || m_use_range)
+      if (m_searchMode == SEARCH_MODE_RANGE || (m_use_range && (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)) )
       {
         ss.str("");
         if (m_searchValueFormat == FORMAT_DEC)
@@ -2464,16 +2467,18 @@ void GuiCheats::onInput(u32 kdown)
           else
           {
             m_memoryDump->clear();
-            // remove(EDIZON_DIR "/memdump1.dat");
-            // remove(EDIZON_DIR "/memdump1a.dat");
-            // remove(EDIZON_DIR "/memdump2.dat");
-            // remove(EDIZON_DIR "/memdump3.dat");
+            m_use_range = false;
+            removef(EDIZON_DIR "/memdump1.dat");
+            removef(EDIZON_DIR "/memdump1a.dat");
+            removef(EDIZON_DIR "/datadump2.dat");
+            // removef(EDIZON_DIR "/memdump2.dat");
+            // removef(EDIZON_DIR "/memdump3.dat");
 
-            // m_searchType = SEARCH_TYPE_NONE;
-            // m_searchMode = SEARCH_MODE_NONE;
-            // m_searchRegion = SEARCH_REGION_NONE;
-            // m_searchValue[0]._u64 = 0;
-            // m_searchValue[1]._u64 = 0;
+            m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+            m_searchMode = SEARCH_MODE_RANGE;
+            m_searchRegion = SEARCH_REGION_MAIN;
+            m_searchValue[0]._u64 = 1;
+            m_searchValue[1]._u64 = 100;
 
             m_menuLocation = CHEATS;
           }
@@ -2944,22 +2949,29 @@ void GuiCheats::onInput(u32 kdown)
         }
         m_selectedEntry = 1;
       };
-      if (kdown & KEY_DUP)
+      if (m_searchMenuLocation == SEARCH_VALUE)
       {
-        m_searchMode = SEARCH_MODE_SAME;
+        if (kdown & KEY_DUP)
+        {
+          m_searchMode = SEARCH_MODE_SAME;
+        }
+        else if (kdown & KEY_DDOWN)
+        {
+          m_searchMode = SEARCH_MODE_DIFF;
+        }
+        else if (kdown & KEY_DLEFT)
+        {
+          m_searchMode = SEARCH_MODE_DEC;
+        }
+        else if (kdown & KEY_DRIGHT)
+        {
+          m_searchMode = SEARCH_MODE_INC;
+        }        
+        else if (kdown & KEY_PLUS)
+        {
+          m_searchMode = SEARCH_MODE_RANGE;
+        };
       }
-      else if (kdown & KEY_DDOWN)
-      {
-        m_searchMode = SEARCH_MODE_DIFF;
-      }
-      else if (kdown & KEY_DLEFT)
-      {
-        m_searchMode = SEARCH_MODE_DEC;
-      }
-      else if (kdown & KEY_DRIGHT)
-      {
-        m_searchMode = SEARCH_MODE_INC;
-      };
       if (kdown & KEY_A)
       {
         if (m_searchMenuLocation == SEARCH_editRAM)
@@ -3066,7 +3078,13 @@ void GuiCheats::onInput(u32 kdown)
             }
           }
           else if (m_selectedEntry == 1) // search
+          {if (m_searched) 
           {
+            (new Snackbar("Already did one search for this session, relaunch to do another"))->show();
+          }
+          else
+          {
+            m_searched = true;
             (new MessageBox("Traversing title memory.\n \nThis may take a while...", MessageBox::NONE))->show();
             requestDraw();
 
@@ -3134,6 +3152,11 @@ void GuiCheats::onInput(u32 kdown)
                     std::string s = m_edizon_dir + "/memdump1a.dat";
                     REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
                   }
+                  // else
+                  // {
+                  //   std::string s = m_edizon_dir + "/datadump2.dat";
+                  //   REPLACEFILE(EDIZON_DIR "/predatadump2.dat", s.c_str());
+                  // }
                 }
               }
             }
@@ -3164,6 +3187,7 @@ void GuiCheats::onInput(u32 kdown)
 
             m_searchMenuLocation = SEARCH_NONE;
             // m_searchMode = SEARCH_MODE_NONE;
+          }
           }
         }
       }
@@ -3910,6 +3934,18 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
 
 void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, MemoryDump **displayDump)
 {
+  MemoryDump *lastdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, false);
+  if (lastdataDump->size() == 0)
+  {
+    (new Snackbar("No previous value found !"))->show();
+    m_nothingchanged = true;
+    delete lastdataDump;
+    return;
+  }
+  else
+  {
+    delete lastdataDump;
+  }
   MemoryDump *newDump = new MemoryDump(EDIZON_DIR "/memdump2.dat", DumpType::ADDR, true);
   bool ledOn = false;
   //begin
@@ -6028,6 +6064,16 @@ void GuiCheats::iconloadcheck()
   {
     m_havesave = false;
   }
+}
+void GuiCheats::removef(std::string filePath)
+{
+  filePath.replace(0, sizeof(EDIZON_DIR)-1, m_edizon_dir);
+  remove(filePath.c_str());
+}
+void GuiCheats::renamef(std::string filePath1,std::string filePath2)
+{
+  filePath1.replace(0, sizeof(EDIZON_DIR)-1, m_edizon_dir);
+  rename(filePath1.c_str(),filePath2.c_str());
 }
 bool GuiCheats::freeze()
 {
