@@ -2476,11 +2476,11 @@ void GuiCheats::onInput(u32 kdown)
             // removef(EDIZON_DIR "/memdump2.dat");
             // removef(EDIZON_DIR "/memdump3.dat");
 
-            m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
-            m_searchMode = SEARCH_MODE_RANGE;
-            m_searchRegion = SEARCH_REGION_MAIN;
-            m_searchValue[0]._u64 = 1;
-            m_searchValue[1]._u64 = 100;
+            // m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+            // m_searchMode = SEARCH_MODE_RANGE;
+            // m_searchRegion = SEARCH_REGION_MAIN;
+            // m_searchValue[0]._u64 = 1;
+            // m_searchValue[1]._u64 = 100;
 
             m_menuLocation = CHEATS;
           }
