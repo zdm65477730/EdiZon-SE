@@ -128,14 +128,14 @@ namespace zipper {
       if (UNZ_OK == err)
       {
         err = unzCloseCurrentFile(m_zf);
-        if (UNZ_OK != err)
-        {
-          std::stringstream str;
-          str << "Error " << err << " openinginternal file '" 
-              << entryinfo.name << "' in zip";
-
-          throw EXCEPTION_CLASS(str.str().c_str());
-        }
+      }
+      if (UNZ_OK != err)
+      {
+        std::stringstream str;
+        str << "Error " << err << " openinginternal file '"
+            << entryinfo.name << "' in zip";
+        printf("%s\n", str.str().c_str());
+        // throw EXCEPTION_CLASS(str.str().c_str());
       }
 
       return UNZ_OK == err;
@@ -239,7 +239,7 @@ namespace zipper {
 
       if (output_file.good())
       {
-        if (extractToStream(output_file, info))
+        if (extractToStream(output_file, info) == 0)
           err = UNZ_OK;
 
         output_file.close();
@@ -418,7 +418,7 @@ namespace zipper {
 
     bool extractEntry(const std::string& name, const std::string& destination)
     {
-      std::string outputFile = destination.empty() ? name : destination + "\\" + name;
+      std::string outputFile = destination.empty() ? name : destination;// + "\\" + name;
 
       if (locateEntry(name))
       {

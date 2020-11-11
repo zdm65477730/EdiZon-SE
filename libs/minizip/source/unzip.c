@@ -1724,7 +1724,7 @@ extern int ZEXPORT unzLocateFile(unzFile file, const char *filename, unzFileName
         if (filename_compare_func != NULL)
             err = filename_compare_func(file, current_filename, filename);
         else
-            err = strcmp(current_filename, filename);
+            err = strcasecmp(current_filename, filename);
         if (err == 0)
             return UNZ_OK;
         err = unzGoToNextFile2(file, NULL, current_filename, sizeof(current_filename)-1, NULL, 0, NULL, 0);

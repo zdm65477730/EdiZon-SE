@@ -12,6 +12,7 @@
 #include "edizon_logo_bin.h"
 #include "lz.h"
 #include "version.h"
+#include "unzipper.h"
 // #define checkheap
 // #define printpointerchain
 #define MAX_BUFFER_SIZE 0x1000000 // increase size for faster speed
@@ -5636,7 +5637,7 @@ static void _moveLonelyCheats(u8 *buildID, u64 titleID)
   std::stringstream buildIDStr;
 
   for (u8 i = 0; i < 8; i++)
-    buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)buildID[i];
+    buildIDStr << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)buildID[i];
 
   lonelyCheatPath << EDIZON_DIR "/cheats/" << buildIDStr.str() << ".txt";
   // EdizonCheatPath << EDIZON_DIR "/" << buildIDStr.str() << ".txt";
@@ -5653,6 +5654,30 @@ static void _moveLonelyCheats(u8 *buildID, u64 titleID)
     REPLACEFILE(lonelyCheatPath.str().c_str(), realCheatPath.str().c_str());
     (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
   }
+  // Move cheat from code database if exist
+  std::stringstream zipPath;
+  zipPath << EDIZON_DIR "/cheats/" << "titles.zip";
+  if (access(zipPath.str().c_str(), F_OK) == 0)
+  {
+    realCheatPath.str("");
+    realCheatPath << "/atmosphere/contents/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID;
+    mkdir(realCheatPath.str().c_str(), 0777);
+    realCheatPath << "/cheats/";
+    // realCheatPath << "\\atmosphere\\contents\\" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID;
+    // mkdir(realCheatPath.str().c_str(), 0777);
+    // realCheatPath << "\\cheats\\";
+    mkdir(realCheatPath.str().c_str(), 0777);
+    realCheatPath << std::uppercase << buildIDStr.str() << ".txt";
+    std::stringstream zipCheatPath;
+    zipCheatPath << "titles/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID << "/cheats/" << std::uppercase << buildIDStr.str() << ".txt";
+    // zipCheatPath << "titles\\" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID << "\\cheats\\" << buildIDStr.str() << ".txt";
+    // zipCheatPath << buildIDStr.str() << ".txt";
+    zipper::Unzipper cheatzip(zipPath.str().c_str()); // cheatzip;
+    if (cheatzip.extractEntry(zipCheatPath.str().c_str(),realCheatPath.str().c_str()))
+    {
+    (new MessageBox("A new cheat has been added for this title from database. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+    }
+  }//
   // else
   // {
   //   realCheatPath << "/atmosphere/contents/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID;
