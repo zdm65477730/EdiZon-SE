@@ -68,7 +68,7 @@ static u32 cheatListOffset = 0;
 static bool _isAddressFrozen(uintptr_t);
 static std::string _getAddressDisplayString(u64, Debugger *debugger, searchType_t searchType);
 static std::string _getValueDisplayString(searchValue_t searchValue, searchType_t searchType);
-static void _moveLonelyCheats(u8 *buildID, u64 titleID);
+// static void _moveLonelyCheats(u8 *buildID, u64 titleID);
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 
 GuiCheats::GuiCheats() : Gui()
@@ -5628,7 +5628,7 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
  *   Matches should be stored as [MEMADDR][DUMPADDR] for fast comparing later on
  */
 
-static void _moveLonelyCheats(u8 *buildID, u64 titleID)
+void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
 {
   std::stringstream lonelyCheatPath;
   // std::stringstream EdizonCheatPath;
@@ -5657,8 +5657,11 @@ static void _moveLonelyCheats(u8 *buildID, u64 titleID)
   // Move cheat from code database if exist
   std::stringstream zipPath;
   zipPath << EDIZON_DIR "/cheats/" << "titles.zip";
-  if (access(zipPath.str().c_str(), F_OK) == 0)
+  Config::readConfig();
+  if (access(zipPath.str().c_str(), F_OK) == 0 && Config::getConfig()->enablecheats)
   {
+    Config::getConfig()->enablecheats = false;
+    Config::writeConfig();
     realCheatPath.str("");
     realCheatPath << "/atmosphere/contents/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID;
     mkdir(realCheatPath.str().c_str(), 0777);
@@ -5675,7 +5678,14 @@ static void _moveLonelyCheats(u8 *buildID, u64 titleID)
     zipper::Unzipper cheatzip(zipPath.str().c_str()); // cheatzip;
     if (cheatzip.extractEntry(zipCheatPath.str().c_str(),realCheatPath.str().c_str()))
     {
-    (new MessageBox("A new cheat has been added for this title from database. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+      if (!(m_debugger->m_dmnt))
+      {
+        m_debugger->detatch();
+        dmntchtForceOpenCheatProcess();
+        printf("force open called\n");
+      }
+      else
+        (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
     }
   }//
   // else

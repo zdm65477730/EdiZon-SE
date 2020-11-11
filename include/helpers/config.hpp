@@ -21,6 +21,7 @@ namespace Config {
     bool showallsaves;
     bool freeze;
     bool disablerangeonunknown;
+    bool enablecheats;
   } config_data_t;
 
   void readConfig();
