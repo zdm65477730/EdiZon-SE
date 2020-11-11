@@ -158,7 +158,7 @@ namespace zipper {
 				} while ((err == ZIP_OK) && (size_read>0));
 			}
 			else
-				throw EXCEPTION_CLASS(("Error adding '" + nameInZip + "' to zip").c_str());
+				printf("Zipper error : %s\n",("Error adding '" + nameInZip + "' to zip").c_str());
 
 			if (ZIP_OK == err)
 				err = zipCloseFileInZip(this->m_zf);
@@ -199,7 +199,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
-			throw EXCEPTION_CLASS("Error creating zip in file!");
+			printf("Zipper error : %s\n","Error creating zip in file!");
 
 		m_open = true;
 	}
@@ -214,7 +214,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initFile(zipname))
-			throw EXCEPTION_CLASS("Error creating zip in file!");
+			printf("Zipper error : %s\n","Error creating zip in file!");
 
 		m_open = true;
 	}
@@ -227,7 +227,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithStream(m_obuffer))
-			throw EXCEPTION_CLASS("Error creating zip in memory!");
+			printf("Zipper error : %s\n","Error creating zip in memory!");
 
 		m_open = true;
 	}
@@ -240,7 +240,7 @@ namespace zipper {
 		, m_impl(new Impl(*this))
 	{
 		if (!m_impl->initWithVector(m_vecbuffer))
-			throw EXCEPTION_CLASS("Error creating zip in memory!");
+			printf("Zipper error : %s\n","Error creating zip in memory!");
 
 		m_open = true;
 	}
@@ -288,17 +288,17 @@ namespace zipper {
 			if (m_usingMemoryVector)
 			{
 				if (!m_impl->initWithVector(m_vecbuffer))
-					throw EXCEPTION_CLASS("Error opening zip memory!");
+					printf("Zipper error : %s\n","Error opening zip memory!");
 			}
 			else if (m_usingStream)
 			{
 				if (!m_impl->initWithStream(m_obuffer))
-					throw EXCEPTION_CLASS("Error opening zip memory!");
+					printf("Zipper error : %s\n","Error opening zip memory!");
 			}
 			else
 			{
 				if (!m_impl->initFile(m_zipname))
-					throw EXCEPTION_CLASS("Error opening zip file!");
+					printf("Zipper error : %s\n","Error opening zip file!");
 			}
 
 			m_open = true;

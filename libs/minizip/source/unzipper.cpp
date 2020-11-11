@@ -36,7 +36,7 @@ namespace zipper {
 
       int err = unzGetCurrentFileInfo64(m_zf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
       if (UNZ_OK != err)
-        throw EXCEPTION_CLASS("Error, couln't get the current entry info");
+        printf("Zipper error : %s\n","Error, couln't get the current entry info");
 
       return ZipEntry(std::string(filename_inzip), file_info.compressed_size, file_info.uncompressed_size,
         file_info.tmu_date.tm_year, file_info.tmu_date.tm_mon, file_info.tmu_date.tm_mday,
@@ -109,7 +109,7 @@ namespace zipper {
       {
         err = unzCloseCurrentFile(m_zf);
         if (UNZ_OK != err)
-          throw EXCEPTION_CLASS(("Error " + std::to_string(err) + " closing internal file '" + entryinfo.name +
+          printf("Zipper error : %s\n",("Error " + std::to_string(err) + " closing internal file '" + entryinfo.name +
             "' in zip").c_str());
       }
 
@@ -135,7 +135,7 @@ namespace zipper {
         str << "Error " << err << " openinginternal file '"
             << entryinfo.name << "' in zip";
         printf("%s\n", str.str().c_str());
-        // throw EXCEPTION_CLASS(str.str().c_str());
+        // printf("Zipper error : %s\n",str.str().c_str());
       }
 
       return UNZ_OK == err;
@@ -158,7 +158,7 @@ namespace zipper {
           str << "Error " << err << " opening internal file '" 
               << entryinfo.name << "' in zip";
 
-          throw EXCEPTION_CLASS(str.str().c_str());
+          printf("Zipper error : %s\n",str.str().c_str());
         }
       }
 
@@ -182,7 +182,7 @@ namespace zipper {
           str << "Error " << err << " opening internal file '" 
               << entryinfo.name << "' in zip";
 
-          throw EXCEPTION_CLASS(str.str().c_str());
+          printf("Zipper error : %s\n",str.str().c_str());
         }
       }
 
@@ -267,7 +267,7 @@ namespace zipper {
         str << "Error " << err << " opening internal file '" 
             << info.name << "' in zip";
 
-        throw EXCEPTION_CLASS(str.str().c_str());
+        printf("Zipper error : %s\n",str.str().c_str());
       }
 
       std::vector<char> buffer;
@@ -304,7 +304,7 @@ namespace zipper {
         str << "Error " << err << " opening internal file '" 
             << info.name << "' in zip";
 
-        throw EXCEPTION_CLASS(str.str().c_str());
+        printf("Zipper error : %s\n",str.str().c_str());
       }
 
       std::vector<unsigned char> buffer;
@@ -466,7 +466,7 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initWithStream(m_ibuffer))
-      throw EXCEPTION_CLASS("Error loading zip in memory!");
+      printf("Zipper error : %s\n","Error loading zip in memory!");
     m_open = true;
   }
 
@@ -478,7 +478,7 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initWithVector(m_vecbuffer))
-      throw EXCEPTION_CLASS("Error loading zip in memory!");
+      printf("Zipper error : %s\n","Error loading zip in memory!");
 
     m_open = true;
   }
@@ -492,7 +492,7 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initFile(zipname))
-      throw EXCEPTION_CLASS("Error loading zip file!");
+      printf("Zipper error : %s\n","Error loading zip file!");
 
     m_open = true;
   }
@@ -507,7 +507,7 @@ namespace zipper {
     , m_impl(new Impl(*this))
   {
     if (!m_impl->initFile(zipname))
-      throw EXCEPTION_CLASS("Error loading zip file!");
+      printf("Zipper error : %s\n","Error loading zip file!");
 
     m_open = true;
   }
