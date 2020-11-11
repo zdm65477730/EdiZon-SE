@@ -32,6 +32,7 @@ enum gui_t {
   GUI_CHEATS,
   GUI_GUIDE,
   GUI_ABOUT,
+  GUI_CHEATDB,
   GUI_CHOOSE_MISSION,
   GUI_MORE
 };

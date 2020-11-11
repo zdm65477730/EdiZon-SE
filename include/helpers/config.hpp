@@ -22,6 +22,7 @@ namespace Config {
     bool freeze;
     bool disablerangeonunknown;
     bool enablecheats;
+    char dbversion[40];
   } config_data_t;
 
   void readConfig();

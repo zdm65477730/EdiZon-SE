@@ -18,6 +18,7 @@
 #include "guis/gui_more.hpp"
 #include "guis/gui_cheats.hpp"
 #include "guis/gui_about.hpp"
+#include "guis/gui_cheatdb.hpp"
 #include "guis/gui_guide.hpp"
 
 #include "helpers/title.hpp"
@@ -346,6 +347,9 @@ int main(int argc, char **argv)
           break;
         case GUI_MORE:
           currGui = new GuiMore();
+          break;
+        case GUI_CHEATDB:
+          currGui = new Guicheatdb();
           break;
         case GUI_INVALID:
           [[fallthrough]] default : break;

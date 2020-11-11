@@ -76,7 +76,7 @@ void GuiChooseMission::onInput(u32 kdown)
   }
     else if (kdown & KEY_DDOWN)
   {
-    Gui::g_nextGui = GUI_MORE;
+    Gui::g_nextGui = GUI_CHEATDB;
   }
   else if (kdown & KEY_PLUS)
   {

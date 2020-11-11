@@ -66,11 +66,11 @@ void GuiAbout::draw() {
 
 
   Gui::drawRectangled(50, 350, Gui::g_framebuffer_width - 100, 250, currTheme.textColor);
-  Gui::drawRectangled(51, 351, Gui::g_framebuffer_width - 102, updateAvailable ? 190 : 248, currTheme.backgroundColor);
+  Gui::drawRectangled(51, 351, Gui::g_framebuffer_width - 102, updateAvailable ? 210 : 248, currTheme.backgroundColor);
   Gui::drawShadow(52, 352, Gui::g_framebuffer_width - 104, 248);
 
   if (updateAvailable)
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 555, currTheme.backgroundColor, "A update for EdiZon SE is available!", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 565, currTheme.backgroundColor, "A update for EdiZon SE is available!", ALIGNED_CENTER);
 
   Gui::drawTextAligned(font20, 60, 360, currTheme.selectedColor, "EdiZon SE Update", ALIGNED_LEFT);
 
