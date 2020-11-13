@@ -74,7 +74,12 @@ static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 GuiCheats::GuiCheats() : Gui()
 {
   if (Config::getConfig()->deletebookmark)
+  {
+    if (Config::getConfig()->separatebookmark)
+    remove((m_edizon_dir + "/memdumpbookmark.dat").c_str());
+    else
     remove(EDIZON_DIR "/memdumpbookmark.dat");
+  }
   // Check if dmnt:cht is running and we're not on sxos
   m_sysmodulePresent = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
 
@@ -333,7 +338,10 @@ if (!(m_debugger->m_dmnt)){
     for (u8 i = 0; i < 8; i++)
       buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
     // buildIDStr.str("attdumpbookmark");
-    filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
+    if (Config::getConfig()->separatebookmark)
+      filebuildIDStr << m_edizon_dir + "/" << buildIDStr.str() << ".dat";
+    else
+      filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
     m_PCDump_filename << EDIZON_DIR "/" << buildIDStr.str() << ".dmp1";
   }
   if (Config::getConfig()->deletebookmark)
@@ -6679,7 +6687,10 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
   char import[]="import";
   for (u8 i = 0; i < 8; i++)
     buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
-  filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
+  if (Config::getConfig()->separatebookmark)
+    filebuildIDStr << m_edizon_dir + "/" << buildIDStr.str() << ".dat";
+  else
+    filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
 
   MemoryDump *tempdump;
   tempdump = new MemoryDump(EDIZON_DIR "/tempbookmark.dat", DumpType::ADDR, true);

@@ -23,6 +23,7 @@ namespace Config {
     bool disablerangeonunknown;
     bool enablecheats;
     char dbversion[40];
+    bool separatebookmark;
   } config_data_t;
 
   void readConfig();
