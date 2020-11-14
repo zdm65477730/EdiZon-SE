@@ -1439,7 +1439,7 @@ void GuiCheats::drawSearchRAMMenu()
     break;
   case SEARCH_VALUE:
     if (m_memoryDump1 != nullptr)
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Bookmark search let you narrow down your bookmark list by searching. Only folating point search of type == or A..B supported.", ALIGNED_CENTER);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Bookmark search let you narrow down your bookmark list by searching. Only search of type == or A..B supported.", ALIGNED_CENTER);
     else
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the value you want to search for. The value(s) you enter here will depend on what options you've chosen in the \n"
                                                                                            "first three sections. Either it's the exact integer you want to search for, a floating point number or even two values that \n"
@@ -6738,31 +6738,16 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool f
         else if (filter)
         {
           value._u64 = m_debugger->peekMemory(m_target);
-          if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
+          memset(&value + dataTypeSizes[m_searchType], 0, 8 - dataTypeSizes[m_searchType]);
+          if (m_searchMode == SEARCH_MODE_EQ)
           {
-            if (m_searchMode == SEARCH_MODE_EQ)
-            {
-              if (value._f32 != m_searchValue[0]._f32)
-                continue;
-            }
-            else if (m_searchMode == SEARCH_MODE_RANGE)
-            {
-              if (!(m_searchValue[0]._f32 <= value._f32 && value._f32 <= m_searchValue[1]._f32))
-                continue;
-            }
+            if (value._s64 != m_searchValue[0]._s64)
+              continue;
           }
-          else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT)
+          else if (m_searchMode == SEARCH_MODE_RANGE)
           {
-            if (m_searchMode == SEARCH_MODE_EQ)
-            {
-              if (value._f64 != m_searchValue[0]._f64)
-                continue;
-            }
-            else if (m_searchMode == SEARCH_MODE_RANGE)
-            {
-              if (!(m_searchValue[0]._f64 <= value._f64 && value._f64 <= m_searchValue[1]._f64))
-                continue;
-            }
+            if (!(m_searchValue[0]._s64 <= value._s64 && value._s64 <= m_searchValue[1]._s64))
+              continue;
           }
         }
       }
