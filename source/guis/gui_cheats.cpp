@@ -6708,7 +6708,7 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool f
 {
   std::stringstream filebuildIDStr;
   std::stringstream buildIDStr, tempstr;
-  searchValue_t value;
+  searchValue_t value, value2;
   char import[]="import";
   for (u8 i = 0; i < 8; i++)
     buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
@@ -6737,8 +6737,10 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool f
           continue;
         else if (filter)
         {
-          value._u64 = m_debugger->peekMemory(m_target);
-          memset(&value + dataTypeSizes[m_searchType], 0, 8 - dataTypeSizes[m_searchType]);
+          value2._u64 = m_debugger->peekMemory(m_target);
+          memset(&value,0,8);
+          memcpy(&value, &value2, dataTypeSizes[m_searchType]);
+          // memset(&value + dataTypeSizes[m_searchType], 0, 8 - dataTypeSizes[m_searchType]);
           if (m_searchMode == SEARCH_MODE_EQ)
           {
             if (value._s64 != m_searchValue[0]._s64)
