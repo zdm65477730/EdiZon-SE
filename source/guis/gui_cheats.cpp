@@ -1344,7 +1344,10 @@ void GuiCheats::drawSearchRAMMenu()
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
       static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  "};
       ss.str("");
-      ss << "\uE132   Search Memory";
+      if (m_memoryDump1 != nullptr)
+        ss << "\uE132   Search Bookmark";
+      else
+        ss << "\uE132   Search Memory";
       ss << "   [ " << dataTypes[m_searchType] << " ]";
       ss << "   [ " << modeNames[m_searchMode] << " ]";
       ss << "   [ " << regionNames[m_searchRegion] << " ]";
@@ -1435,10 +1438,14 @@ void GuiCheats::drawSearchRAMMenu()
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
     break;
   case SEARCH_VALUE:
-    Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the value you want to search for. The value(s) you enter here will depend on what options you've chosen in the \n"
-                                                                                         "first three sections. Either it's the exact integer you want to search for, a floating point number or even two values that \n"
-                                                                                         "will be used as range. Use quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==",
-                         ALIGNED_CENTER);
+    if (m_memoryDump1 != nullptr)
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Bookmark search let you narrow down your bookmark list by searching. Only folating point search of type == or A..B supported.", ALIGNED_CENTER);
+    else
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the value you want to search for. The value(s) you enter here will depend on what options you've chosen in the \n"
+                                                                                           "first three sections. Either it's the exact integer you want to search for, a floating point number or even two values that \n"
+                                                                                           "will be used as range. Use quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==\n"
+                                                                                           "If you search type is floating point \uE0A5 negate the number",
+                           ALIGNED_CENTER);
 
     //Gui::drawRectangle(300, 250, Gui::g_framebuffer_width - 600, 80, currTheme.separatorColor);
     if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {m_selectedEntry = 1;};
@@ -2135,7 +2142,7 @@ void GuiCheats::onInput(u32 kdown)
             m_memoryDump = m_memoryDump1;
             m_memoryDump1 = nullptr;
 
-            updatebookmark(true, true);
+            updatebookmark(true, true, false);
 
             m_memoryDump1 = m_memoryDump;
             m_memoryDump = m_memoryDumpBookmark;
@@ -2402,7 +2409,7 @@ void GuiCheats::onInput(u32 kdown)
         m_memoryDump = m_memoryDump1;
         m_memoryDump1 = nullptr;
 
-        updatebookmark(true, false);
+        updatebookmark(true, false, false);
 
         m_memoryDump1 = m_memoryDump;
         m_memoryDump = m_memoryDumpBookmark;
@@ -2985,6 +2992,19 @@ void GuiCheats::onInput(u32 kdown)
         else if (kdown & KEY_MINUS)
         {
           m_searchMode = SEARCH_MODE_EQ;
+        }
+        else if (kdown & KEY_R)
+        {
+          if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
+          {
+            m_searchValue[0]._f32 = 0 - m_searchValue[0]._f32;
+            m_searchValue[1]._f32 = 0 - m_searchValue[1]._f32;
+          }
+          else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT)
+          {
+            m_searchValue[0]._f64 = 0 - m_searchValue[0]._f64;
+            m_searchValue[1]._f64 = 0 - m_searchValue[1]._f64;
+          }
         };
       }
       if (kdown & KEY_A)
@@ -3107,8 +3127,12 @@ void GuiCheats::onInput(u32 kdown)
 
             if (m_searchMode == SEARCH_MODE_POINTER)
               m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
-
-            if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
+            if (m_memoryDump1 != nullptr)
+            {
+              updatebookmark(true,false,true);
+              m_memoryDump = m_memoryDumpBookmark;
+            }
+            else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
             {
               if (m_memoryDump->size() == 0)
               {
@@ -6680,10 +6704,11 @@ void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t 
   // delete newstringDump;
 }
 //
-void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
+void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool filter)
 {
   std::stringstream filebuildIDStr;
   std::stringstream buildIDStr, tempstr;
+  searchValue_t value;
   char import[]="import";
   for (u8 i = 0; i < 8; i++)
     buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
@@ -6710,6 +6735,36 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
       {
         if (unresolved(bookmark.pointer))
           continue;
+        else if (filter)
+        {
+          value._u64 = m_debugger->peekMemory(m_target);
+          if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
+          {
+            if (m_searchMode == SEARCH_MODE_EQ)
+            {
+              if (value._f32 != m_searchValue[0]._f32)
+                continue;
+            }
+            else if (m_searchMode == SEARCH_MODE_RANGE)
+            {
+              if (!(m_searchValue[0]._f32 <= value._f32 && value._f32 <= m_searchValue[1]._f32))
+                continue;
+            }
+          }
+          else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT)
+          {
+            if (m_searchMode == SEARCH_MODE_EQ)
+            {
+              if (value._f64 != m_searchValue[0]._f64)
+                continue;
+            }
+            else if (m_searchMode == SEARCH_MODE_RANGE)
+            {
+              if (!(m_searchValue[0]._f64 <= value._f64 && value._f64 <= m_searchValue[1]._f64))
+                continue;
+            }
+          }
+        }
       }
       if (importbookmark)
       {
@@ -6728,6 +6783,7 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark)
       }
       MemoryInfo meminfo;
       meminfo = m_debugger->queryMemory(address);
+      // static case 
       if (meminfo.perm != Perm_Rw)
         continue;
       m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
@@ -6818,6 +6874,7 @@ bool GuiCheats::unresolved(pointer_chain_t pointer)
         if (z == 0)
         {
           printf("(%lx)\n", nextaddress); // nextaddress = the target
+          m_target = nextaddress;
           return false;
         }
         else

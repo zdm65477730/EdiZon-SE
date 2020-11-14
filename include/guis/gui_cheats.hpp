@@ -234,7 +234,7 @@ private:
   bool addstaticcodetofile(u64 index);
   void PSsaveSTATE();
   void PSresumeSTATE();
-  void updatebookmark(bool clearunresolved, bool importbookmark);
+  void updatebookmark(bool clearunresolved, bool importbookmark, bool filter);
   bool unresolved(pointer_chain_t pointer);
   bool unresolved2(pointer_chain_t *pointer);
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
