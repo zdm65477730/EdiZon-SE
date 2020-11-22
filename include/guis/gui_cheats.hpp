@@ -237,6 +237,8 @@ private:
   void updatebookmark(bool clearunresolved, bool importbookmark, bool filter);
   bool unresolved(pointer_chain_t pointer);
   bool unresolved2(pointer_chain_t *pointer);
+  void save_meminfos();
+  void load_meminfos();
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
   u64 m_heapSize = 0;
   u64 m_mainSize = 0;

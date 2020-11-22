@@ -24,6 +24,8 @@ namespace Config {
     bool enablecheats;
     char dbversion[40];
     bool separatebookmark;
+    bool enabletargetedscan;
+    int extrasegment;
   } config_data_t;
 
   void readConfig();
