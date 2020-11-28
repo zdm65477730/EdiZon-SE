@@ -1243,10 +1243,14 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
         m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
       }
     }
+    MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
+    BMDump->addData((u8 *)&bookmark.label, 18);
+    BMDump->addData((u8 *)&address, sizeof(u64));
+    delete BMDump;
     m_AttributeDumpBookmark->flushBuffer();
     m_memoryDumpBookmark->flushBuffer();
     (new Snackbar("Address added to bookmark!"))->show();
-    printf("%s\n", "PLUS key pressed");
+    printf("%s\n", "PLUS key pressed1");
   }
   else if (kdown & KEY_ZR && kheld & KEY_ZL) // Page Up
   {
@@ -2203,9 +2207,12 @@ void GuiCheats::onInput(u32 kdown)
 
             m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
             m_memoryDumpBookmark->flushBuffer();
-
+            MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
+            BMDump->addData((u8 *)&bookmark.label, 18);
+            BMDump->addData((u8 *)&address, sizeof(u64));
+            delete BMDump;
             (new Snackbar("Address added to bookmark!"))->show(); // prompt for label
-            printf("%s\n", "PLUS key pressed");
+            printf("%s\n", "PLUS key pressed2");
           }
         }
         // add bookmark end
@@ -2917,9 +2924,12 @@ void GuiCheats::onInput(u32 kdown)
           }
           m_AttributeDumpBookmark->flushBuffer();
           m_memoryDumpBookmark->flushBuffer();
-
+          MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
+          BMDump->addData((u8 *)&bookmark.label, 18);
+          BMDump->addData((u8 *)&address, sizeof(u64));
+          delete BMDump;
           (new Snackbar("Address added to bookmark!"))->show();
-          printf("%s\n", "PLUS key pressed");
+          printf("%s\n", "PLUS key pressed3");
         }
         if (kdown & KEY_ZR)
         {
