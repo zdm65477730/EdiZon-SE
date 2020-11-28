@@ -308,6 +308,7 @@ if (!(m_debugger->m_dmnt)){
 
     remove(EDIZON_DIR "/memdump2.dat");
     remove(EDIZON_DIR "/memdump3.dat");
+    remove(EDIZON_DIR "/BMDump.dat");
 
     // m_searchType = SEARCH_TYPE_NONE;
     // m_searchRegion = SEARCH_REGION_NONE;
