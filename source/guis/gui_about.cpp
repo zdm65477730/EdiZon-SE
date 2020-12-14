@@ -50,9 +50,9 @@ void GuiAbout::draw() {
   Gui::drawTextAligned(fontTitle, 70, 60, currTheme.textColor, "\uE017", ALIGNED_LEFT);
   Gui::drawTextAligned(font24, 70, 23, currTheme.textColor, "        About", ALIGNED_LEFT);
 
-  // if (updateAvailable)
-  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Install update     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
-  // else
+  if (updateAvailable)
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Install update     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+  else
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
 
   Gui::drawTextAligned(fontHuge, 100, 180, Gui::makeColor(0xFB, 0xA6, 0x15, 0xFF), "EdiZon SE v" VERSION_STRING, ALIGNED_LEFT);
@@ -100,7 +100,7 @@ void GuiAbout::onInput(u32 kdown) {
       Gui::g_nextGui = GUI_MAIN;
   }
 
-  if (kdown & KEY_MINUS && updateAvailable && false) {
+  if (kdown & KEY_MINUS && updateAvailable && true) {
 
     (new MessageBox("Updating EdiZon.\n \nThis may take a while...", MessageBox::NONE))->show();
     requestDraw();
@@ -121,6 +121,7 @@ void GuiAbout::onInput(u32 kdown) {
     {
       fclose(fp);
       curl_easy_cleanup(curl);
+      romfsExit();
       printf("remove(APP_OUTPUT) = %d\n", remove(APP_OUTPUT));
       (new MessageBox("Updated EdiZon\n Please restart EdiZon!", MessageBox::OKAY))->show();
       printf("rename(TEMP_FILE, APP_OUTPUT) = %d\n", rename(TEMP_FILE, APP_OUTPUT));

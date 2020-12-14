@@ -1617,6 +1617,10 @@ void GuiCheats::onInput(u32 kdown)
         if (autoexitcheck()) Gui::g_requestExit = true;
         return;
       };
+      if (m_memoryDump1 != nullptr)
+        m_memoryDump1->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
+      else
+        m_memoryDump->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
       Gui::g_requestExit = true;
       return;
     }
