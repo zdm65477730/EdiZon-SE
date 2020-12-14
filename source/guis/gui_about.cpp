@@ -1,5 +1,5 @@
 #include "guis/gui_about.hpp"
-
+#include "unzip1.hpp"
 #include <thread>
 #include <curl/curl.h>
 #include "version.h"
@@ -8,7 +8,7 @@
 #include "helpers/config.hpp"
 #include "helpers/debugger.hpp"
 #define VER_URL "https://github.com/tomvita/EdiZon-SE/releases/latest/download/version.txt"
-#define APP_URL "https://github.com/tomvita/EdiZon-SE/releases/latest/download/EdiZon.nro"
+#define APP_URL "https://github.com/tomvita/EdiZon-SE/releases/latest/download/EdiZon.zip"
 #define APP_OUTPUT "/switch/EdiZon/EdiZon.nro"
 #define VER_OUTPUT "/switch/EdiZon/version.txt"
 #define TEMP_FILE "/switch/EdiZon/Edizontemp"
@@ -124,8 +124,16 @@ void GuiAbout::onInput(u32 kdown) {
       romfsExit();
       printf("remove(APP_OUTPUT) = %d\n", remove(APP_OUTPUT));
       (new MessageBox("Updated EdiZon\n Please restart EdiZon!", MessageBox::OKAY))->show();
-      printf("rename(TEMP_FILE, APP_OUTPUT) = %d\n", rename(TEMP_FILE, APP_OUTPUT));
+      inst::zip::extractFile(TEMP_FILE, "sdmc:/");
+      // printf("rename(TEMP_FILE, APP_OUTPUT) = %d\n", rename(TEMP_FILE, APP_OUTPUT));
       updateAvailable = false;
+      if (threadRunning)
+      {
+        threadWaitForExit(&networkThread);
+        threadClose(&networkThread);
+        threadRunning = false;
+      }
+      Gui::g_requestExit = true;
     }
     else
     {
