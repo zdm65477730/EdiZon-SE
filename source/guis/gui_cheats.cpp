@@ -1460,8 +1460,8 @@ void GuiCheats::drawSearchRAMMenu()
     else
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 500, currTheme.textColor, "Set the value you want to search for. The value(s) you enter here will depend on what options you've chosen in the \n"
                                                                                            "first three sections. Either it's the exact integer you want to search for, a floating point number or even two values that \n"
-                                                                                           "will be used as range. Use quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 == \n"
-                                                                                           "If you search type is floating point \uE0A5 negate the number",
+                                                                                           "will be used as range. Use quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==/!=\n"
+                                                                                           "If you search type is floating point \uE0A5 negate the number. \uE0C4 cycle float type \uE0C5 presets \uE0A3 cycle integer type",
                            ALIGNED_CENTER);
 
     //Gui::drawRectangle(300, 250, Gui::g_framebuffer_width - 600, 80, currTheme.separatorColor);
@@ -3043,7 +3043,64 @@ void GuiCheats::onInput(u32 kdown)
         }   
         else if (kdown & KEY_MINUS)
         {
+          if (m_searchMode == SEARCH_MODE_RANGE)
+          {
+            m_searchMode = SEARCH_MODE_EQ;
+            m_searchValue[0]._u64 = 0;
+            m_selectedEntry = 1;
+          }
+          else if (m_searchMode == SEARCH_MODE_EQ)
+          {
+            m_searchMode = SEARCH_MODE_NEQ;
+            m_selectedEntry = 1;
+          }
+          else
+          {
+            m_searchMode = SEARCH_MODE_EQ;
+          }
+          m_searchValueIndex = 0;  
+        }
+        else if (kdown & KEY_RSTICK)
+        {
+          m_searchMode = SEARCH_MODE_RANGE;
+          m_searchType = SEARCH_TYPE_FLOAT_32BIT;
+          m_searchValue[0]._f32 = 0.1;
+          m_searchValue[1]._f32 = 2000; 
+          m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+          m_selectedEntry = 1;
+        }
+        else if (kdown & KEY_LSTICK)
+        {
+          if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
+          {
+            m_searchType = SEARCH_TYPE_FLOAT_64BIT;
+          }
+          else
+            m_searchType = SEARCH_TYPE_FLOAT_32BIT;
+          m_searchValueIndex = 0;
+          m_selectedEntry = 0;
+          m_searchValue[0]._u64 = 0;
+          m_searchValue[1]._u64 = 0;
+        }
+        else if (kdown & KEY_Y)
+        {
+          if (m_searchType == SEARCH_TYPE_UNSIGNED_32BIT)
+          {
+            m_searchType = SEARCH_TYPE_UNSIGNED_8BIT;
+          }
+          else if (m_searchType == SEARCH_TYPE_UNSIGNED_8BIT)
+          {
+            m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+          }
+          else
+            m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
+
           m_searchMode = SEARCH_MODE_EQ;
+          m_searchValueIndex = 0;
+          m_selectedEntry = 0;
+          m_searchValue[0]._u64 = 0;
+          m_searchValue[1]._u64 = 0;
+          m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
         }
         else if (kdown & KEY_R)
         {
