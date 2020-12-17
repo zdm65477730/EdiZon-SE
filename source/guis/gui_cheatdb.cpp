@@ -10,6 +10,7 @@
 #define VER_URL "https://github.com/tomvita/NXCheatCode/releases/latest/download/version.txt"
 #define APP_URL "https://github.com/tomvita/NXCheatCode/releases/latest/download/titles.zip"
 #define APP_OUTPUT "/switch/EdiZon/cheats/titles.zip"
+#define CHEATS_DIR "/switch/EdiZon/cheats/"
 #define VER_OUTPUT "/switch/EdiZon/version.txt"
 #define TEMP_FILE "/switch/EdiZon/Edizontemp"
 static std::string remoteVersion, remoteCommitSha, remoteCommitMessage;
@@ -102,6 +103,7 @@ void Guicheatdb::onInput(u32 kdown) {
 
   if (kdown & KEY_MINUS && updateAvailable)  {
 
+    mkdir(CHEATS_DIR, 0777);
     (new MessageBox("Updating cheat database.\n \nThis may take a while...", MessageBox::NONE))->show();
     requestDraw();
     CURL *curl = curl_easy_init();
@@ -190,6 +192,7 @@ static void getVersionInfoAsync(void* args) {
   {
     updateAvailable = true;
   }
+  if (access(APP_OUTPUT, F_OK)!=0) updateAvailable = true;
 
   // curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   // curl_easy_setopt(curl, CURLOPT_URL, EDIZON_URL "/info/latest_db_sha.php");
