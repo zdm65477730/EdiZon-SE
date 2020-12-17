@@ -86,7 +86,8 @@ GuiCheats::GuiCheats() : Gui()
   // dmntchtForceOpenCheatProcess();
   // dmntchtPauseCheatProcess();
   m_debugger = new Debugger();
-  dmntchtInitialize();
+  if (m_sysmodulePresent)
+    dmntchtInitialize();
   if (!autoattachcheck())
     m_debugger->attachToProcess();
   if (!m_debugger->m_dmnt) { m_sysmodulePresent = true;  }
@@ -107,8 +108,8 @@ GuiCheats::GuiCheats() : Gui()
   freeze();
   m_cheatCnt = 0;
 
-  if (!m_sysmodulePresent)
-    return;
+  // if (!m_sysmodulePresent)
+  //   return;
 
 
   DmntCheatProcessMetadata metadata;
@@ -584,14 +585,14 @@ void GuiCheats::draw()
     Gui::endDraw();
     return;
   }
-  else if (!m_sysmodulePresent)
-  {
-    Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, currTheme.textColor, "\uE142", ALIGNED_CENTER);
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, currTheme.textColor, "EdiZon depends on Atmosphere's dmnt:cht service which doesn't seem to be \n running on this device. Please install a supported CFW to \n use the cheat engine.", ALIGNED_CENTER);
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 Back", ALIGNED_RIGHT);
-    Gui::endDraw();
-    return;
-  }
+  // else if (!m_sysmodulePresent)
+  // {
+  //   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, currTheme.textColor, "\uE142", ALIGNED_CENTER);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, currTheme.textColor, "EdiZon depends on Atmosphere's dmnt:cht service which doesn't seem to be \n running on this device. Please install a supported CFW to \n use the cheat engine.", ALIGNED_CENTER);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 Back", ALIGNED_RIGHT);
+  //   Gui::endDraw();
+  //   return;
+  // }
 
   if (m_menuLocation == CHEATS)
   {
@@ -6243,11 +6244,10 @@ bool GuiCheats::autoattachcheck()
   if (Config::getConfig()->options[0] == 0)
   {
     if (m_debugger->m_dmnt)
-      dmntchtForceOpenCheatProcess();
-    return true;
+      return dmntchtForceOpenCheatProcess();
   }
-  else
-    return false;
+
+  return false;
   // std::stringstream filenoiconStr;
   // filenoiconStr << EDIZON_DIR "/noautoattach.txt";
   // if (access(filenoiconStr.str().c_str(), F_OK) != 0)
