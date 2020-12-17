@@ -68,7 +68,7 @@ CFLAGS	:=	-g -Wall -O3 -ffunction-sections \
 			-DVERSION_MICRO=${VERSION_MICRO} \
 			-DVERSION_STRING=\"$(subst $(SPACE),\$(SPACE),${APP_VERSION})\"
 			
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -I$(PORTLIBS)/include/freetype2 $(pkg-config --cflags --libs python3)
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -I$(PORTLIBS)/include/freetype2 $(pkg-config --cflags --libs python3) -Wno-deprecated-declarations
 
 CXXFLAGS	:= $(CFLAGS) -fexceptions -std=gnu++17
 

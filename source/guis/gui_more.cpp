@@ -13,7 +13,7 @@ void GuiMore::update() {
 static const char *const optionNames[] = {"No Auto Attach \uE0A2", "No Auto Exit after detach \uE0A3", "Disable this screen \uE0B4"};
 void GuiMore::draw() {
   std::stringstream extra_seg_str;
-  extra_seg_str << "\uE0B2 +  \uE0B1 -  Extra segments " << Config::getConfig()->extrasegment;
+  extra_seg_str << "\uE0B2 +  \uE0B1 -  Extra MB " << Config::getConfig()->extraMB;
   Gui::beginDraw();
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x30, 0x39, 0x29, 0xFF));
   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "More options", ALIGNED_CENTER);
@@ -21,6 +21,7 @@ void GuiMore::draw() {
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2+60, COLOR_BLACK, "Use X, Y, - to toggle options, if you disable this screen use R+B to exit will show this on next launch", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->enabletargetedscan ? COLOR_WHITE : COLOR_BLACK, "\uE0AF Enable targeted scan", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->enabletargetedscan ? COLOR_WHITE : COLOR_BLACK, extra_seg_str.str().c_str(), ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width *4 / 5, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->use_absolute_address ? COLOR_WHITE : COLOR_BLACK, "\uE0B0 Use absolute address", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 250, Config::getConfig()->deletebookmark ? COLOR_WHITE : COLOR_BLACK, "\uE0C4 clear all bookmarks", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, Gui::g_framebuffer_height / 2+250, Config::getConfig()->freeze ? COLOR_WHITE : COLOR_BLACK, "\uE0C5 freeze game", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, m_edizon_dir.c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
@@ -73,12 +74,16 @@ void GuiMore::onInput(u32 kdown)
   }
   else if (kdown & KEY_DRIGHT)
   {
-    Config::getConfig()->extrasegment = Config::getConfig()->extrasegment + 1;
+    Config::getConfig()->extraMB = Config::getConfig()->extraMB + 1;
   }
   else if (kdown & KEY_DLEFT)
   {
-    if (Config::getConfig()->extrasegment > 0)
-      Config::getConfig()->extrasegment = Config::getConfig()->extrasegment - 1;
+    if (Config::getConfig()->extraMB > 0)
+      Config::getConfig()->extraMB = Config::getConfig()->extraMB - 1;
+  }
+  else if (kdown & KEY_DDOWN)
+  {
+    Config::getConfig()->use_absolute_address = !Config::getConfig()->use_absolute_address;
   }
   else if (kdown & KEY_PLUS)
   {

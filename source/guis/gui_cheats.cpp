@@ -857,7 +857,9 @@ void GuiCheats::draw()
             u64 address = 0;
             m_memoryDump->getData((line + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
             // candidate display
-            if (address >= m_heapBaseAddr && address < m_heapEnd)
+            if (Config::getConfig()->use_absolute_address)
+              ss << "[ 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address) << " ]";
+            else if (address >= m_heapBaseAddr && address < m_heapEnd)
               ss << "[ HEAP + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_heapBaseAddr) << " ]";
             else if (address >= m_mainBaseAddr && address < m_mainend)
               ss << "[ MAIN + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_mainBaseAddr) << " ]";
@@ -2247,24 +2249,25 @@ void GuiCheats::onInput(u32 kdown)
           printf("\nstart scan range select ....................\n");
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
           MemoryInfo meminfo = {0};
-          meminfo = m_debugger->queryMemory(m_EditorBaseAddr);
-          for (int i = 0; i < Config::getConfig()->extrasegment; i ++)
-          {
-            if (meminfo.addr > 1)
-              meminfo = m_debugger->queryMemory(meminfo.addr - 1);
-          }
+          u64 t_start = m_EditorBaseAddr - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+          u64 t_end = m_EditorBaseAddr + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+          if (t_end > m_heapEnd) t_end = m_heapEnd;
+          meminfo = m_debugger->queryMemory(t_start);
+          u64 seg_endp = meminfo.addr + meminfo.size;
+          meminfo.addr = t_start;
+          if (seg_endp > t_end)
+            meminfo.size = t_end - t_start;
+          else
+            meminfo.size = seg_endp - t_start;
           m_targetmemInfos.clear();
           m_targetmemInfos.push_back(meminfo);
-          printf("Address %lx \n", m_EditorBaseAddr);
-          printf("meminfo.addr = %lx + meminfo.size = %lx \n", meminfo.addr, meminfo.size);
-          for (int i = 0; i < Config::getConfig()->extrasegment * 2; i++)
+          while (seg_endp < t_end)
           {
-            if (meminfo.size > 0)
-            {
-              meminfo = m_debugger->queryMemory(meminfo.addr + meminfo.size);
-              m_targetmemInfos.push_back(meminfo);
-            }
-            printf("meminfo.addr = %lx + meminfo.size = %lx \n", meminfo.addr, meminfo.size);
+            meminfo = m_debugger->queryMemory(seg_endp);
+            seg_endp = meminfo.addr + meminfo.size;
+            if (seg_endp > t_end)
+              meminfo.size = t_end - meminfo.addr ;
+            m_targetmemInfos.push_back(meminfo);
           }
           save_meminfos();
           // MemoryDump *scaninfo = new MemoryDump((m_edizon_dir + "/scaninfo.dat").c_str(), DumpType::UNDEFINED, true);

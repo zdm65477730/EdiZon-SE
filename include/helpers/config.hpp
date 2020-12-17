@@ -25,7 +25,8 @@ namespace Config {
     char dbversion[40];
     bool separatebookmark;
     bool enabletargetedscan;
-    int extrasegment;
+    int extraMB;
+    bool use_absolute_address;
   } config_data_t;
 
   void readConfig();
