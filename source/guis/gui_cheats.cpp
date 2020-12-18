@@ -662,27 +662,28 @@ void GuiCheats::draw()
   Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
 
   ss.str("");
-  ss << "EdiZon SE : " VERSION_STRING;
+  if (m_debugger->m_dmnt)
+    ss << "EdiZon SE " VERSION_STRING;
+  else
+  {
+    ss << "EdiZon SE " VERSION_STRING;
+    ss << " (dmnt not attached)"; //"dmnt not attached to game process";
+  }
   if (m_32bitmode)
-    ss << "     32 bit pointer mode";
+    ss << "(32bit)";
   Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
   ss.str("");
-  if (m_debugger->m_dmnt)
-  {
     if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
     {
       ss << "Target  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_targetmemInfos[0].addr; //metadata.address_space_extents.size
       ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << (m_targetmemInfos[m_targetmemInfos.size()-1].addr + m_targetmemInfos[m_targetmemInfos.size()-1].size);
     }
-    else
+    else if (m_debugger->m_dmnt)
     {
 
       ss << "BASE  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_addressSpaceBaseAddr; //metadata.address_space_extents.size
       ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_addressSpaceBaseAddr + m_addressSpaceSize;
     }
-  }
-  else
-    ss << "dmnt not attached to game process";
   Gui::drawTextAligned(font14, 900, 92, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
   ss.str("");
   ss << "HEAP  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapBaseAddr;

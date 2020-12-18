@@ -13,7 +13,7 @@
 #include "guis/gui.hpp"
 #include "guis/gui_main.hpp"
 #include "guis/gui_editor.hpp"
-#include "guis/gui_tx_warning.hpp"
+// #include "guis/gui_tx_warning.hpp"
 #include "guis/gui_choose_mission.hpp"
 #include "guis/gui_more.hpp"
 #include "guis/gui_cheats.hpp"
@@ -293,8 +293,8 @@ int main(int argc, char **argv)
 
 
 
-  if (isServiceRunning("tx") && !isServiceRunning("rnx") && !Config::getConfig()->hideSX)
-    Gui::g_nextGui = GUI_TX_WARNING;
+  // if (isServiceRunning("tx") && !isServiceRunning("rnx") && !Config::getConfig()->hideSX)
+  //   Gui::g_nextGui = GUI_TX_WARNING;
 
   g_edizonPath = new char[strlen(argv[0]) + 1];
   strcpy(g_edizonPath, argv[0] + 5);
@@ -330,9 +330,9 @@ int main(int argc, char **argv)
         case GUI_EDITOR:
           currGui = new GuiEditor();
           break;
-        case GUI_TX_WARNING:
-          currGui = new GuiTXWarning();
-          break;
+        // case GUI_TX_WARNING:
+        //   currGui = new GuiTXWarning();
+        //   break;
         case GUI_CHEATS:
           currGui = new GuiCheats();
           break;
