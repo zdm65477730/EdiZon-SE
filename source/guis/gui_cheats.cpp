@@ -6059,7 +6059,7 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
     // zipCheatPath << "titles\\" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID << "\\cheats\\" << buildIDStr.str() << ".txt";
     // zipCheatPath << buildIDStr.str() << ".txt";
     zipper::Unzipper cheatzip(zipPath.str().c_str()); // cheatzip;
-    if (!(access(realCheatPath.str().c_str(), F_OK) == 0) || Config::getConfig()->enablecheats)
+    if (!(access(realCheatPath.str().c_str(), F_OK) == 0) || Config::getConfig()->enablecheats || Config::getConfig()->easymode)
     {
       Config::getConfig()->enablecheats = false;
       if (cheatzip.extractEntry(zipCheatPath.str().c_str(), realCheatPath.str().c_str()))
