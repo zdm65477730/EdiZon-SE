@@ -636,7 +636,7 @@ AccountUid Gui::requestPlayerSelection() {
   u8 indata[0xA0] = { 0 };
   indata[0x96] = 1;
 
-  appletCreateLibraryApplet(&aph, AppletId_playerSelect, LibAppletMode_AllForeground);
+  appletCreateLibraryApplet(&aph, AppletId_LibraryAppletPlayerSelect, LibAppletMode_AllForeground);//AppletId_LibraryAppletPlayerSelect old AppletId_playerSelect
   libappletArgsCreate(&args, 0);
   libappletArgsPush(&args, &aph);
 
@@ -668,7 +668,7 @@ void Gui::requestErrorMessage(Result result) {
 
   *(Result*)&indata[16] = result;
 
-  appletCreateLibraryApplet(&aph, AppletId_error, LibAppletMode_AllForeground);
+  appletCreateLibraryApplet(&aph, AppletId_LibraryAppletError, LibAppletMode_AllForeground); // AppletId_LibraryAppletError old AppletId_error
   libappletArgsCreate(&args, 0);
   libappletArgsPush(&args, &aph);
 
