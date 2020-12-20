@@ -2116,6 +2116,12 @@ void GuiCheats::onInput(u32 kdown)
       {
         if (kdown & KEY_X && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR && !(kheld & KEY_ZL))
         {
+          if (!(m_debugger->m_dmnt))
+          {
+            m_debugger->detatch();
+            dmntchtForceOpenCheatProcess();
+            printf("force open called\n");
+          }
           u64 address = 0;
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
 
@@ -2304,6 +2310,12 @@ void GuiCheats::onInput(u32 kdown)
             // m_showpointermenu = true;
             if (m_menuLocation == CANDIDATES && m_memoryDumpBookmark->size() != 0)
             {
+              if (!(m_debugger->m_dmnt))
+              {
+                m_debugger->detatch();
+                dmntchtForceOpenCheatProcess();
+                printf("force open called\n");
+              }
               bookmark_t bookmark;
               m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
               // printf("m_selectedEntry + m_addresslist_offset %ld\n", m_selectedEntry + m_addresslist_offset);

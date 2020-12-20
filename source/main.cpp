@@ -131,6 +131,7 @@ bool firstruncheck()
   {
     Config::getConfig()->not_first_run = true;
     Config::getConfig()->options[0] = true; // No Auto Attach for fetching of game code
+    Config::getConfig()->options[2] = true; // Disable config screen
     Config::writeConfig();
     return true;
   }
