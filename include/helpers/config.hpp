@@ -28,6 +28,7 @@ namespace Config {
     int extraMB;
     bool use_absolute_address;
     bool not_first_run;
+    bool easymode;
   } config_data_t;
 
   void readConfig();

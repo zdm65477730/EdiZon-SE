@@ -256,11 +256,13 @@ private:
   void drawSearchRAMMenu();
 
   void drawEditRAMMenu();
+  void draw_easymode();
   std::string buttonStr(u32 buttoncode);
   void drawEditRAMMenu2();
   bool m_editCheat = false;
   bool m_32bitmode = false;
   void editor_input(u32 kdown, u32 kheld);
+  void easymode_input(u32 kdown, u32 kheld);
   void drawSearchPointerMenu();
   void searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1,
                                     searchValue_t searchValue2, searchType_t searchType,

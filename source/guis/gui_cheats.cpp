@@ -549,9 +549,134 @@ void GuiCheats::update()
 {
   Gui::update();
 }
+void GuiCheats::draw_easymode()
+{
+  static u32 splashCnt = 0;
+  std::stringstream ss;
+  Gui::beginDraw();
+#if SPLASH_ENABLED
+  if (!Gui::g_splashDisplayed)
+  {
+    Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x5D, 0x4F, 0x4E, 0xFF));
+    Gui::drawImage(Gui::g_framebuffer_width / 2 - 128, Gui::g_framebuffer_height / 2 - 128, 256, 256, edizon_logo_bin, IMAGE_MODE_BGR24);
+
+    if (splashCnt++ >= 70)
+      Gui::g_splashDisplayed = true;
+
+    Gui::endDraw();
+    return;
+  }
+#endif
+  Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);
+  Gui::drawRectangle((u32)((Gui::g_framebuffer_width - 1220) / 2), Gui::g_framebuffer_height - 73, 1220, 1, currTheme.textColor);
+  if (m_debugger->getRunningApplicationPID() == 0)
+  {
+    Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, currTheme.textColor, "\uE12C", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, currTheme.textColor, "A title needs to be running in the background to use the RAM editor. \n Please launch an application and try again.", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 Back", ALIGNED_RIGHT);
+    Gui::endDraw();
+    return;
+  }
+  m_menuLocation = CHEATS;
+  {
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Check for update  \uE0E6 Page Up  \uE0E7 Page Down  \uE0E0 Cheat on/off  \uE0E1 Quit", ALIGNED_RIGHT);
+  }
+  Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
+  // Don't draw icon
+  if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
+    Gui::drawImage(0, 0, 256, 256, Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleIcon(), IMAGE_MODE_RGB24);
+  else
+    Gui::drawRectangle(0, 0, 256, 256, Gui::makeColor(0x00, 0x00, 0xFF, 0xFF));
+
+  Gui::drawRectangle(660, 65, 20, 20, Gui::makeColor(0xFF, 0x00, 0x00, 0xFF));  // Code
+  Gui::drawRectangle(660, 85, 20, 20, Gui::makeColor(0x00, 0xFF, 0x00, 0xFF));  // Shared Memory
+  Gui::drawRectangle(660, 105, 20, 20, Gui::makeColor(0x00, 0x00, 0xFF, 0xFF)); // Heap
+  Gui::drawRectangle(660, 125, 20, 20, Gui::makeColor(0xFF, 0xFF, 0x00, 0xFF)); // Stack
+  Gui::drawRectangle(660, 145, 20, 20, Gui::makeColor(0x80, 0x80, 0x80, 0xFF)); // Others
+
+  Gui::drawTextAligned(font14, 700, 62, currTheme.textColor, "Code", ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 700, 82, currTheme.textColor, "Shared Memory", ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 700, 102, currTheme.textColor, "Heap", ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 700, 122, currTheme.textColor, "Stack", ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 700, 142, currTheme.textColor, "Others", ALIGNED_LEFT);
+
+  ss.str("");
+  if (m_debugger->m_dmnt)
+    ss << "EdiZon SE " VERSION_STRING;
+  else
+  {
+    ss << "EdiZon SE " VERSION_STRING;
+    ss << " (dmnt not attached)"; //"dmnt not attached to game process";
+  }
+  if (m_32bitmode)
+    ss << "(32bit)";
+  Gui::drawTextAligned(font14, 900, 62, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  ss.str("");
+  Gui::drawTextAligned(font14, 900, 92, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  ss.str("");
+  ss << "HEAP  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapBaseAddr;
+  ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapEnd;
+  Gui::drawTextAligned(font14, 900, 122, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  ss.str("");
+  ss << "MAIN  :  0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_mainBaseAddr;
+  ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_mainend;
+  Gui::drawTextAligned(font14, 900, 152, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  if (m_memoryDump1 != nullptr)
+    Gui::drawRectangle(256, 50, 394, 137, COLOR_LIGHTGREEN);
+  else
+    Gui::drawRectangle(256, 50, 394, 137, COLOR_WHITE);
+  Gui::drawTextAligned(font20, 280, 70, COLOR_BLACK, titleNameStr.c_str(), ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 290, 110, COLOR_BLACK, tidStr.c_str(), ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 290, 130, COLOR_BLACK, pidStr.c_str(), ALIGNED_LEFT);
+  Gui::drawTextAligned(font14, 290, 150, COLOR_BLACK, buildIDStr.c_str(), ALIGNED_LEFT);
+    if (m_cheatCnt > 0)
+    {
+      Gui::drawRectangle(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40, currTheme.textColor);
+      Gui::drawTextAligned(font14, 375, 262, currTheme.backgroundColor, "Cheats", ALIGNED_CENTER);
+      Gui::drawShadow(50, 256, 650, 46 + std::min(static_cast<u32>(m_cheatCnt), 8U) * 40);
+
+      for (u8 line = cheatListOffset; line < 8 + cheatListOffset; line++)
+      {
+        if (line >= m_cheatCnt)
+          break;
+        // WIP
+        ss.str("");
+        ss << "\uE070  " << buttonStr(m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
+
+        Gui::drawRectangle(52, 300 + (line - cheatListOffset) * 40, 646, 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
+        Gui::drawTextAligned(font14, 70, 305 + (line - cheatListOffset) * 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+
+        if (!m_cheats[line].enabled)
+        {
+          color_t highlightColor = currTheme.highlightColor;
+          highlightColor.a = 0xFF;
+
+          Gui::drawRectangled(74, 313 + (line - cheatListOffset) * 40, 10, 10, (m_selectedEntry == line && m_menuLocation == CHEATS) ? highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
+        }
+      }
+    }
+    else if (m_mainBaseAddr == 0)
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_CENTER);
+    else if (m_cheatsPresent && m_memoryDump->size() == 0)
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Cheats for this game present but title version or region doesn't match!", ALIGNED_CENTER);
+    else
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "No cheats available for this game", ALIGNED_CENTER);
+
+    Gui::drawShadow(0, 0, Gui::g_framebuffer_width, 256);
+    Gui::drawShadow(256, 50, Gui::g_framebuffer_width, 136);
+
+    for (u16 x = 0; x < 1024; x++)
+      Gui::drawRectangle(256 + x, 0, 2, 50, m_memory[x]);
+    Gui::endDraw();
+}
 
 void GuiCheats::draw()
 {
+  if (Config::getConfig()->easymode) 
+  {
+    draw_easymode();
+    return;
+  }
   static u32 splashCnt = 0;
   std::stringstream ss;
 
@@ -1541,7 +1666,83 @@ void GuiCheats::drawSearchRAMMenu()
     break;
   }
 }
-
+void GuiCheats::easymode_input(u32 kdown, u32 kheld)
+{
+  if (kdown & KEY_B)
+  {
+    Gui::g_requestExit = true;
+  }
+  else if (kdown & KEY_MINUS)
+  {
+    Gui::g_nextGui = GUI_FIRST_RUN;
+  }
+  else if (kdown & KEY_UP)
+  {
+    if (m_selectedEntry > 0)
+      m_selectedEntry--;
+    if (m_selectedEntry+1 == cheatListOffset && cheatListOffset > 0)
+      cheatListOffset-=8;
+  }
+  else if (kdown & KEY_DOWN) //
+  {
+    if (m_selectedEntry < (m_cheatCnt - 1))
+      m_selectedEntry++;
+    if (m_selectedEntry == (cheatListOffset + 8) && cheatListOffset < (m_cheatCnt - 8))
+      cheatListOffset+=8;
+  }
+  else if (kdown & KEY_ZR)
+  {
+    cheatListOffset += 8;
+    m_selectedEntry += 8;
+    if (cheatListOffset >= m_cheatCnt)
+    {
+      cheatListOffset -= 8;
+      m_selectedEntry -= 8;
+    }
+    if (m_selectedEntry + 1 > m_cheatCnt)
+      m_selectedEntry = m_cheatCnt - 1;
+  }
+  else if (kdown & KEY_ZL)
+  {
+    if (cheatListOffset >= 8)
+    {
+      cheatListOffset -= 8;
+      m_selectedEntry -= 8;
+    }
+    else
+    {
+      cheatListOffset = 0;
+      m_selectedEntry = 0;
+    }
+    
+  }
+  else if (kdown & KEY_A)
+  {
+    if (m_cheatCnt == 0)
+      return;
+    // count total opcode
+    u32 opcodecount = m_cheats[m_selectedEntry].definition.num_opcodes;
+    for (u32 i = 0; i < m_cheatCnt; i++)
+    {
+      if (m_cheats[i].enabled)
+        opcodecount += m_cheats[i].definition.num_opcodes;
+    }
+    if (opcodecount > 0x400)
+    {
+      (new Snackbar("Total opcode count would exceed 1024!"))->show();
+      return;
+    }
+    dmntchtToggleCheat(m_cheats[m_selectedEntry].cheat_id);
+    u64 cheatCnt = 0;
+    dmntchtGetCheatCount(&cheatCnt);
+    if (cheatCnt > 0)
+    {
+      delete[] m_cheats;
+      m_cheats = new DmntCheatEntry[cheatCnt];
+      dmntchtGetCheats(m_cheats, cheatCnt, 0, &m_cheatCnt);
+    }
+  }
+}
 void GuiCheats::onInput(u32 kdown)
 {
   u32 kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
@@ -1550,6 +1751,11 @@ void GuiCheats::onInput(u32 kdown)
     editor_input(kdown, kheld);
     return;
   };
+  if (Config::getConfig()->easymode)
+  {
+    easymode_input(kdown, kheld);
+    return;
+  }
   if (m_editCheat)
   {
     // printf("kdown = %x, kheld = %x\n", kdown, kheld);

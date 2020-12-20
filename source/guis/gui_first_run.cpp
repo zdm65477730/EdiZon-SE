@@ -85,10 +85,11 @@ void Guifirstrun::draw() {
   Gui::drawTextAligned(font24, 70, 23, currTheme.textColor, "        Welcome to EdiZon SE", ALIGNED_LEFT);
     Gui::drawTextAligned(fontHuge, 100, 180, Gui::makeColor(0xFB, 0xA6, 0x15, 0xFF), "EdiZon SE v" VERSION_STRING, ALIGNED_LEFT);
   Gui::drawTextAligned(font20, 130, 190, currTheme.separatorColor, "by Tomvita", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, Config::getConfig()->easymode ? currTheme.textColor : COLOR_RED, Config::getConfig()->easymode ? "\uE0E2 Easy Mode" : "\uE0E2 Expert Mode", ALIGNED_LEFT);
   if (updateAvailable)
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Install update     \uE0E1 Skip", ALIGNED_RIGHT);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF App update Check                       \uE0F0 Install update     \uE0E1 Skip", ALIGNED_RIGHT);
   else
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Exit", ALIGNED_RIGHT);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF App update Check                                                 \uE0E1 Exit", ALIGNED_RIGHT);
   Gui::drawTextAligned(font14, 120, 250, currTheme.textColor, "Checking Cheat database. Special thank to everyone who has contributed at Gbatemp Switch cheat code forum.", ALIGNED_LEFT);
   Gui::drawRectangled(50, 350, Gui::g_framebuffer_width - 100, 250, currTheme.textColor);
   Gui::drawRectangled(51, 351, Gui::g_framebuffer_width - 102, updateAvailable ? 210 : 248, currTheme.backgroundColor);
@@ -113,8 +114,17 @@ void Guifirstrun::onInput(u32 kdown) {
       threadRunning = false;
     }
       Gui::g_nextGui = GUI_CHEATS;
+      Config::writeConfig();
   }
-  if (kdown & KEY_MINUS && updateAvailable)
+  else if (kdown & KEY_X)
+  {
+    Config::getConfig()->easymode = !Config::getConfig()->easymode;
+  }
+    else if (kdown & KEY_PLUS)
+  {
+    Gui::g_nextGui = GUI_ABOUT;
+  }
+  else if (kdown & KEY_MINUS && updateAvailable)
   {
     getdb();
     // Gui::g_nextGui = GUI_CHEATS;
@@ -146,7 +156,7 @@ static void getVersionInfoAsync(void* args) {
     remoteVersion = "???";
   curl_easy_cleanup(curl);
   Config::readConfig();
-  if (strcmp(remoteCommitSha.c_str(), "???") == 0)
+  if (remoteVersion.compare(0, 6, Config::getConfig()->dbversion) == 0 || strcmp(remoteCommitSha.c_str(), "???") == 0)
   {
     updateAvailable = false;
   }
