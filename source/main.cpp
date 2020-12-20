@@ -130,6 +130,7 @@ bool firstruncheck()
   if (!Config::getConfig()->not_first_run)
   {
     Config::getConfig()->not_first_run = true;
+    Config::getConfig()->options[0] = true; // No Auto Attach for fetching of game code
     Config::writeConfig();
     return true;
   }
