@@ -19,6 +19,7 @@
 #include "guis/gui_cheats.hpp"
 #include "guis/gui_about.hpp"
 #include "guis/gui_cheatdb.hpp"
+#include "guis/gui_first_run.hpp"
 #include "guis/gui_guide.hpp"
 
 #include "helpers/title.hpp"
@@ -122,6 +123,18 @@ bool multimissioncheck()
   // }
   // else
   //   return false;
+}
+bool firstruncheck()
+{
+  Config::readConfig();
+  if (!Config::getConfig()->not_first_run)
+  {
+    Config::getConfig()->not_first_run = true;
+    Config::writeConfig();
+    return true;
+  }
+  else
+    return false;
 }
 bool showallgamesavecheck()
 {
@@ -257,7 +270,11 @@ int main(int argc, char **argv)
     m_edizon_dir = Config::getConfig()->edizon_dir;
     if (m_edizon_dir.compare(0, sizeof(EDIZON_DIR)-1, EDIZON_DIR) != 0)
       m_edizon_dir = EDIZON_DIR;
-    if (multimissioncheck())
+    if (firstruncheck())
+    {
+      Gui::g_nextGui = GUI_FIRST_RUN;
+    }
+    else if (multimissioncheck())
       Gui::g_nextGui = GUI_CHOOSE_MISSION;
     else
       Gui::g_nextGui = GUI_CHEATS;
@@ -350,6 +367,9 @@ int main(int argc, char **argv)
           break;
         case GUI_CHEATDB:
           currGui = new Guicheatdb();
+          break;
+        case GUI_FIRST_RUN:
+          currGui = new Guifirstrun();
           break;
         case GUI_INVALID:
           [[fallthrough]] default : break;

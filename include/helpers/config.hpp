@@ -27,6 +27,7 @@ namespace Config {
     bool enabletargetedscan;
     int extraMB;
     bool use_absolute_address;
+    bool not_first_run;
   } config_data_t;
 
   void readConfig();
