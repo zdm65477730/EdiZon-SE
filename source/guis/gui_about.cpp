@@ -95,7 +95,10 @@ void GuiAbout::onInput(u32 kdown) {
     }
     Debugger *l_debugger = new Debugger();
     if (l_debugger->getRunningApplicationPID() != 0)
-      Gui::g_nextGui = GUI_CHEATS;
+      if (Config::getConfig()->easymode)
+        Gui::g_nextGui = GUI_FIRST_RUN;
+      else
+        Gui::g_nextGui = GUI_CHOOSE_MISSION;
     else
       Gui::g_nextGui = GUI_MAIN;
   }

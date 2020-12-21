@@ -1984,8 +1984,8 @@ void GuiCheats::onInput(u32 kdown)
         m_selectedEntry--;
 
       if (m_menuLocation == CHEATS)
-        if (m_selectedEntry == cheatListOffset && cheatListOffset > 0)
-          cheatListOffset--;
+        if (m_selectedEntry+1 == cheatListOffset && cheatListOffset > 0)
+          cheatListOffset-=8;
     }
 
     if (kdown & KEY_DOWN) //
@@ -2000,8 +2000,8 @@ void GuiCheats::onInput(u32 kdown)
         if (m_selectedEntry < (m_cheatCnt - 1))
           m_selectedEntry++;
 
-        if (m_selectedEntry == (cheatListOffset + 7) && cheatListOffset < (m_cheatCnt - 8))
-          cheatListOffset++;
+        if (m_selectedEntry == (cheatListOffset + 8) && cheatListOffset < (m_cheatCnt - 8))
+          cheatListOffset+=8;
       }
     }
     // start mod
@@ -2908,18 +2908,49 @@ void GuiCheats::onInput(u32 kdown)
 
     if ((kdown & KEY_ZR) && !(kheld & KEY_ZL))
     {
-      m_addresslist_offset += 8;
-      if (m_addresslist_offset >= (m_memoryDump->size() / sizeof(u64)))
-        m_addresslist_offset -= 8;
-      if (m_selectedEntry + m_addresslist_offset + 1 > (m_memoryDump->size() / sizeof(u64)))
-        m_selectedEntry = (m_memoryDump->size() / sizeof(u64)) % 8 - 1;
-      // printf("%s\n", "ZR key pressed");
+      if (m_menuLocation == CHEATS)
+      {
+        cheatListOffset += 8;
+        m_selectedEntry += 8;
+        if (cheatListOffset >= m_cheatCnt)
+        {
+          cheatListOffset -= 8;
+          m_selectedEntry -= 8;
+        }
+        if (m_selectedEntry + 1 > m_cheatCnt)
+          m_selectedEntry = m_cheatCnt - 1;
+      }
+      else
+      {
+        m_addresslist_offset += 8;
+        if (m_addresslist_offset >= (m_memoryDump->size() / sizeof(u64)))
+          m_addresslist_offset -= 8;
+        if (m_selectedEntry + m_addresslist_offset + 1 > (m_memoryDump->size() / sizeof(u64)))
+          m_selectedEntry = (m_memoryDump->size() / sizeof(u64)) % 8 - 1;
+        // printf("%s\n", "ZR key pressed");
+      }
     }
 
     if ((kdown & KEY_ZR) && (kheld & KEY_ZL))
     {
-      if (m_addresslist_offset >= 8)
-        m_addresslist_offset -= 8;
+      if (m_menuLocation == CHEATS)
+      {
+        if (cheatListOffset >= 8)
+        {
+          cheatListOffset -= 8;
+          m_selectedEntry -= 8;
+        }
+        else
+        {
+          cheatListOffset = 0;
+          m_selectedEntry = 0;
+        }
+      }
+      else
+      {
+        if (m_addresslist_offset >= 8)
+          m_addresslist_offset -= 8;
+      }
       // printf("%s\n", "ZL key pressed");
     }
 
