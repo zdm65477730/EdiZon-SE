@@ -120,6 +120,7 @@ private:
   u64 m_EditorBaseAddr = 0x00;
   u64 m_BookmarkAddr = 0;
   u8 m_addressmod = 0;
+  bool m_show_ptr = true;
   time_t m_Time1;
   struct helperinfo_t
   {

@@ -1281,7 +1281,7 @@ void GuiCheats::drawEditRAMMenu2()
   // Gui::drawTextAligned(font20, 1010, line2, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "u64", ALIGNED_CENTER);
 
 // status line
-  u64 addr = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20;
+  u64 addr = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20; 
   u32 out;
   u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 ;
   ss.str("");
@@ -1325,6 +1325,24 @@ void GuiCheats::drawEditRAMMenu2()
   ss << dataTypes[m_searchType2]<<":" << std::uppercase << std::dec << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
   Gui::drawTextAligned(font20, 860, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
 
+  // pointer display if address in range
+  if (address % 8 == 0)
+  {
+    u64 pointed_address;
+    m_debugger->readMemory(&pointed_address, sizeof(u64), address);
+    ss.str("");
+    if (pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend)
+      ss << "Main + " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address - m_mainBaseAddr;
+    else if (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd)
+      ss << "Heap + " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address - m_heapBaseAddr;
+    if (ss.str().size() != 0)
+    {
+      Gui::drawTextAligned(font20, 30, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+      ss.str("");
+      ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address;
+      Gui::drawTextAligned(font20, 360, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+    }
+  };
   // Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, line2, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT); // the end bracket
   // Gui::drawTextAligned(font20, 260, line2, m_searchMenuLocation == SEARCH_TYPE ? currTheme.selectedColor : currTheme.textColor, "U8", ALIGNED_CENTER);
   // Gui::drawTextAligned(font20, 510, line2, m_searchMenuLocation == SEARCH_MODE ? currTheme.selectedColor : currTheme.textColor, "U16", ALIGNED_CENTER);
@@ -1340,7 +1358,31 @@ void GuiCheats::drawEditRAMMenu2()
       Gui::drawRectangled(88 + (i % 5) * 225, 235 + (i / 5) * 50, 225, 50, m_searchMode == static_cast<searchMode_t>(i) ? currTheme.selectedColor : currTheme.highlightColor);
     if ((i % 5) != 0)
     {
-      Gui::drawRectangled(93 + (i % 5) * 225, 240 + (i / 5) * 50, 215, 40, currTheme.separatorColor);
+      color_t separatorColor;
+      if (addr % 8 == 0 && m_show_ptr)
+      {
+        separatorColor = currTheme.separatorColor;
+        u64 pointed_address;
+        m_debugger->readMemory(&pointed_address, sizeof(u64), addr);
+        // ss.str("");
+        if (pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend)
+        separatorColor = Gui::makeColor(0xFF, 0xFF, 0x00, 0x40); 
+          // ss << "M+" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address - m_mainBaseAddr;
+        else if (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd)
+        separatorColor = Gui::makeColor(0x00, 0xFF, 0x00, 0x40); 
+          // ss << "H+" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address - m_heapBaseAddr;
+        // if (ss.str().size() != 0)
+        // {
+        //   Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+        //   addr += 8;
+        //   i++;
+        //   ss.str("");
+        //   ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address;
+        //   Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+        //   continue;
+        // }
+      };
+      Gui::drawRectangled(93 + (i % 5) * 225, 240 + (i / 5) * 50, 215, 40, separatorColor);
       ss.str("");
       // dmntchtReadCheatProcessMemory(addr, &out, sizeof(u32));
       m_debugger->readMemory(&out, sizeof(u32), addr);
