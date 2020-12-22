@@ -20,6 +20,7 @@
 #include "guis/gui_about.hpp"
 #include "guis/gui_cheatdb.hpp"
 #include "guis/gui_first_run.hpp"
+#include "guis/gui_memory_editor.hpp"
 #include "guis/gui_guide.hpp"
 
 #include "helpers/title.hpp"
@@ -364,6 +365,9 @@ int main(int argc, char **argv)
           break;
         case GUI_CHOOSE_MISSION:
           currGui = new GuiChooseMission();
+          break;
+        case GUI_MEMORY_EDITOR:
+          currGui = new GuiMemoryEditor();
           break;
         case GUI_MORE:
           currGui = new GuiMore();

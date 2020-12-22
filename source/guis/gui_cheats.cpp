@@ -1261,7 +1261,125 @@ std::string GuiCheats::buttonStr(u32 buttoncode)
   }
   return "";
 }
+#define line1 10
+#define line2 80
+#define line3 120
 void GuiCheats::drawEditRAMMenu2()
+{
+  std::stringstream ss;
+  if (m_searchMenuLocation != SEARCH_editRAM2)
+    return;
+  Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);//background
+  Gui::drawText(font24, 30, 10 , currTheme.textColor, "\uE132   Memory Explorer");
+  Gui::drawRectangle(10, 70 , Gui::g_framebuffer_width - 10, 1, currTheme.textColor);//the line
+
+  // Gui::drawTextAligned(font20, 100, line2, currTheme.textColor, "\uE149 \uE0A4", ALIGNED_LEFT); // the start bracket
+  // Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, line2, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT); // the end bracket
+  // Gui::drawTextAligned(font20, 260, line2, m_searchMenuLocation == SEARCH_TYPE ? currTheme.selectedColor : currTheme.textColor, "U8", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, 510, line2, m_searchMenuLocation == SEARCH_MODE ? currTheme.selectedColor : currTheme.textColor, "U16", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, 760, line2, m_searchMenuLocation == SEARCH_REGION ? currTheme.selectedColor : currTheme.textColor, "u32", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, 1010, line2, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "u64", ALIGNED_CENTER);
+
+// status line
+  u64 addr = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20;
+  u32 out;
+  u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 ;
+  ss.str("");
+  ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address + m_addressmod) << " ] " << dataTypes[m_searchType];
+  Gui::drawText(font24, 420, line1, currTheme.textColor, ss.str().c_str());
+  ss.str("");
+  //dmntchtReadCheatProcessMemory(address, &out, sizeof(u32));
+  m_debugger->readMemory(&out, sizeof(u32), address);
+  Gui::drawText(font24, 830, line1, currTheme.textColor, _getAddressDisplayString(address + m_addressmod, m_debugger, m_searchType).c_str()); //ss.str().c_str()
+
+  // display all datatypes
+  // m_searchtype = SEARCH_TYPE_POINTER;
+  searchType_t m_searchType2;
+
+  m_searchType2 = SEARCH_TYPE_UNSIGNED_8BIT;
+  ss.str("");
+  ss << dataTypes[m_searchType2] << ":" << std::uppercase << std::dec << std::setfill('0') << std::setw(3) << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
+  ss << ":" << std::uppercase << std::dec << std::setfill('0') << std::setw(3) << _getAddressDisplayString(address + 1, m_debugger, m_searchType2).c_str();
+  ss << ":" << std::uppercase << std::dec << std::setfill('0') << std::setw(3) << _getAddressDisplayString(address + 2, m_debugger, m_searchType2).c_str();
+  ss << ":" << std::uppercase << std::dec << std::setfill('0') << std::setw(3) << _getAddressDisplayString(address + 3, m_debugger, m_searchType2).c_str();
+  Gui::drawTextAligned(font20, 30, line2, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT); // the start bracket
+  m_searchType2 = SEARCH_TYPE_UNSIGNED_16BIT;
+  ss.str("");
+  ss << dataTypes[m_searchType2]<<":" << std::uppercase << std::dec << std::setfill('0') << std::setw(5) << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
+  ss << ":" << std::uppercase << std::dec << std::setfill('0') << std::setw(5) << _getAddressDisplayString(address+2, m_debugger, m_searchType2).c_str();
+  Gui::drawTextAligned(font20, 360, line2, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  m_searchType2 = SEARCH_TYPE_SIGNED_32BIT;
+  ss.str("");
+  ss << dataTypes[m_searchType2]<<":" << std::uppercase << std::dec << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
+  Gui::drawTextAligned(font20, 610, line2, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  m_searchType2 = SEARCH_TYPE_SIGNED_64BIT;
+  ss.str("");
+  ss << dataTypes[m_searchType2]<<":" << std::uppercase << std::dec << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
+  Gui::drawTextAligned(font20, 860, line2, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  m_searchType2 = SEARCH_TYPE_FLOAT_32BIT;
+  ss.str("");
+  ss << dataTypes[m_searchType2]<<":" << std::uppercase << std::dec << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
+  Gui::drawTextAligned(font20, 610, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  m_searchType2 = SEARCH_TYPE_FLOAT_64BIT;
+  ss.str("");
+  ss << dataTypes[m_searchType2]<<":" << std::uppercase << std::dec << _getAddressDisplayString(address, m_debugger, m_searchType2).c_str();
+  Gui::drawTextAligned(font20, 860, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+
+  // Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, line2, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT); // the end bracket
+  // Gui::drawTextAligned(font20, 260, line2, m_searchMenuLocation == SEARCH_TYPE ? currTheme.selectedColor : currTheme.textColor, "U8", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, 510, line2, m_searchMenuLocation == SEARCH_MODE ? currTheme.selectedColor : currTheme.textColor, "U16", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, 760, line2, m_searchMenuLocation == SEARCH_REGION ? currTheme.selectedColor : currTheme.textColor, "u32", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, 1010, line2, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "u64", ALIGNED_CENTER);
+
+
+// Grid display
+
+  for (u8 i = 0; i < 40; i++) // 8 Row X 5 column
+  {
+    if (m_selectedEntry == i)
+      Gui::drawRectangled(88 + (i % 5) * 225, 235 + (i / 5) * 50, 225, 50, m_searchMode == static_cast<searchMode_t>(i) ? currTheme.selectedColor : currTheme.highlightColor);
+    if ((i % 5) != 0)
+    {
+      Gui::drawRectangled(93 + (i % 5) * 225, 240 + (i / 5) * 50, 215, 40, currTheme.separatorColor);
+      ss.str("");
+      // dmntchtReadCheatProcessMemory(addr, &out, sizeof(u32));
+      m_debugger->readMemory(&out, sizeof(u32), addr);
+      if (dataTypeSizes[m_searchType] == 1)
+      {
+        u8 outb[4];
+        memcpy(&outb, &out, 4);
+        ss << ((m_addressmod == 0 && m_selectedEntry == i) ? "[" : " ") << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)outb[0] << ((m_addressmod == 0 && m_selectedEntry == i) ? "]" : " ");
+        ss << ((m_addressmod == 1 && m_selectedEntry == i) ? "[" : " ") << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)outb[1] << ((m_addressmod == 1 && m_selectedEntry == i) ? "]" : " ");
+        ss << ((m_addressmod == 2 && m_selectedEntry == i) ? "[" : " ") << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)outb[2] << ((m_addressmod == 2 && m_selectedEntry == i) ? "]" : " ");
+        ss << ((m_addressmod == 3 && m_selectedEntry == i) ? "[" : " ") << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)outb[3] << ((m_addressmod == 3 && m_selectedEntry == i) ? "]" : " ");
+      }
+      else if (dataTypeSizes[m_searchType] == 2)
+      {
+        u16 outb[2];
+        memcpy(&outb, &out, 4);
+        ss << ((m_addressmod == 0 && m_selectedEntry == i) ? "[" : " ") << std::uppercase << std::hex << std::setfill('0') << std::setw(4) << (u16)outb[0] << ((m_addressmod == 0 && m_selectedEntry == i) ? "]" : " ");
+        ss << ((m_addressmod == 2 && m_selectedEntry == i) ? "[" : " ") << std::uppercase << std::hex << std::setfill('0') << std::setw(4) << (u16)outb[1] << ((m_addressmod == 2 && m_selectedEntry == i) ? "]" : " ");
+      }
+      else
+      {
+        ss << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << out << "";
+      }
+      Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+      addr += 4;
+    }
+    else
+    {
+      ss.str("");
+      ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (addr) << " ]";
+      Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+    }
+  }
+
+  // key hits
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E4 \uE0E5 Change Mode  \uE0E3 Goto address  \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E1 Back", ALIGNED_RIGHT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E0 Follow  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
+}
+void GuiCheats::drawEditRAMMenu3()
 {
   std::stringstream ss;
   if (m_searchMenuLocation != SEARCH_editRAM2)
@@ -1315,6 +1433,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
   {
     m_selectedEntry = m_selectedEntrySave;
     m_searchMenuLocation = SEARCH_NONE;
+    m_addressmod = 0;
   }
   else if (kdown & KEY_UP)
   {
@@ -1336,13 +1455,29 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_LEFT)
   {
-    if (m_selectedEntry % 5 > 1)
-      m_selectedEntry--;
+    if (m_addressmod >= dataTypeSizes[m_searchType] && dataTypeSizes[m_searchType] < 4)
+      m_addressmod -= dataTypeSizes[m_searchType];
+    else
+    {
+      if (m_selectedEntry % 5 > 1)
+      {
+        m_selectedEntry--;
+        m_addressmod = 4 - dataTypeSizes[m_searchType];
+      }
+    }
   }
   else if (kdown & KEY_RIGHT)
   {
-    if (m_selectedEntry % 5 < 4)
-      m_selectedEntry++;
+    if (m_addressmod + dataTypeSizes[m_searchType] < 4)
+      m_addressmod += dataTypeSizes[m_searchType];
+    else
+    {
+      if (m_selectedEntry % 5 < 4)
+      {
+        m_selectedEntry++;
+        m_addressmod = 0;
+      }
+    }
   }
   else if (kdown & KEY_PLUS) // Add bookmark
   {
@@ -1390,8 +1525,17 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
   {
     m_EditorBaseAddr += 0x80;
   }
+  else if (kdown & KEY_R && !(kheld & KEY_ZL))
+  {
+
+  }
+  else if (kdown & KEY_L && !(kheld & KEY_ZL))
+  {
+
+  }
   else if (kdown & KEY_R && kheld & KEY_ZL) // change type
   {
+    m_addressmod = 0;
     if (m_searchType < SEARCH_TYPE_FLOAT_64BIT)
     {
       u8 i = static_cast<u8>(m_searchType) + 1;
@@ -1400,6 +1544,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_L && kheld & KEY_ZL) // Chang type
   {
+    m_addressmod = 0;
     if (m_searchType > SEARCH_TYPE_UNSIGNED_8BIT)
     {
       u8 i = static_cast<u8>(m_searchType) - 1;
@@ -1672,6 +1817,10 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   {
     Gui::g_requestExit = true;
   }
+  // else if (kdown & KEY_L)
+  // {
+  //   Gui::g_nextGui = GUI_MEMORY_EDITOR;
+  // }
   else if (kdown & KEY_MINUS)
   {
     Gui::g_nextGui = GUI_FIRST_RUN;
@@ -2439,7 +2588,7 @@ void GuiCheats::onInput(u32 kdown)
         // add bookmark end
         // show memory editor
         // BM1
-        if (kdown & KEY_RSTICK && !(kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
+        if (kdown & KEY_RSTICK && (kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
         {
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
           m_BookmarkAddr = m_EditorBaseAddr;
@@ -2448,7 +2597,7 @@ void GuiCheats::onInput(u32 kdown)
           m_selectedEntrySave = m_selectedEntry;
           m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
         }
-        if (kdown & KEY_RSTICK && (kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
+        if (kdown & KEY_RSTICK && !(kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
         {
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
           m_BookmarkAddr = m_EditorBaseAddr;
@@ -2456,6 +2605,13 @@ void GuiCheats::onInput(u32 kdown)
           m_searchMenuLocation = SEARCH_editRAM2;
           m_selectedEntrySave = m_selectedEntry;
           m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+          if (m_memoryDump1 != nullptr)
+          {
+            m_addressmod = m_EditorBaseAddr % 4;
+            m_searchType = m_bookmark.type;
+            if (m_addressmod % dataTypeSizes[m_searchType] != 0)
+              m_addressmod = 0;
+          }
         }
 
         if ((kdown & KEY_LSTICK) && (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) && (m_memoryDump1 != nullptr))
