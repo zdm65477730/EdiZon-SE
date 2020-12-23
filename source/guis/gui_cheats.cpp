@@ -1418,8 +1418,8 @@ void GuiCheats::drawEditRAMMenu2()
   }
 
   // key hits
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E4 \uE0E5 Change Mode  \uE0E3 Goto address  \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E1 Back", ALIGNED_RIGHT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E0 Follow  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E3 Follow pointer \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E5 Forward  \uE0E1 Back", ALIGNED_RIGHT); //\uE0E4 Change Mode  
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
 }
 void GuiCheats::drawEditRAMMenu3()
 {
@@ -1477,6 +1477,32 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
     m_searchMenuLocation = SEARCH_NONE;
     m_addressmod = 0;
   }
+  else if (kdown & KEY_B && !(kheld & KEY_ZL))
+  {
+    if (m_jump_stack_index > 0)
+    {
+      m_jump_stack_index--;
+      m_EditorBaseAddr = m_jump_stack[m_jump_stack_index];
+      m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+    }
+    else
+    {
+      (new Snackbar("Jump Stack empty!"))->show();
+    }
+  }
+  else if (kdown & KEY_R && !(kheld & KEY_ZL))
+  {
+    if (m_jump_stack_index < m_jump_stack_max - 1)
+    {
+      m_jump_stack_index++;
+      m_EditorBaseAddr = m_jump_stack[m_jump_stack_index];
+      m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+    }
+    else
+    {
+      (new Snackbar("Top of Stack reached!"))->show();
+    }
+  }
   else if (kdown & KEY_UP)
   {
     if (m_selectedEntry > 4)
@@ -1504,7 +1530,8 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
       if (m_selectedEntry % 5 > 1)
       {
         m_selectedEntry--;
-        m_addressmod = 4 - dataTypeSizes[m_searchType];
+        if(dataTypeSizes[m_searchType] < 4)
+          m_addressmod = 4 - dataTypeSizes[m_searchType];
       }
     }
   }
@@ -1593,10 +1620,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
       m_searchType = static_cast<searchType_t>(i);
     }
   }
-  else if (kdown & KEY_R)
-  {
-  }
-  else if (kdown & KEY_L)
+  else if (kdown & KEY_L && !(kheld & KEY_ZL))
   {
   }
   else if (kdown & KEY_X) // Hex mode toggle
@@ -1606,23 +1630,84 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
     else
       m_searchValueFormat = FORMAT_DEC;
   }
-  else if (kdown & KEY_Y) // Goto
+  else if (kdown & KEY_Y && !(kheld & KEY_ZL)) // Goto
   {
     u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+    u64 pointed_address;
+    m_debugger->readMemory(&pointed_address, sizeof(u64), address);
+    if ((pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend) || (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd))
+    {
+      if (m_jump_stack_index + 1 < MAX_JUMP_STACK)
+      {
+        m_jump_stack[m_jump_stack_index] = address;
+        m_jump_stack_index++; 
+        m_jump_stack_max = m_jump_stack_index;
+        m_EditorBaseAddr = pointed_address;
+        m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+        m_addressmod = m_EditorBaseAddr % 4;
+        if (m_addressmod % dataTypeSizes[m_searchType] != 0)
+          m_addressmod = 0;
+      }
+      else
+      {
+        (new Snackbar("Jump Stack full!"))->show();
+      }
+    }
+    // std::stringstream ss;
+    // ss << "0x" << std::uppercase << std::hex << address;
+    // char input[16];
+    // if (Gui::requestKeyboardInput("Enter Address", "Enter Address to add to bookmark .", ss.str(), SwkbdType_QWERTY, input, 18))
+    // {
+    //   address = static_cast<u64>(std::stoul(input, nullptr, 16));
+    //   bookmark_t bookmark;
+    //   bookmark.type = m_searchType;
+    //   Gui::requestKeyboardInput("Enter Label", "Enter Label to add to bookmark .", "", SwkbdType_QWERTY, bookmark.label, 18);
+    //   m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+    //   m_AttributeDumpBookmark->flushBuffer();
+    //   (new Snackbar("Address added to bookmark!"))->show();
+    //   m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+    //   m_memoryDumpBookmark->flushBuffer();
+    // }
+  }
+  else if (kdown & KEY_Y && (kheld & KEY_ZL))
+  {
+    u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+    // u64 pointed_address = address;
     std::stringstream ss;
     ss << "0x" << std::uppercase << std::hex << address;
     char input[16];
-    if (Gui::requestKeyboardInput("Enter Address", "Enter Address to add to bookmark .", ss.str(), SwkbdType_QWERTY, input, 18))
+    if (Gui::requestKeyboardInput("Enter Address", "Enter Address to Jump to .", ss.str(), SwkbdType_QWERTY, input, 18))
     {
-      address = static_cast<u64>(std::stoul(input, nullptr, 16));
+      address = static_cast<u64>(std::stoul(input, nullptr, 16)); // this line has problem?
       bookmark_t bookmark;
       bookmark.type = m_searchType;
-      Gui::requestKeyboardInput("Enter Label", "Enter Label to add to bookmark .", "", SwkbdType_QWERTY, bookmark.label, 18);
+      if (!Gui::requestKeyboardInput("Enter Label", "Enter Label to add to bookmark .", "", SwkbdType_QWERTY, bookmark.label, 18))
+        strcpy(bookmark.label, "jump address");
       m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
       m_AttributeDumpBookmark->flushBuffer();
       (new Snackbar("Address added to bookmark!"))->show();
       m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
       m_memoryDumpBookmark->flushBuffer();
+      if ((address >= m_mainBaseAddr && address <= m_mainend) || (address >= m_heapBaseAddr && address <= m_heapEnd))
+      {
+        // printf("valid %lx\n", address);
+        (new Snackbar("Address valid!"))->show();
+        if (m_jump_stack_index < MAX_JUMP_STACK)
+        {
+          m_jump_stack[m_jump_stack_index] = m_EditorBaseAddr;
+          m_jump_stack_index++;
+          m_EditorBaseAddr = address;
+        }
+        else
+        {
+          (new Snackbar("Jump Stack full!"))->show();
+        }
+      }
+      else
+      {
+        // printf("not valid %lx\n", address);
+        (new Snackbar("Address not valid!"))->show();
+      }
     }
   }
   else if (kdown & KEY_A)
@@ -2647,12 +2732,37 @@ void GuiCheats::onInput(u32 kdown)
           m_searchMenuLocation = SEARCH_editRAM2;
           m_selectedEntrySave = m_selectedEntry;
           m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+          m_addressmod = m_EditorBaseAddr % 4;
+          if (m_addressmod % dataTypeSizes[m_searchType] != 0)
+            m_addressmod = 0;
           if (m_memoryDump1 != nullptr)
           {
-            m_addressmod = m_EditorBaseAddr % 4;
             m_searchType = m_bookmark.type;
-            if (m_addressmod % dataTypeSizes[m_searchType] != 0)
-              m_addressmod = 0;
+            // populate stack if on pointer
+            if (m_bookmark.pointer.depth > 0)
+            {
+              u64 nextaddress = m_mainBaseAddr;
+              for (int z = m_bookmark.pointer.depth; z > 0; z--)
+              {
+                nextaddress += m_bookmark.pointer.offset[z];
+                m_jump_stack[m_jump_stack_index] = nextaddress;
+                m_jump_stack_index++;
+                MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
+                if (meminfo.perm == Perm_Rw)
+                  m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
+                else
+                {
+                   // printf("*access denied*");
+                  break;
+                }
+                m_jump_stack[m_jump_stack_index] = nextaddress;
+                m_jump_stack_index++;
+              }
+            }
+            m_jump_stack[m_jump_stack_index] = m_EditorBaseAddr;
+            m_jump_stack_index++;
+            m_jump_stack_max = m_jump_stack_index;
+            //
           }
         }
 
