@@ -136,7 +136,8 @@ void GuiAbout::onInput(u32 kdown) {
         threadClose(&networkThread);
         threadRunning = false;
       }
-      Gui::g_requestExit = true;
+      if (!Config::getConfig()->easymode)
+        Gui::g_requestExit = true;
     }
     else
     {

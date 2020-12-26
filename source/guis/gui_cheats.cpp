@@ -6418,7 +6418,10 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
       std::stringstream realCheatPathold;
       realCheatPathold.str("");
       realCheatPathold << realCheatPath.str() << ".old";
+      if ((access(realCheatPath.str().c_str(), F_OK) == 0))
+      {
       REPLACEFILE(realCheatPath.str().c_str(),realCheatPathold.str().c_str());
+      };
       if (cheatzip.extractEntry(zipCheatPath.str().c_str(), realCheatPath.str().c_str()))
       {
         if (!(m_debugger->m_dmnt))
