@@ -6418,7 +6418,7 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
       std::stringstream realCheatPathold;
       realCheatPathold.str("");
       realCheatPathold << realCheatPath.str() << ".old";
-      rename(realCheatPath.str().c_str(),realCheatPathold.str().c_str());
+      REPLACEFILE(realCheatPath.str().c_str(),realCheatPathold.str().c_str());
       if (cheatzip.extractEntry(zipCheatPath.str().c_str(), realCheatPath.str().c_str()))
       {
         if (!(m_debugger->m_dmnt))
@@ -6427,9 +6427,40 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
           dmntchtForceOpenCheatProcess();
           printf("force open called\n");
         }
+        // else if (!Config::getConfig()->easymode)
+        //   (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
         else
-        opendir
-          (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
+        {
+          FILE *fp1 = fopen(realCheatPath.str().c_str(), "rb");
+          FILE *fp2 = fopen(realCheatPathold.str().c_str(), "rb");
+          size_t fileSize1, fileSize2;
+          fseek(fp1, 0, SEEK_END);
+          fileSize1 = ftell(fp1);
+          rewind(fp1);
+          fseek(fp2, 0, SEEK_END);
+          fileSize2 = ftell(fp2);
+          rewind(fp2);
+          bool different = false;
+          // printf("fileSize1 = %ld fileSize2 = %ld\n",fileSize1,fileSize2);
+          if (fileSize1 != fileSize2) different = true;
+          else 
+          {
+            char *content1;
+            char *content2;
+            content1 = new char[fileSize1];
+            fread(content1, 1, fileSize1, fp1);
+            content2 = new char[fileSize2];
+            fread(content2, 1, fileSize2, fp2);
+            // printf("memcmp(&content1,&content2,fileSize1-1) = %d \n",memcmp(&content1,&content2,fileSize1));
+            if (memcmp(content1,content2,fileSize1) !=0) different = true;
+            fclose(fp1);
+            fclose(fp2);
+            delete content1;
+            delete content2;
+          };
+          if (different)
+            (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
+        }
       }
     }
   }//
