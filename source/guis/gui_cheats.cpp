@@ -61,7 +61,7 @@ static const std::vector<u32> buttonCodes = {0x80000001,
 static const std::vector<s128> dataTypeMaxValues = {std::numeric_limits<u8>::max(), std::numeric_limits<s8>::max(), std::numeric_limits<u16>::max(), std::numeric_limits<s16>::max(), std::numeric_limits<u32>::max(), std::numeric_limits<s32>::max(), std::numeric_limits<u64>::max(), std::numeric_limits<s64>::max(), std::numeric_limits<s32>::max(), std::numeric_limits<s64>::max(), std::numeric_limits<u64>::max()};
 static const std::vector<s128> dataTypeMinValues = {std::numeric_limits<u8>::min(), std::numeric_limits<s8>::min(), std::numeric_limits<u16>::min(), std::numeric_limits<s16>::min(), std::numeric_limits<u32>::min(), std::numeric_limits<s32>::min(), std::numeric_limits<u64>::min(), std::numeric_limits<s64>::min(), std::numeric_limits<s32>::min(), std::numeric_limits<s64>::min(), std::numeric_limits<u64>::min()};
 
-static std::string titleNameStr, tidStr, pidStr, buildIDStr;
+static std::string titleNameStr, tidStr, pidStr, buildIDStr, cheatpathStr;
 
 static u32 cheatListOffset = 0;
 
@@ -1355,7 +1355,7 @@ void GuiCheats::drawEditRAMMenu2()
   for (u8 i = 0; i < 40; i++) // 8 Row X 5 column
   {
     if (m_selectedEntry == i)
-      Gui::drawRectangled(88 + (i % 5) * 225, 235 + (i / 5) * 50, 225, 50, m_searchMode == static_cast<searchMode_t>(i) ? currTheme.selectedColor : currTheme.highlightColor);
+      Gui::drawRectangled(88 + (i % 5) * 225, 235 + (i / 5) * 50, 225, 50, currTheme.highlightColor);
     if ((i % 5) != 0)
     {
       color_t separatorColor;
@@ -3317,6 +3317,7 @@ void GuiCheats::onInput(u32 kdown)
         printf("%s\n", Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str());
       printf("%s\n", tidStr.c_str());
       printf("%s\n", buildIDStr.c_str());
+      GuiCheats::_writegameid();
       //make sure not using bookmark
       // if (m_memoryDump1 != nullptr)
       // {
@@ -6343,7 +6344,20 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
  *   Dump all values from changed addresses into a file
  *   Matches should be stored as [MEMADDR][DUMPADDR] for fast comparing later on
  */
-
+void GuiCheats::_writegameid()
+{
+  FILE *pfile;
+  pfile = fopen(EDIZON_DIR "/ID.txt", "w");
+  if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
+    fputs(Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str(),pfile);
+  fputs("\n",pfile);
+  fputs(tidStr.c_str(),pfile);
+  fputs("\n", pfile);
+  fputs(buildIDStr.c_str(),pfile);
+  fputs("\n", pfile);
+  fputs(cheatpathStr.c_str(),pfile);
+  fclose(pfile);
+}
 void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
 {
   std::stringstream lonelyCheatPath;
@@ -6401,6 +6415,10 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
     if (!(access(realCheatPath.str().c_str(), F_OK) == 0) || Config::getConfig()->enablecheats || Config::getConfig()->easymode)
     {
       Config::getConfig()->enablecheats = false;
+      std::stringstream realCheatPathold;
+      realCheatPathold.str("");
+      realCheatPathold << realCheatPath.str() << ".old";
+      rename(realCheatPath.str().c_str(),realCheatPathold.str().c_str());
       if (cheatzip.extractEntry(zipCheatPath.str().c_str(), realCheatPath.str().c_str()))
       {
         if (!(m_debugger->m_dmnt))
@@ -6410,6 +6428,7 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
           printf("force open called\n");
         }
         else
+        opendir
           (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
       }
     }
@@ -6424,6 +6443,7 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
   // {
   //   REPLACEFILE(realCheatPath.str().c_str(), EdizonCheatPath.str().c_str());
   // }
+  cheatpathStr = realCheatPath.str(); 
 }
 
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID)

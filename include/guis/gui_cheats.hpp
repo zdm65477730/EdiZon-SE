@@ -245,6 +245,7 @@ private:
   void save_meminfos();
   void load_meminfos();
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
+  void _writegameid();
   u64 m_heapSize = 0;
   u64 m_mainSize = 0;
   u64 m_heapEnd = 0;

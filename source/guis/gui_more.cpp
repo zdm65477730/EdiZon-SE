@@ -92,6 +92,7 @@ void GuiMore::onInput(u32 kdown)
   else if (kdown & KEY_LSTICK) 
   {
     Config::getConfig()->easymode = !Config::getConfig()->easymode;
+    Config::getConfig()->options[0] = true;
   }
   else if (kdown & KEY_RSTICK) 
   {
