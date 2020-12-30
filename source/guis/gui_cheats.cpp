@@ -4218,6 +4218,13 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
         else
           memcpy(&realValue, buffer + i, dataTypeSizes[searchType]);
 
+        if (Config::getConfig()->exclude_ptr_candidates && searchMode != SEARCH_MODE_POINTER)
+        {
+          searchValue_t ptr_address;
+          memcpy(&ptr_address, buffer + i - i % 8, 8);
+          if (((ptr_address._u64 >= m_mainBaseAddr) && (ptr_address._u64 <= (m_mainend))) || ((ptr_address._u64 >= m_heapBaseAddr) && (ptr_address._u64 <= (m_heapEnd))))
+            continue;
+        }
         switch (searchMode)
         {
         case SEARCH_MODE_EQ:

@@ -29,6 +29,8 @@ namespace Config {
     bool use_absolute_address;
     bool not_first_run;
     bool easymode;
+    bool exclude_ptr_candidates;
+    bool show_previous_values;
   } config_data_t;
 
   void readConfig();
