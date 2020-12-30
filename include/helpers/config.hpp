@@ -31,6 +31,7 @@ namespace Config {
     bool easymode;
     bool exclude_ptr_candidates;
     bool show_previous_values;
+    char store_extension[10];
   } config_data_t;
 
   void readConfig();

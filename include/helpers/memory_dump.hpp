@@ -6,6 +6,7 @@
 #include <vector>
 extern bool print_details;
 extern std::string m_edizon_dir; 
+extern std::string m_store_extension;
 // extern bool m_compress = false;
 class MemoryDump
 {

@@ -1930,6 +1930,16 @@ void GuiCheats::drawSearchRAMMenu()
       Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 375, currTheme.separatorColor, "Search Now!", ALIGNED_CENTER);
     }
 
+    {
+      std::string s = m_edizon_dir + "/datadump2.datB";
+      if (access(s.c_str(), F_OK) == 0)
+      {
+        ss.str("");
+        ss << "\uE0AF Store ";
+        ss << m_store_extension;
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, 375, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+      }
+    };
     break;
   case SEARCH_NONE:
   case SEARCH_editRAM:
@@ -3066,6 +3076,8 @@ void GuiCheats::onInput(u32 kdown)
             removef(EDIZON_DIR "/memdump1.dat");
             removef(EDIZON_DIR "/memdump1a.dat");
             removef(EDIZON_DIR "/datadump2.dat");
+            removef(EDIZON_DIR "/datadump2.datA");
+            removef(EDIZON_DIR "/datadump2.datB");
             // removef(EDIZON_DIR "/memdump2.dat");
             // removef(EDIZON_DIR "/memdump3.dat");
 
@@ -3584,6 +3596,19 @@ void GuiCheats::onInput(u32 kdown)
         if (kdown & KEY_DUP)
         {
           m_searchMode = SEARCH_MODE_SAME;
+          {
+            std::string s = m_edizon_dir + "/datadump2.datB";
+            if (access(s.c_str(), F_OK) == 0)
+            {
+              if (m_store_extension == "B")
+                m_store_extension = "A";
+              else
+                m_store_extension = "B";
+              memcpy(Config::getConfig()->store_extension, m_store_extension.c_str(), m_store_extension.size());
+              Config::getConfig()->store_extension[m_store_extension.size()] = 0;
+              Config::writeConfig();
+            }
+          };
         }
         else if (kdown & KEY_DDOWN)
         {
@@ -3917,7 +3942,7 @@ void GuiCheats::onInput(u32 kdown)
       }
     }
 
-    if (kdown & KEY_X)
+    if (kdown & KEY_X && !(kheld & KEY_ZL))
     {
       if (m_searchMenuLocation == SEARCH_VALUE)
       {
@@ -3926,6 +3951,10 @@ void GuiCheats::onInput(u32 kdown)
         else
           m_searchValueFormat = FORMAT_DEC;
       }
+    }
+    else if (kdown & KEY_X && (kheld & KEY_ZL))
+    {
+      // key available
     }
 
     if (kdown & KEY_L)
@@ -4692,7 +4721,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
   // helper init
   MemoryDump *helperDump = new MemoryDump(EDIZON_DIR "/memdump1a.dat", DumpType::HELPER, false);   // has address, size, count for fetching buffer from memory
   MemoryDump *newhelperDump = new MemoryDump(EDIZON_DIR "/memdump3a.dat", DumpType::HELPER, true); // has address, size, count for fetching buffer from memory
-  std::string s = m_edizon_dir + "/datadump2.dat";
+  std::string s = m_edizon_dir + "/datadump2.dat" + m_store_extension;
   REPLACEFILE(s.c_str(), EDIZON_DIR "/predatadump2.dat");
   MemoryDump *predataDump = new MemoryDump(EDIZON_DIR "/predatadump2.dat", DumpType::DATA, false);
   MemoryDump *newdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, true);

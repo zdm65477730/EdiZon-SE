@@ -36,6 +36,7 @@ char *g_edizonPath;
 
 static int debugOutputFile;
 std::string m_edizon_dir = "/switch/EdiZon";
+std::string m_store_extension = "A";
 static bool updateThreadRunning = false;
 static Mutex mutexCurrGui;
 static Gui *currGui = nullptr;
@@ -272,6 +273,8 @@ int main(int argc, char **argv)
     Gui::g_splashDisplayed = true;
     Config::readConfig();
     m_edizon_dir = Config::getConfig()->edizon_dir;
+    if (Config::getConfig()->store_extension[0] > 0)
+      m_store_extension = Config::getConfig()->store_extension;
     if (m_edizon_dir.compare(0, sizeof(EDIZON_DIR)-1, EDIZON_DIR) != 0)
       m_edizon_dir = EDIZON_DIR;
     if (firstruncheck())
