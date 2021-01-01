@@ -1079,6 +1079,7 @@ void GuiCheats::draw()
     drawSearchRAMMenu();
     drawEditRAMMenu();
     drawEditRAMMenu2();
+    drawEditExtraSearchValues();
     drawSearchPointerMenu();
     Gui::endDraw();
   }
@@ -1421,14 +1422,14 @@ void GuiCheats::drawEditRAMMenu2()
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E3 Follow pointer \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E5 Forward  \uE0E1 Back", ALIGNED_RIGHT); //\uE0E4 Change Mode  
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
 }
-void GuiCheats::drawEditRAMMenu3()
+void GuiCheats::drawEditExtraSearchValues()
 {
   std::stringstream ss;
-  if (m_searchMenuLocation != SEARCH_editRAM2)
+  if (m_searchMenuLocation != SEARCH_editExtraSearchValues)
     return;
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
-  Gui::drawText(font24, 120, 70, currTheme.textColor, "\uE132   Edit Memory 2");
+  Gui::drawText(font24, 120, 70, currTheme.textColor, "\uE132   Extra Search Values");
   Gui::drawTextAligned(font20, 100, 160, currTheme.textColor, "\uE149 \uE0A4", ALIGNED_LEFT);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, 160, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT);
   Gui::drawTextAligned(font20, 260, 160, m_searchMenuLocation == SEARCH_TYPE ? currTheme.selectedColor : currTheme.textColor, "U8", ALIGNED_CENTER);
@@ -1468,6 +1469,13 @@ void GuiCheats::drawEditRAMMenu3()
   }
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E4 \uE0E5 Change Mode  \uE0E3 Goto address  \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E1 Back", ALIGNED_RIGHT);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E0 Follow  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
+}
+void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
+{
+  if (kdown & KEY_B)
+  {
+    m_searchMenuLocation = SEARCH_NONE;
+  }
 }
 void GuiCheats::editor_input(u32 kdown, u32 kheld)
 {
@@ -1748,7 +1756,8 @@ void GuiCheats::drawSearchRAMMenu()
   u32 strWidth = 0;
   std::stringstream ss;
 
-  if ((m_searchMenuLocation == SEARCH_NONE) || (m_searchMenuLocation == SEARCH_POINTER) || (m_searchMenuLocation == SEARCH_editRAM))
+  if ((m_searchMenuLocation == SEARCH_NONE) || (m_searchMenuLocation == SEARCH_POINTER) || (m_searchMenuLocation == SEARCH_editRAM)
+   || (m_searchMenuLocation == SEARCH_editRAM2) || (m_searchMenuLocation == SEARCH_editExtraSearchValues))
     return;
 
   Gui::drawRectangled(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x00, 0x00, 0x00, 0xA0));
@@ -1945,6 +1954,7 @@ void GuiCheats::drawSearchRAMMenu()
   case SEARCH_editRAM:
   case SEARCH_editRAM2:
   case SEARCH_POINTER:
+  case SEARCH_editExtraSearchValues:
     break;
   }
 }
@@ -1966,7 +1976,7 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   {
     if (m_selectedEntry > 0)
       m_selectedEntry--;
-    if (m_selectedEntry+1 == cheatListOffset && cheatListOffset > 0)
+    if (m_selectedEntry + 1 == cheatListOffset && cheatListOffset > 0)
       cheatListOffset-=8;
   }
   else if (kdown & KEY_DOWN) //
@@ -2035,6 +2045,11 @@ void GuiCheats::onInput(u32 kdown)
   if (m_searchMenuLocation == SEARCH_editRAM2)
   {
     editor_input(kdown, kheld);
+    return;
+  };
+  if (m_searchMenuLocation == SEARCH_editExtraSearchValues)
+  {
+    EditExtraSearchValues_input(kdown, kheld);
     return;
   };
   if (Config::getConfig()->easymode)
@@ -3299,7 +3314,9 @@ void GuiCheats::onInput(u32 kdown)
     {
       if (m_searchMenuLocation == SEARCH_NONE)
       {
-        if (m_searchMode == SEARCH_MODE_NONE) 
+        if (Config::getConfig()->extra_value)
+          m_searchMenuLocation = SEARCH_editExtraSearchValues;
+        else if (m_searchMode == SEARCH_MODE_NONE) 
         {
           m_searchMenuLocation = SEARCH_MODE;
           if (m_selectedEntry > 11)
@@ -3378,6 +3395,8 @@ void GuiCheats::onInput(u32 kdown)
           }
 
           break;
+        case SEARCH_editExtraSearchValues:
+          break;
         }
       }
 
@@ -3412,6 +3431,8 @@ void GuiCheats::onInput(u32 kdown)
           }
 
           break;
+        case SEARCH_editExtraSearchValues:
+          break;
         }
       }
 
@@ -3439,6 +3460,8 @@ void GuiCheats::onInput(u32 kdown)
           if (m_selectedEntry % 5 > 1)
             m_selectedEntry--;
           break;
+        case SEARCH_editExtraSearchValues:
+          break;
         }
       }
 
@@ -3465,6 +3488,8 @@ void GuiCheats::onInput(u32 kdown)
         case SEARCH_editRAM: // need RIGHT
           if (m_selectedEntry % 5 < 4)
             m_selectedEntry++;
+          break;
+        case SEARCH_editExtraSearchValues:
           break;
         }
       }
@@ -4259,6 +4284,11 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
         case SEARCH_MODE_EQ:
           if (realValue._s64 == searchValue1._s64)
           {
+            if (Config::getConfig()->extra_value)
+            {
+              if (!true) // extra value match
+                break;
+            }
             (*displayDump)->addData((u8 *)&address, sizeof(u64));
             helperinfo.count++;
           }
@@ -6518,6 +6548,7 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
 
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID)
 {
+  return false;
   std::stringstream ss;
 
   ss << "/atmosphere/contents/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << titleID << "/cheats/";

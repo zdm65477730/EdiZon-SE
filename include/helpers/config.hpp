@@ -32,6 +32,7 @@ namespace Config {
     bool exclude_ptr_candidates;
     bool show_previous_values;
     char store_extension[10];
+    bool extra_value;
   } config_data_t;
 
   void readConfig();

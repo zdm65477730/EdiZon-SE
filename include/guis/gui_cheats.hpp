@@ -37,13 +37,13 @@ private:
   u8 m_ramBuffer[0x10 * 14] = {0};
   color_t m_memory[1024] = {0};
 
-  u8 m_selectedEntry = 0;
-  u8 m_selectedEntrySave = 0;
-  u8 m_selectedEntrySaveCL = 0;
-  u8 m_selectedEntrySaveBM = 0;
-  u8 m_selectedEntrySaveSR = 0;
+  u32 m_selectedEntry = 0;
+  u32 m_selectedEntrySave = 0;
+  u32 m_selectedEntrySaveCL = 0;
+  u32 m_selectedEntrySaveBM = 0;
+  u32 m_selectedEntrySaveSR = 0;
 
-  u8 m_searchValueIndex = 0;
+  u32 m_searchValueIndex = 0;
   u32 m_addresslist_offset = 0;
   u32 m_addresslist_offsetSaveBM = 0;
   u32 m_addresslist_offsetSaveSR = 0;
@@ -64,6 +64,7 @@ private:
     SEARCH_VALUE,
     SEARCH_editRAM,
     SEARCH_editRAM2,
+    SEARCH_editExtraSearchValues,
     SEARCH_POINTER
   } m_searchMenuLocation = SEARCH_NONE;
 
@@ -265,10 +266,11 @@ private:
   void draw_easymode();
   std::string buttonStr(u32 buttoncode);
   void drawEditRAMMenu2();
-  void drawEditRAMMenu3();
+  void drawEditExtraSearchValues();
   bool m_editCheat = false;
   bool m_32bitmode = false;
   void editor_input(u32 kdown, u32 kheld);
+  void EditExtraSearchValues_input(u32 kdown, u32 kheld);
   void easymode_input(u32 kdown, u32 kheld);
   void drawSearchPointerMenu();
   void searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1,
