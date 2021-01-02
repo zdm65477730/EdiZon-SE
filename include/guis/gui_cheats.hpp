@@ -81,6 +81,23 @@ private:
   MemoryDump *m_AttributeDumpBookmark;
   MemoryDump *m_pointeroffsetDump;
   MemoryDump *m_dataDump;
+  struct MultiSearchEntry_t
+  {
+    char label[20] = {0};
+    s16 offset = 0;
+    bool on = false;
+    searchType_t type = SEARCH_TYPE_UNSIGNED_32BIT;
+    searchMode_t mode = SEARCH_MODE_EQ;
+    searchValue_t value1 = {0}, value2 = {0};
+  };
+  struct MultiSearch_t
+  {
+    char laber[40] = {0};
+    u32 target = 0;
+    MultiSearchEntry_t Entries[10];
+  };
+  MultiSearch_t m_multisearch;
+
   struct PSsetup_t
   {
     u64 m_numoffset = 3;
@@ -203,7 +220,7 @@ private:
   };
   struct bookmark_t
   {
-    char label[18] = {0};
+    char label[19] = {0};
     searchType_t type;
     pointer_chain_t pointer;
     bool heap = true;
@@ -245,6 +262,8 @@ private:
   bool unresolved2(pointer_chain_t *pointer);
   void save_meminfos();
   void load_meminfos();
+  void save_multisearch_setup();
+  void load_multisearch_setup();
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
   void _writegameid();
   u64 m_heapSize = 0;

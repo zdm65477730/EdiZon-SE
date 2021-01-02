@@ -68,6 +68,7 @@ static u32 cheatListOffset = 0;
 static bool _isAddressFrozen(uintptr_t);
 static std::string _getAddressDisplayString(u64, Debugger *debugger, searchType_t searchType);
 static std::string _getValueDisplayString(searchValue_t searchValue, searchType_t searchType);
+static searchValue_t _get_entry(searchValue_t value, searchType_t type);
 // static void _moveLonelyCheats(u8 *buildID, u64 titleID);
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 
@@ -298,6 +299,7 @@ if (!(m_debugger->m_dmnt)){
   // MemoryDump *m_pointeroffsetDump = new MemoryDump(EDIZON_DIR "/pointerdump1.dat", DumpType::POINTER, false);
   // m_pointeroffsetDump->setPointerSearchParams(m_max_depth, m_numoffset, m_max_range, m_buildID);
   load_meminfos();
+  load_multisearch_setup();
   m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::UNDEFINED, false);
   // start mod make list of memory found toggle between current find and bookmark
   m_memoryDumpBookmark = new MemoryDump(EDIZON_DIR "/memdumpbookmark.dat", DumpType::ADDR, false);
@@ -1427,54 +1429,523 @@ void GuiCheats::drawEditExtraSearchValues()
   std::stringstream ss;
   if (m_searchMenuLocation != SEARCH_editExtraSearchValues)
     return;
-  Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);
+  Gui::drawRectangled(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x00, 0x00, 0x00, 0xA0));
+  // Gui::drawRectangle(50, 50, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
+  Gui::drawRectangle(0, 50, Gui::g_framebuffer_width, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
-  Gui::drawText(font24, 120, 70, currTheme.textColor, "\uE132   Extra Search Values");
-  Gui::drawTextAligned(font20, 100, 160, currTheme.textColor, "\uE149 \uE0A4", ALIGNED_LEFT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, 160, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT);
-  Gui::drawTextAligned(font20, 260, 160, m_searchMenuLocation == SEARCH_TYPE ? currTheme.selectedColor : currTheme.textColor, "U8", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, 510, 160, m_searchMenuLocation == SEARCH_MODE ? currTheme.selectedColor : currTheme.textColor, "U16", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, 760, 160, m_searchMenuLocation == SEARCH_REGION ? currTheme.selectedColor : currTheme.textColor, "u32", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, 1010, 160, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "u64", ALIGNED_CENTER);
-  u64 addr = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20;
-  u32 out;
-  u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+  {
+      static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
+      ss.str("");
+      ss << "\uE132   Multi Target Memory Search";
+      ss << "   [ " << regionNames[m_searchRegion] << " ]";
+      // ss << " line = " << m_selectedEntry / 6;
+  }
+  Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
   ss.str("");
-  ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address) << " ] " << dataTypes[m_searchType];
-  Gui::drawText(font24, 520, 70, currTheme.textColor, ss.str().c_str());
-  ss.str("");
-  //dmntchtReadCheatProcessMemory(address, &out, sizeof(u32));
-  m_debugger->readMemory(&out, sizeof(u32), address);
-  Gui::drawText(font24, 830, 70, currTheme.textColor, _getAddressDisplayString(address, m_debugger, m_searchType).c_str()); //ss.str().c_str()
-  for (u8 i = 0; i < 40; i++)
+#define shift1 15 + 50
+#define shift2 40
+#define c0 75
+#define c1 135 + shift1
+#define c2 260 + shift1
+#define c3 385 + shift1
+#define c4 510 + shift1
+#define c5 760 + shift1 - shift2
+#define c6 1010 + shift1 + shift2
+#define linegape 30
+#define M_ENTRY m_multisearch.Entries[i / 6]
+#define labelline 145
+  color_t cellColor;
+  Gui::drawTextAligned(font20, c0, labelline, currTheme.textColor, "LABEL", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c1, labelline, currTheme.textColor, "OFFSET", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c2, labelline, currTheme.textColor, "On/OFF", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c3, labelline, currTheme.textColor, "TYPE", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c4, labelline, currTheme.textColor, "MODE", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c5, labelline, currTheme.textColor, "VALUE 1", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c6, labelline, currTheme.textColor, "VALUE 2", ALIGNED_CENTER);
+
+  for (u8 i = 0; i < 60; i++) // 10 Row X 6 column
   {
     if (m_selectedEntry == i)
-      Gui::drawRectangled(88 + (i % 5) * 225, 235 + (i / 5) * 50, 225, 50, m_searchMode == static_cast<searchMode_t>(i) ? currTheme.selectedColor : currTheme.highlightColor);
-    if ((i % 5) != 0)
-    {
-      Gui::drawRectangled(93 + (i % 5) * 225, 240 + (i / 5) * 50, 215, 40, currTheme.separatorColor);
-      ss.str("");
-      // dmntchtReadCheatProcessMemory(addr, &out, sizeof(u32));
-      m_debugger->readMemory(&out, sizeof(u32), addr);
-      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << out << "";
-      Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
-      addr += 4;
-    }
+      cellColor = currTheme.selectedColor;
     else
+      cellColor = currTheme.textColor;
+    if ((i % 6) == 0)
     {
       ss.str("");
-      ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (addr) << " ]";
-      Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+      ss << M_ENTRY.label;
+      Gui::drawTextAligned((ss.str().size() > 8) ? font14 : font20, c0, 160 + linegape * (1 + i / 6), ((i / 6) == (m_selectedEntry / 6)) ? currTheme.selectedColor : currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+
+      ss.str("");
+      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(3) << m_multisearch.Entries[i / 6].offset;
+      Gui::drawTextAligned(font20, c1, 160 + linegape * (1 + i / 6), cellColor, ss.str().c_str(), ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 1)
+    {
+      Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, (m_multisearch.Entries[i / 6].on) ? "On" : "OFF", ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 2)
+    {
+      static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "pointer"};
+      Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, typeNames[m_multisearch.Entries[i / 6].type], ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 3)
+    {
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  "};
+      if (M_ENTRY.type != SEARCH_TYPE_POINTER)
+        Gui::drawTextAligned(font20, c4, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 4)
+    {
+      if (M_ENTRY.type != SEARCH_TYPE_POINTER)
+        Gui::drawTextAligned(font20, c5, 160 + linegape * (1 + i / 6), cellColor, _getValueDisplayString(m_multisearch.Entries[i / 6].value1, m_multisearch.Entries[i / 6].type).c_str(), ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 5)
+    {
+      if ((m_multisearch.Entries[i / 6].mode == SEARCH_MODE_RANGE) && (M_ENTRY.type != SEARCH_TYPE_POINTER))
+        Gui::drawTextAligned(font20, c6, 160 + linegape * (1 + i / 6), cellColor, _getValueDisplayString(m_multisearch.Entries[i / 6].value2, m_multisearch.Entries[i / 6].type).c_str(), ALIGNED_CENTER);
     }
   }
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E4 \uE0E5 Change Mode  \uE0E3 Goto address  \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E1 Back", ALIGNED_RIGHT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E0 Follow  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
+  // if (m_selectedEntry == 1)
+  //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 155, 345, 310, 90, currTheme.highlightColor);
+  // if (m_searchType != SEARCH_TYPE_NONE && m_searchMode != SEARCH_MODE_NONE && m_searchRegion != SEARCH_REGION_NONE)
+  // {
+  //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 150, 350, 300, 80, currTheme.selectedColor);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 375, currTheme.backgroundColor, "Search Now!", ALIGNED_CENTER);
+  // }
+  // else
+  // {
+  //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 150, 350, 300, 80, currTheme.selectedButtonColor);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 375, currTheme.separatorColor, "Search Now!", ALIGNED_CENTER);
+  // }
+  Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 520, currTheme.textColor, "Set the value(s) you want to search for. Put the cursor on the primary target and press \uE0B3 to start the search(Chosen target is automatically turn on)\n"
+                                                                                       "Each line you enable will be used to narrow down the target. Pointer is 64bit values that falls in the range of either main or heap.\n"
+                                                                                       "Move the cursor to the field you want to modify. Press \uE0A4 \uE0A5 to modify. Press \uE0A0 to edit numeric Values.\n"
+                                                                                       "Use \uE0A6 + \uE0A0 to edit label. Use \uE0A2 to toggle on/off. Use \uE0A6 + \uE0A2 to toggle Hex mode. Use \uE0A3 to jump cursor to value1.\n"
+                                                                                       "Press \uE0A1 to exit this screen.",
+                       ALIGNED_CENTER);
+  //  "Press quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==/!=\n"
+  //  "If you search type is floating point \uE0A5 negate the number. \uE0C4 cycle float type \uE0C5 presets \uE0A3 cycle integer type",
 }
 void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
 {
-  if (kdown & KEY_B)
+#define M_ENTRY m_multisearch.Entries[m_selectedEntry / 6]
+  std::stringstream ss;
+  if (kdown & KEY_B && !(kheld & KEY_ZL))
   {
+    GuiCheats::save_multisearch_setup();
+    m_selectedEntry = m_selectedEntrySave;
     m_searchMenuLocation = SEARCH_NONE;
+  }
+  else if (kdown & KEY_PLUS && !(kheld & KEY_ZL))
+  {
+    m_multisearch.target = m_selectedEntry / 6;
+    m_searchType = M_ENTRY.type;
+    m_searchMode = M_ENTRY.mode;
+    m_searchValue[0] = M_ENTRY.value1;
+    m_searchValue[1] = M_ENTRY.value2; 
+    // START SEARCH
+    {
+      if (m_searched)
+      {
+        if (m_memoryDump1 == nullptr)
+          m_memoryDump->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
+        else
+          m_memoryDump1->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
+        (new Snackbar("Already did one search for this session, relaunch to do another"))->show();
+      }
+      else
+      {
+        m_searched = true;
+        (new MessageBox("Traversing title memory.\n \nThis may take a while...", MessageBox::NONE))->show();
+        requestDraw();
+        overclockSystem(true);
+        if (m_searchMode == SEARCH_MODE_POINTER)
+          m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+        if (m_memoryDump1 != nullptr)
+        {
+          updatebookmark(true, false, true);
+          m_memoryDump = m_memoryDumpBookmark;
+        }
+        else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
+        {
+          if (m_memoryDump->size() == 0)
+          {
+            delete m_memoryDump;
+            m_use_range = false;
+            if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+              GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+            else
+              GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+            printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
+          }
+          else if (m_memoryDump->getDumpInfo().dumpType == DumpType::DATA)
+          {
+            printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
+            if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+              GuiCheats::searchMemoryValuesSecondary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+            else
+              GuiCheats::searchMemoryValuesSecondary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+            delete m_memoryDump;
+            std::string s = m_edizon_dir + "/memdump1.dat";
+            REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
+            m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
+          }
+          else if (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
+          {
+            if (m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
+            {
+              if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+                GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_targetmemInfos);
+              else
+                GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_memoryInfo);
+              delete m_memoryDump;
+              std::string s = m_edizon_dir + "/memdump1.dat";
+              REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
+              s = m_edizon_dir + "/memdump1a.dat";
+              REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+              m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
+              s = m_edizon_dir + "/datadump2.dat";
+              REPLACEFILE(EDIZON_DIR "/datadump4.dat", s.c_str());
+              REPLACEFILE(EDIZON_DIR "/datadumpAa.dat", EDIZON_DIR "/datadumpA.dat")
+              REPLACEFILE(EDIZON_DIR "/datadumpBa.dat", EDIZON_DIR "/datadumpB.dat");
+            }
+            else
+            {
+              m_nothingchanged = false;
+              GuiCheats::searchMemoryAddressesSecondary2(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
+              if (m_nothingchanged == false)
+              {
+                std::string s = m_edizon_dir + "/memdump1a.dat";
+                REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+              }
+            }
+          }
+        }
+        else
+        {
+          if (m_memoryDump->size() == 0)
+          {
+            delete m_memoryDump;
+            if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+              GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+            else
+              GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+          }
+          else
+          {
+            m_nothingchanged = false;
+            GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
+            if (m_nothingchanged == false)
+            {
+              std::string s = m_edizon_dir + "/memdump1a.dat";
+              REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+            }
+          }
+        }
+        overclockSystem(false);
+        Gui::g_currMessageBox->hide();
+        m_searchMenuLocation = SEARCH_NONE;
+      }
+    }
+  }
+  else if (kdown & KEY_MINUS && !(kheld & KEY_ZL))
+  {
+    for (u8 i = 0; i < 10; i++)
+    {
+      m_multisearch.Entries[i].offset = i * 0x8;
+      m_multisearch.Entries[i].on = false;
+      m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
+      m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
+      m_multisearch.Entries[i].value1._u64 = 0;
+      m_multisearch.Entries[i].value2._u64 = 0;
+      ss.str("");
+      ss << "Item " << std::dec << (u16)i + 1;
+      strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    }
+  }
+  else if (kdown & KEY_MINUS && (kheld & KEY_ZL))
+  {
+    u8 i = 0;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
+    m_multisearch.Entries[i].value1._u64 = 0;
+    m_multisearch.Entries[i].value2._u64 = 0;
+    ss.str("");
+    ss << "Item " << std::dec << (u16)i + 1;
+
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    i = 1;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+    m_multisearch.Entries[i].value1._f32 = 0.1;
+    m_multisearch.Entries[i].value2._f32 = 1000;
+    ss.str("");
+    ss << "Range 32+";
+
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    i = 2;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+    m_multisearch.Entries[i].value1._f32 = -0.1;
+    m_multisearch.Entries[i].value2._f32 = -1000;
+    ss.str("");
+    ss << "Range 32-";
+
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    i = 3;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
+    m_multisearch.Entries[i].value1._f64 = 0;
+    m_multisearch.Entries[i].value2._f64 = 0;
+    ss.str("");
+    ss << "Double";
+
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    i = 4;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+    m_multisearch.Entries[i].value1._f64 = 0.1;
+    m_multisearch.Entries[i].value2._f64 = 1000;
+    ss.str("");
+    ss << "Range 64+";
+
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    i = 5;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+    m_multisearch.Entries[i].value1._f64 = -0.1;
+    m_multisearch.Entries[i].value2._f64 = -1000;
+    ss.str("");
+    ss << "Range 64-";
+
+    // strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    // u8 i = 6;
+    // m_multisearch.Entries[i].offset = i * 0x8;
+    // m_multisearch.Entries[i].on = false;
+    // m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
+    // m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
+    // m_multisearch.Entries[i].value1._u64 = 0;
+    // m_multisearch.Entries[i].value2._u64 = 0;
+    // ss.str("");
+    // ss << "Item " << std::dec << (u16)i + 1;
+    // strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+  }
+  else if (kdown & KEY_X && !(kheld & KEY_ZL))
+  {
+    m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
+  }
+  else if (kdown & KEY_R && !(kheld & KEY_ZL))
+  {
+    switch (m_selectedEntry % 6)
+    {
+    case 0:
+      m_multisearch.Entries[m_selectedEntry / 6].offset++;
+      break;
+    case 1:
+      m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
+      break;
+    case 2:
+      if (M_ENTRY.type == SEARCH_TYPE_UNSIGNED_32BIT)
+      {
+        M_ENTRY.type = SEARCH_TYPE_UNSIGNED_64BIT;
+      }
+      else if (M_ENTRY.type == SEARCH_TYPE_UNSIGNED_64BIT)
+      {
+        M_ENTRY.type = SEARCH_TYPE_UNSIGNED_8BIT;
+      }
+      else if (M_ENTRY.type == SEARCH_TYPE_UNSIGNED_8BIT)
+      {
+        M_ENTRY.type = SEARCH_TYPE_UNSIGNED_16BIT;
+      }
+      else
+        M_ENTRY.type = SEARCH_TYPE_UNSIGNED_32BIT;
+      break;
+    case 3:
+      M_ENTRY.mode = SEARCH_MODE_EQ;
+      break;
+    case 4:
+      switch (M_ENTRY.type)
+      {
+      case SEARCH_TYPE_FLOAT_32BIT:
+        M_ENTRY.value1._f32++;
+        break;
+      case SEARCH_TYPE_FLOAT_64BIT:
+        M_ENTRY.value1._f64++;
+        break;
+      default:
+        M_ENTRY.value1._u64++;
+      }
+      break;
+    case 5:
+      switch (M_ENTRY.type)
+      {
+      case SEARCH_TYPE_FLOAT_32BIT:
+        M_ENTRY.value2._f32++;
+        break;
+      case SEARCH_TYPE_FLOAT_64BIT:
+        M_ENTRY.value2._f64++;
+        break;
+      default:
+        M_ENTRY.value2._u64++;
+      }
+      break;
+    }
+  }
+  else if (kdown & KEY_L && !(kheld & KEY_ZL))
+  {
+    switch (m_selectedEntry % 6)
+    {
+    case 0:
+      m_multisearch.Entries[m_selectedEntry / 6].offset--;
+      break;
+    case 1:
+      m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
+      break;
+    case 2:
+      if (m_multisearch.Entries[m_selectedEntry / 6].type == SEARCH_TYPE_FLOAT_32BIT)
+      {
+        m_multisearch.Entries[m_selectedEntry / 6].type = SEARCH_TYPE_FLOAT_64BIT;
+      }
+      else if (M_ENTRY.type == SEARCH_TYPE_FLOAT_64BIT)
+      {
+        M_ENTRY.type = SEARCH_TYPE_POINTER;
+      }
+      else
+        m_multisearch.Entries[m_selectedEntry / 6].type = SEARCH_TYPE_FLOAT_32BIT;
+      break;
+    case 3:
+      M_ENTRY.mode = SEARCH_MODE_RANGE;
+      break;
+    case 4:
+      switch (M_ENTRY.type)
+      {
+      case SEARCH_TYPE_FLOAT_32BIT:
+        M_ENTRY.value1._f32--;
+        break;
+      case SEARCH_TYPE_FLOAT_64BIT:
+        M_ENTRY.value1._f64--;
+        break;
+      default:
+        M_ENTRY.value1._u64--;
+      }
+      break;
+    case 5:
+      switch (M_ENTRY.type)
+      {
+      case SEARCH_TYPE_FLOAT_32BIT:
+        M_ENTRY.value2._f32--;
+        break;
+      case SEARCH_TYPE_FLOAT_64BIT:
+        M_ENTRY.value2._f64--;
+        break;
+      default:
+        M_ENTRY.value2._u64--;
+      }
+      break;
+    }
+  }
+  else if (kdown & KEY_Y && !(kheld & KEY_ZL)) // Jump cursor to value1
+  {
+    m_selectedEntry = m_selectedEntry - m_selectedEntry %6 + 4;
+  }
+  else if (kdown & KEY_Y && (kheld & KEY_ZL)) // Jump cursor to offset
+  {
+    m_selectedEntry = m_selectedEntry - m_selectedEntry %6 ;
+  }
+  else if (kdown & KEY_X && (kheld & KEY_ZL)) // Toggle HEX mode
+  {
+    if (m_searchValueFormat == FORMAT_HEX)
+      m_searchValueFormat = FORMAT_DEC;
+    else
+      m_searchValueFormat = FORMAT_HEX;
+  }
+  else if (kdown & KEY_A && !(kheld & KEY_ZL))
+  {
+    switch (m_selectedEntry % 6)
+    {
+    case 0:
+    {
+      searchValue_t offset = {0};
+      offset._u16 = M_ENTRY.offset;
+      if (m_searchValueFormat != FORMAT_HEX)
+      {
+        m_searchValueFormat = FORMAT_HEX;
+        M_ENTRY.offset = _get_entry(offset, SEARCH_TYPE_UNSIGNED_16BIT)._u16;
+        m_searchValueFormat = FORMAT_DEC;
+      }
+      else
+      {
+        M_ENTRY.offset = _get_entry(offset, SEARCH_TYPE_UNSIGNED_16BIT)._u16;
+      }
+    }
+    break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      M_ENTRY.value1 = _get_entry(M_ENTRY.value1, M_ENTRY.type);
+      break;
+    case 5:
+      M_ENTRY.value2 = _get_entry(M_ENTRY.value2, M_ENTRY.type);
+      break;
+    }
+  }
+  else if (kdown & KEY_A && (kheld & KEY_ZL))
+  {
+    ss.str("");
+    ss << M_ENTRY.label;
+    if (!Gui::requestKeyboardInput("Enter Label", "Enter Label to this item .", ss.str().c_str(), SwkbdType_QWERTY, M_ENTRY.label, 14))
+    {
+      ss.str("");
+      ss << "Item " << std::dec << (m_selectedEntry / 6) + 1;
+      strcpy(M_ENTRY.label, ss.str().c_str());
+    }
+  }
+  else if (kdown & KEY_UP && !(kheld & KEY_ZL))
+  {
+    if (m_selectedEntry > 5)
+      m_selectedEntry -= 6;
+  }
+  else if (kdown & KEY_DOWN && !(kheld & KEY_ZL))
+  {
+    if (m_selectedEntry < 54)
+      m_selectedEntry += 6;
+  }
+  else if (kdown & KEY_LEFT && !(kheld & KEY_ZL))
+  {
+    if (m_selectedEntry % 6 > 0)
+      m_selectedEntry--;
+  }
+  else if (kdown & KEY_RIGHT && !(kheld & KEY_ZL))
+  {
+    if (m_selectedEntry % 6 < 5)
+      m_selectedEntry++;
+  }
+  if (M_ENTRY.type == SEARCH_TYPE_POINTER)
+  {
+    if (m_selectedEntry % 6 > 2)
+    {
+      m_selectedEntry = m_selectedEntry - m_selectedEntry % 6 + 2;
+    }
+  }
+  else if (M_ENTRY.mode != SEARCH_MODE_RANGE)
+  {
+    if (m_selectedEntry % 6 > 4)
+    {
+      m_selectedEntry = m_selectedEntry - m_selectedEntry % 6 + 4;
+    }
   }
 }
 void GuiCheats::editor_input(u32 kdown, u32 kheld)
@@ -1683,7 +2154,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
     // u64 pointed_address = address;
     std::stringstream ss;
     ss << "0x" << std::uppercase << std::hex << address;
-    char input[16];
+    char input[19];
     if (Gui::requestKeyboardInput("Enter Address", "Enter Address to Jump to .", ss.str(), SwkbdType_QWERTY, input, 18))
     {
       address = static_cast<u64>(std::stoul(input, nullptr, 16)); // this line has problem?
@@ -1721,7 +2192,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
   else if (kdown & KEY_A)
   {
     u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-    char input[16];
+    char input[19];
     char initialString[21];
     strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
     if (Gui::requestKeyboardInput("Enter value", "Enter a value that should get written at this .", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18))
@@ -2889,7 +3360,7 @@ void GuiCheats::onInput(u32 kdown)
 
           if (m_selectedEntry < 8)
           {
-            char input[16];
+            char input[19];
             char initialString[21];
             // start mod address content edit Hex option
 
@@ -3303,6 +3774,11 @@ void GuiCheats::onInput(u32 kdown)
           PSresumeSTATE();
           // m_showpointermenu = true;
         }
+        else
+        {
+          m_searchMenuLocation = SEARCH_VALUE;
+            m_selectedEntry = 1;
+        }
       }
     }
     // if ((kdown & KEY_X) && (kheld & KEY_ZL))
@@ -3315,7 +3791,12 @@ void GuiCheats::onInput(u32 kdown)
       if (m_searchMenuLocation == SEARCH_NONE)
       {
         if (Config::getConfig()->extra_value)
+        { // enter multi search
           m_searchMenuLocation = SEARCH_editExtraSearchValues;
+          m_selectedEntrySave = m_selectedEntry;
+          m_selectedEntry = 0;
+          load_multisearch_setup();
+        }
         else if (m_searchMode == SEARCH_MODE_NONE) 
         {
           m_searchMenuLocation = SEARCH_MODE;
@@ -3567,7 +4048,7 @@ void GuiCheats::onInput(u32 kdown)
           u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
           std::stringstream ss;
           ss << "0x" << std::uppercase << std::hex << address;
-          char input[16];
+          char input[19];
           if (Gui::requestKeyboardInput("Enter Address", "Enter Address to add to bookmark .", ss.str(), SwkbdType_QWERTY, input, 18))
           {
             address = static_cast<u64>(std::stoul(input, nullptr, 16));
@@ -3733,7 +4214,7 @@ void GuiCheats::onInput(u32 kdown)
           // EditRAM routine
           // to update to use L and R to select type and display it on the top line
           u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-          char input[16];
+          char input[19];
           char initialString[21];
           strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
           if (Gui::requestKeyboardInput("Enter value", "Enter a value that should get written at this .", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18))
@@ -4129,7 +4610,41 @@ static std::string _getAddressDisplayString(u64 address, Debugger *debugger, sea
 
   return ss.str();
 }
-
+static searchValue_t _get_entry(searchValue_t value, searchType_t type)
+{
+  searchValue_t result={0};
+  char input[19];
+  char initialString[21];
+  strcpy(initialString, _getValueDisplayString(value, type).c_str());
+  if (Gui::requestKeyboardInput("Enter value", "Enter a value that should get written at this .", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18))
+  {
+    if (m_searchValueFormat == FORMAT_HEX)
+    {
+      result._u64 = static_cast<u64>(std::stoul(input, nullptr, 16));
+    }
+    else if (type == SEARCH_TYPE_FLOAT_32BIT)
+    {
+      result._f32 = static_cast<float>(std::atof(input));
+    }
+    else if (type == SEARCH_TYPE_FLOAT_64BIT)
+    {
+      result._f64 = std::atof(input);
+    }
+    else if (type != SEARCH_TYPE_NONE)
+    {
+      result._u64 = std::atol(input);
+    }
+    else
+    {
+      result = value;
+    };
+  }
+  else
+  {
+    result = value;
+  }
+  return result;
+} 
 static std::string _getValueDisplayString(searchValue_t searchValue, searchType_t searchType)
 {
   std::stringstream ss;
@@ -4139,17 +4654,17 @@ static std::string _getValueDisplayString(searchValue_t searchValue, searchType_
     switch (dataTypeSizes[searchType])
     {
     case 1:
-      ss << "0x" << std::uppercase << std::hex << (searchValue._u16 & 0x00FF);
+      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << (searchValue._u16 & 0x00FF);
       break;
     case 2:
-      ss << "0x" << std::uppercase << std::hex << searchValue._u16;
+      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(4) << searchValue._u16;
       break;
     default:
     case 4:
-      ss << "0x" << std::uppercase << std::hex << searchValue._u32;
+      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << searchValue._u32;
       break;
     case 8:
-      ss << "0x" << std::uppercase << std::hex << searchValue._u64;
+      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(16) << searchValue._u64;
       break;
     }
   }
@@ -4182,11 +4697,11 @@ static std::string _getValueDisplayString(searchValue_t searchValue, searchType_
       ss << std::dec << static_cast<s64>(searchValue._s64);
       break;
     case SEARCH_TYPE_FLOAT_32BIT:
-      ss.precision(15);
+      // ss.precision(15);
       ss << std::dec << searchValue._f32;
       break;
     case SEARCH_TYPE_FLOAT_64BIT:
-      ss.precision(15);
+      // ss.precision(15);
       ss << std::dec << searchValue._f64;
       break;
     case SEARCH_TYPE_POINTER:
@@ -7720,4 +8235,18 @@ void GuiCheats::load_meminfos()
     }
   }
   delete scaninfo;
+}
+void GuiCheats::save_multisearch_setup()
+{
+  MemoryDump *multisearch = new MemoryDump((m_edizon_dir + "/multisearch.dat").c_str(), DumpType::UNDEFINED, true);
+  multisearch->addData((u8 *)&m_multisearch, sizeof(m_multisearch));
+  multisearch->flushBuffer();
+  delete multisearch;
+}
+void GuiCheats::load_multisearch_setup()
+{
+  MemoryDump *multisearch = new MemoryDump((m_edizon_dir + "/multisearch.dat").c_str(), DumpType::UNDEFINED, false);
+  if (multisearch->size()>0)
+    multisearch->getData(0, (u8 *)&m_multisearch, sizeof(m_multisearch));
+  delete multisearch;
 }
