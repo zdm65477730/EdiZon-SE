@@ -71,6 +71,7 @@ static std::string _getValueDisplayString(searchValue_t searchValue, searchType_
 static searchValue_t _get_entry(searchValue_t value, searchType_t type);
 // static void _moveLonelyCheats(u8 *buildID, u64 titleID);
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
+static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2);
 
 GuiCheats::GuiCheats() : Gui()
 {
@@ -1481,7 +1482,10 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 1)
     {
-      Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, (m_multisearch.Entries[i / 6].on) ? "On" : "OFF", ALIGNED_CENTER);
+      if (i / 6 == m_multisearch.target)
+        Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, "Target", ALIGNED_CENTER);
+      else
+        Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, (m_multisearch.Entries[i / 6].on) ? "On" : "OFF", ALIGNED_CENTER);
     }
     else if ((i % 6) == 2)
     {
@@ -1517,7 +1521,7 @@ void GuiCheats::drawEditExtraSearchValues()
   //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 150, 350, 300, 80, currTheme.selectedButtonColor);
   //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 375, currTheme.separatorColor, "Search Now!", ALIGNED_CENTER);
   // }
-  Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 520, currTheme.textColor, "Set the value(s) you want to search for. Put the cursor on the primary target and press \uE0B3 to start the search(Chosen target is automatically turn on)\n"
+  Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 520, currTheme.textColor, "Set the value(s) you want to search for. Put the cursor on the target and press \uE0B3 to start the search or press \uE0A6 + \uE0B3 to mark it as target\n"
                                                                                        "Each line you enable will be used to narrow down the target. Pointer is 64bit values that falls in the range of either main or heap.\n"
                                                                                        "Move the cursor to the field you want to modify. Press \uE0A4 \uE0A5 to modify. Press \uE0A0 to edit numeric Values.\n"
                                                                                        "Use \uE0A6 + \uE0A0 to edit label. Use \uE0A2 to toggle on/off. Use \uE0A6 + \uE0A2 to toggle Hex mode. Use \uE0A3 to jump cursor to value1.\n"
@@ -1536,9 +1540,20 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     m_selectedEntry = m_selectedEntrySave;
     m_searchMenuLocation = SEARCH_NONE;
   }
+  else if (kdown & KEY_B && (kheld & KEY_ZL))
+  {
+    GuiCheats::save_multisearch_setup();
+  }
+  else if (kdown & KEY_PLUS && (kheld & KEY_ZL))
+  {
+    M_TARGET.on = false;
+    m_multisearch.target = m_selectedEntry / 6;
+  }
   else if (kdown & KEY_PLUS && !(kheld & KEY_ZL))
   {
+    M_TARGET.on = false;
     m_multisearch.target = m_selectedEntry / 6;
+    GuiCheats::save_multisearch_setup();
     m_searchType = M_ENTRY.type;
     m_searchMode = M_ENTRY.mode;
     m_searchValue[0] = M_ENTRY.value1;
@@ -4794,16 +4809,17 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           if (((ptr_address._u64 >= m_mainBaseAddr) && (ptr_address._u64 <= (m_mainend))) || ((ptr_address._u64 >= m_heapBaseAddr) && (ptr_address._u64 <= (m_heapEnd))))
             continue;
         }
+        if (_check_extra_not_OK(address, buffer, i, bufferSize)) continue; // if not match let's continue
         switch (searchMode)
         {
         case SEARCH_MODE_EQ:
           if (realValue._s64 == searchValue1._s64)
           {
-            if (Config::getConfig()->extra_value)
-            {
-              if (!true) // extra value match
-                break;
-            }
+            // if (Config::getConfig()->extra_value)
+            // {
+            //   if (!true) // extra value match
+            //     break;
+            // }
             (*displayDump)->addData((u8 *)&address, sizeof(u64));
             helperinfo.count++;
           }
@@ -8236,8 +8252,34 @@ void GuiCheats::load_meminfos()
   }
   delete scaninfo;
 }
+#define M_ENTRY m_multisearch.Entries[i]
+static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2)
+{
+  return (e1.offset < e2.offset);
+};
 void GuiCheats::save_multisearch_setup()
 {
+  // sort the list
+  // MultiSearch_t temp;
+  // memcpy(&temp, &m_multisearch, sizeof(m_multisearch));
+  // for (int i = 0; i < M_ENTRY_MAX; i++)
+  // {
+  // }
+  std::sort(m_multisearch.Entries, m_multisearch.Entries + sizeof(m_multisearch.Entries) / sizeof(m_multisearch.Entries[0]), compareentry);
+  // m_multisearch.maxoffset = 0;
+  // m_multisearch.minoffset = 0;
+  // for (int i = 0; i < M_ENTRY_MAX; i++)
+  // {
+  //   if (M_ENTRY.offset > M_TARGET.offset + m_multisearch.maxoffset)
+  //   {
+  //     m_multisearch.maxoffset = M_ENTRY.offset - M_TARGET.offset;
+  //   }
+  //   else if (M_ENTRY.offset < M_TARGET.offset + m_multisearch.minoffset)
+  //   {
+  //     m_multisearch.minoffset = M_ENTRY.offset - M_TARGET.offset;
+  //   }
+  // }
+
   MemoryDump *multisearch = new MemoryDump((m_edizon_dir + "/multisearch.dat").c_str(), DumpType::UNDEFINED, true);
   multisearch->addData((u8 *)&m_multisearch, sizeof(m_multisearch));
   multisearch->flushBuffer();
@@ -8249,4 +8291,12 @@ void GuiCheats::load_multisearch_setup()
   if (multisearch->size()>0)
     multisearch->getData(0, (u8 *)&m_multisearch, sizeof(m_multisearch));
   delete multisearch;
+}
+bool GuiCheats::_check_extra_not_OK(u64 address, u8 *buffer, u32 i, u64 bufferSize)
+{
+  if (Config::getConfig()->extra_value)
+  {
+    // m_multisearch.Entries[i].offset
+  }
+  return false;
 }

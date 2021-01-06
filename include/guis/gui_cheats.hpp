@@ -12,7 +12,15 @@
 #include "helpers/memory_dump.hpp"
 
 #include "helpers/dmntcht.h"
-
+struct MultiSearchEntry_t
+{
+  char label[20] = {0};
+  s16 offset = 0;
+  bool on = false;
+  searchType_t type = SEARCH_TYPE_UNSIGNED_32BIT;
+  searchMode_t mode = SEARCH_MODE_EQ;
+  searchValue_t value1 = {0}, value2 = {0};
+};
 enum
 {
   FORMAT_DEC,
@@ -81,20 +89,15 @@ private:
   MemoryDump *m_AttributeDumpBookmark;
   MemoryDump *m_pointeroffsetDump;
   MemoryDump *m_dataDump;
-  struct MultiSearchEntry_t
-  {
-    char label[20] = {0};
-    s16 offset = 0;
-    bool on = false;
-    searchType_t type = SEARCH_TYPE_UNSIGNED_32BIT;
-    searchMode_t mode = SEARCH_MODE_EQ;
-    searchValue_t value1 = {0}, value2 = {0};
-  };
+
+  #define M_ENTRY_MAX 10
+  #define M_TARGET m_multisearch.Entries[m_multisearch.target]
   struct MultiSearch_t
   {
     char laber[40] = {0};
     u32 target = 0;
-    MultiSearchEntry_t Entries[10];
+    s32 maxoffset = 0, minoffset = 0;
+    MultiSearchEntry_t Entries[M_ENTRY_MAX];
   };
   MultiSearch_t m_multisearch;
 
@@ -264,6 +267,7 @@ private:
   void load_meminfos();
   void save_multisearch_setup();
   void load_multisearch_setup();
+  bool _check_extra_not_OK(u64 address, u8 *buffer, u32 i, u64 bufferSize);
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
   void _writegameid();
   u64 m_heapSize = 0;
