@@ -12,11 +12,17 @@
 #include "helpers/memory_dump.hpp"
 
 #include "helpers/dmntcht.h"
+enum on_off_target_t
+{
+  OFF,
+  ON,
+  TARGET
+};
 struct MultiSearchEntry_t
 {
   char label[20] = {0};
-  s16 offset = 0;
-  bool on = false;
+  u16 offset = 0;
+  on_off_target_t on = OFF;
   searchType_t type = SEARCH_TYPE_UNSIGNED_32BIT;
   searchMode_t mode = SEARCH_MODE_EQ;
   searchValue_t value1 = {0}, value2 = {0};
@@ -92,11 +98,12 @@ private:
 
   #define M_ENTRY_MAX 10
   #define M_TARGET m_multisearch.Entries[m_multisearch.target]
+  #define M_ALIGNMENT 8
   struct MultiSearch_t
   {
     char laber[40] = {0};
     u32 target = 0;
-    s32 maxoffset = 0, minoffset = 0;
+    u32 count = 0, first = 0, last = 0, size = 0, adjustment = 0;
     MultiSearchEntry_t Entries[M_ENTRY_MAX];
   };
   MultiSearch_t m_multisearch;
@@ -267,7 +274,7 @@ private:
   void load_meminfos();
   void save_multisearch_setup();
   void load_multisearch_setup();
-  bool _check_extra_not_OK(u64 address, u8 *buffer, u32 i, u64 bufferSize);
+  bool _check_extra_not_OK(u8 *buffer, u32 i);
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
   void _writegameid();
   u64 m_heapSize = 0;

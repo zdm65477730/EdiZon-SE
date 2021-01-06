@@ -1482,7 +1482,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 1)
     {
-      if (i / 6 == m_multisearch.target)
+      if (M_ENTRY.on == TARGET) //(i / 6 == m_multisearch.target)
         Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, "Target", ALIGNED_CENTER);
       else
         Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, (m_multisearch.Entries[i / 6].on) ? "On" : "OFF", ALIGNED_CENTER);
@@ -1533,6 +1533,11 @@ void GuiCheats::drawEditExtraSearchValues()
 void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
 {
 #define M_ENTRY m_multisearch.Entries[m_selectedEntry / 6]
+#define M_ENTRY_TOGGLE       \
+  if (M_ENTRY.on == OFF)     \
+    M_ENTRY.on = ON;         \
+  else if (M_ENTRY.on == ON) \
+    M_ENTRY.on = OFF;
   std::stringstream ss;
   if (kdown & KEY_B && !(kheld & KEY_ZL))
   {
@@ -1546,13 +1551,15 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_PLUS && (kheld & KEY_ZL))
   {
-    M_TARGET.on = false;
+    M_TARGET.on = OFF;
     m_multisearch.target = m_selectedEntry / 6;
+    M_TARGET.on = TARGET;
   }
   else if (kdown & KEY_PLUS && !(kheld & KEY_ZL))
   {
-    M_TARGET.on = false;
+    M_TARGET.on = OFF;
     m_multisearch.target = m_selectedEntry / 6;
+    M_TARGET.on = TARGET;
     GuiCheats::save_multisearch_setup();
     m_searchType = M_ENTRY.type;
     m_searchMode = M_ENTRY.mode;
@@ -1668,7 +1675,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     for (u8 i = 0; i < 10; i++)
     {
       m_multisearch.Entries[i].offset = i * 0x8;
-      m_multisearch.Entries[i].on = false;
+      m_multisearch.Entries[i].on = OFF;
       m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
       m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
       m_multisearch.Entries[i].value1._u64 = 0;
@@ -1682,7 +1689,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
   {
     u8 i = 0;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
     m_multisearch.Entries[i].value1._u64 = 0;
@@ -1693,7 +1700,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     i = 1;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
     m_multisearch.Entries[i].value1._f32 = 0.1;
@@ -1704,7 +1711,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     i = 2;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
     m_multisearch.Entries[i].value1._f32 = -0.1;
@@ -1715,7 +1722,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     i = 3;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
     m_multisearch.Entries[i].value1._f64 = 0;
@@ -1726,7 +1733,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     i = 4;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
     m_multisearch.Entries[i].value1._f64 = 0.1;
@@ -1737,7 +1744,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     i = 5;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = false;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
     m_multisearch.Entries[i].value1._f64 = -0.1;
@@ -1748,7 +1755,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     // strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     // u8 i = 6;
     // m_multisearch.Entries[i].offset = i * 0x8;
-    // m_multisearch.Entries[i].on = false;
+    // m_multisearch.Entries[i].on = OFF;
     // m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
     // m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
     // m_multisearch.Entries[i].value1._u64 = 0;
@@ -1759,7 +1766,8 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_X && !(kheld & KEY_ZL))
   {
-    m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
+    M_ENTRY_TOGGLE
+    // m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
   }
   else if (kdown & KEY_R && !(kheld & KEY_ZL))
   {
@@ -1769,7 +1777,8 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
       m_multisearch.Entries[m_selectedEntry / 6].offset++;
       break;
     case 1:
-      m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
+      M_ENTRY_TOGGLE
+      // m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
       break;
     case 2:
       if (M_ENTRY.type == SEARCH_TYPE_UNSIGNED_32BIT)
@@ -1826,19 +1835,22 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
       m_multisearch.Entries[m_selectedEntry / 6].offset--;
       break;
     case 1:
-      m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
+      M_ENTRY_TOGGLE
+      // m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
       break;
     case 2:
+      if (m_multisearch.Entries[m_selectedEntry / 6].type == SEARCH_TYPE_POINTER)
+      {
+        m_multisearch.Entries[m_selectedEntry / 6].type = SEARCH_TYPE_FLOAT_32BIT;
+      }
       if (m_multisearch.Entries[m_selectedEntry / 6].type == SEARCH_TYPE_FLOAT_32BIT)
       {
         m_multisearch.Entries[m_selectedEntry / 6].type = SEARCH_TYPE_FLOAT_64BIT;
       }
-      else if (M_ENTRY.type == SEARCH_TYPE_FLOAT_64BIT)
+      else 
       {
         M_ENTRY.type = SEARCH_TYPE_POINTER;
       }
-      else
-        m_multisearch.Entries[m_selectedEntry / 6].type = SEARCH_TYPE_FLOAT_32BIT;
       break;
     case 3:
       M_ENTRY.mode = SEARCH_MODE_RANGE;
@@ -4809,7 +4821,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           if (((ptr_address._u64 >= m_mainBaseAddr) && (ptr_address._u64 <= (m_mainend))) || ((ptr_address._u64 >= m_heapBaseAddr) && (ptr_address._u64 <= (m_heapEnd))))
             continue;
         }
-        if (_check_extra_not_OK(address, buffer, i, bufferSize)) continue; // if not match let's continue
+        if (_check_extra_not_OK(buffer, i)) continue; // if not match let's continue
         switch (searchMode)
         {
         case SEARCH_MODE_EQ:
@@ -8252,33 +8264,27 @@ void GuiCheats::load_meminfos()
   }
   delete scaninfo;
 }
-#define M_ENTRY m_multisearch.Entries[i]
+#define M_ENTRYi m_multisearch.Entries[i]
 static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2)
 {
   return (e1.offset < e2.offset);
 };
 void GuiCheats::save_multisearch_setup()
 {
-  // sort the list
-  // MultiSearch_t temp;
-  // memcpy(&temp, &m_multisearch, sizeof(m_multisearch));
-  // for (int i = 0; i < M_ENTRY_MAX; i++)
-  // {
-  // }
   std::sort(m_multisearch.Entries, m_multisearch.Entries + sizeof(m_multisearch.Entries) / sizeof(m_multisearch.Entries[0]), compareentry);
-  // m_multisearch.maxoffset = 0;
-  // m_multisearch.minoffset = 0;
-  // for (int i = 0; i < M_ENTRY_MAX; i++)
-  // {
-  //   if (M_ENTRY.offset > M_TARGET.offset + m_multisearch.maxoffset)
-  //   {
-  //     m_multisearch.maxoffset = M_ENTRY.offset - M_TARGET.offset;
-  //   }
-  //   else if (M_ENTRY.offset < M_TARGET.offset + m_multisearch.minoffset)
-  //   {
-  //     m_multisearch.minoffset = M_ENTRY.offset - M_TARGET.offset;
-  //   }
-  // }
+  m_multisearch.count = 0;
+  for (int i = 0; i < M_ENTRY_MAX; i++)
+  {
+    if (M_ENTRYi.on)
+    {
+      if (m_multisearch.count == 0) m_multisearch.first = i;
+      m_multisearch.count++;
+      if (M_ENTRYi.on == TARGET) m_multisearch.target = i;
+      m_multisearch.last = i;
+    }
+  }
+  m_multisearch.size = (m_multisearch.Entries[m_multisearch.last].offset / M_ALIGNMENT - m_multisearch.Entries[m_multisearch.first].offset / M_ALIGNMENT + 1) * M_ALIGNMENT;
+  m_multisearch.adjustment = (m_multisearch.first / M_ALIGNMENT) * M_ALIGNMENT;
 
   MemoryDump *multisearch = new MemoryDump((m_edizon_dir + "/multisearch.dat").c_str(), DumpType::UNDEFINED, true);
   multisearch->addData((u8 *)&m_multisearch, sizeof(m_multisearch));
@@ -8288,15 +8294,51 @@ void GuiCheats::save_multisearch_setup()
 void GuiCheats::load_multisearch_setup()
 {
   MemoryDump *multisearch = new MemoryDump((m_edizon_dir + "/multisearch.dat").c_str(), DumpType::UNDEFINED, false);
-  if (multisearch->size()>0)
+  if ((multisearch->size() > 0) && (multisearch->size() % sizeof(m_multisearch) == 0))
     multisearch->getData(0, (u8 *)&m_multisearch, sizeof(m_multisearch));
   delete multisearch;
 }
-bool GuiCheats::_check_extra_not_OK(u64 address, u8 *buffer, u32 i, u64 bufferSize)
+bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 i)
 {
+  searchValue_t realValue;
   if (Config::getConfig()->extra_value)
   {
-    // m_multisearch.Entries[i].offset
+    for (int i = 0; i < M_ENTRY_MAX; i++)
+    {
+      if (M_ENTRYi.on == ON)
+      {
+        memset(&realValue, 0, 8);
+        memcpy(&realValue, buffer + i + M_ENTRYi.offset - m_multisearch.adjustment, dataTypeSizes[M_ENTRYi.type]);
+        switch(M_ENTRYi.mode)
+        {
+        case SEARCH_MODE_EQ:
+          if (realValue._s64 == M_ENTRYi.value1._s64)
+          {
+          }
+          else
+            return true;
+          break;
+        case SEARCH_MODE_RANGE:
+          if (realValue._s64 >= M_ENTRYi.value1._s64 && realValue._s64 <= M_ENTRYi.value2._s64)
+          {
+          }
+          else
+            return true;
+          break;
+        case SEARCH_MODE_POINTER: //m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize
+          if ((realValue._u64 != 0))
+          {
+            if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
+            {
+            }
+            else return true;
+          }
+          break;   
+        default:
+          break;
+        }
+      }; 
+    }
   }
   return false;
 }
