@@ -1530,6 +1530,206 @@ void GuiCheats::drawEditExtraSearchValues()
   //  "Press quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==/!=\n"
   //  "If you search type is floating point \uE0A5 negate the number. \uE0C4 cycle float type \uE0C5 presets \uE0A3 cycle integer type",
 }
+// new dev
+void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
+{
+  (*displayDump) = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, true);
+  (*displayDump)->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
+  m_use_range = (searchMode == SEARCH_MODE_RANGE);
+  (*displayDump)->setSearchParams(searchType, searchMode, searchRegion, searchValue1, searchValue2, m_use_range);
+  MemoryDump *helperDump = new MemoryDump(EDIZON_DIR "/memdump1a.dat", DumpType::HELPER, true); // has address, size, count for fetching buffer from memory
+  MemoryDump *newdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, true);
+  MemoryDump *newstringDump = new MemoryDump(EDIZON_DIR "/stringdump.csv", DumpType::DATA, true); // to del when not needed
+  helperinfo_t helperinfo;
+  helperinfo.count = 0;
+  bool ledOn = false;
+  time_t unixTime1 = time(NULL);
+  printf("%s%lx\n", "Start Time primary search", unixTime1);
+  printf("value1=%lx value2=%lx typesize=%d\n", searchValue1._u64, searchValue2._u64, dataTypeSizes[searchType]);
+  for (MemoryInfo meminfo : memInfos)
+  {
+    if (searchRegion == SEARCH_REGION_HEAP && meminfo.type != MemType_Heap)
+      continue;
+    else if (searchRegion == SEARCH_REGION_MAIN &&
+             (((meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable && meminfo.type != MemType_CodeStatic) || !(meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
+      continue;
+    else if (searchRegion == SEARCH_REGION_HEAP_AND_MAIN &&
+             (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
+      continue;
+    else if ( (meminfo.perm & Perm_Rw) != Perm_Rw) //searchRegion == SEARCH_REGION_RAM &&
+      continue;
+    setLedState(ledOn);
+    ledOn = !ledOn;
+    u64 offset = 0;
+    u64 bufferSize = MAX_BUFFER_SIZE; // consider to increase from 10k to 1M (not a big problem)
+    u8 *buffer = new u8[bufferSize];
+    while (offset < meminfo.size)
+    {
+      if (meminfo.size - offset < bufferSize)
+        bufferSize = meminfo.size - offset;
+      debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
+      searchValue_t realValue = {0};
+      u32 inc_i;
+      if (searchMode == SEARCH_MODE_POINTER)
+        inc_i = 4;
+      else
+        inc_i = dataTypeSizes[searchType];
+      for (u32 i = 0; i < bufferSize; i += inc_i)
+      {
+        u64 address = meminfo.addr + offset + i;
+        memset(&realValue, 0, 8);
+        if (searchMode == SEARCH_MODE_POINTER && m_32bitmode)
+          memcpy(&realValue, buffer + i, 4);
+        else
+          memcpy(&realValue, buffer + i, dataTypeSizes[searchType]);
+        if (Config::getConfig()->exclude_ptr_candidates && searchMode != SEARCH_MODE_POINTER)
+        {
+          searchValue_t ptr_address;
+          memcpy(&ptr_address, buffer + i - i % 8, 8);
+          if (((ptr_address._u64 >= m_mainBaseAddr) && (ptr_address._u64 <= (m_mainend))) || ((ptr_address._u64 >= m_heapBaseAddr) && (ptr_address._u64 <= (m_heapEnd))))
+            continue;
+        }
+        if (_check_extra_not_OK(buffer, i)) continue; // if not match let's continue
+        switch (searchMode)
+        {
+        case SEARCH_MODE_EQ:
+          if (realValue._s64 == searchValue1._s64)
+          {
+            (*displayDump)->addData((u8 *)&address, sizeof(u64));
+            helperinfo.count++;
+          }
+          break;
+        case SEARCH_MODE_NEQ:
+          if (realValue._s64 != searchValue1._s64)
+          {
+            (*displayDump)->addData((u8 *)&address, sizeof(u64));
+            helperinfo.count++;
+          }
+          break;
+        case SEARCH_MODE_GT:
+          if (searchType & (SEARCH_TYPE_SIGNED_8BIT | SEARCH_TYPE_SIGNED_16BIT | SEARCH_TYPE_SIGNED_32BIT | SEARCH_TYPE_SIGNED_64BIT | SEARCH_TYPE_FLOAT_32BIT | SEARCH_TYPE_FLOAT_64BIT))
+          {
+            if (realValue._s64 > searchValue1._s64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          else
+          {
+            if (realValue._u64 > searchValue1._u64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          break;
+        case SEARCH_MODE_DIFFA:
+          if (searchType & (SEARCH_TYPE_SIGNED_8BIT | SEARCH_TYPE_SIGNED_16BIT | SEARCH_TYPE_SIGNED_32BIT | SEARCH_TYPE_SIGNED_64BIT | SEARCH_TYPE_FLOAT_32BIT | SEARCH_TYPE_FLOAT_64BIT))
+          {
+            if (realValue._s64 >= searchValue1._s64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          else
+          {
+            if (realValue._u64 >= searchValue1._u64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          break;
+        case SEARCH_MODE_LT:
+          if (searchType & (SEARCH_TYPE_SIGNED_8BIT | SEARCH_TYPE_SIGNED_16BIT | SEARCH_TYPE_SIGNED_32BIT | SEARCH_TYPE_SIGNED_64BIT | SEARCH_TYPE_FLOAT_32BIT | SEARCH_TYPE_FLOAT_64BIT))
+          {
+            if (realValue._s64 < searchValue1._s64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          else
+          {
+            if (realValue._u64 < searchValue1._u64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          break;
+        case SEARCH_MODE_SAMEA:
+          if (searchType & (SEARCH_TYPE_SIGNED_8BIT | SEARCH_TYPE_SIGNED_16BIT | SEARCH_TYPE_SIGNED_32BIT | SEARCH_TYPE_SIGNED_64BIT | SEARCH_TYPE_FLOAT_32BIT | SEARCH_TYPE_FLOAT_64BIT))
+          {
+            if (realValue._s64 <= searchValue1._s64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          else
+          {
+            if (realValue._u64 <= searchValue1._u64)
+            {
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              helperinfo.count++;
+            }
+          }
+          break;
+        case SEARCH_MODE_RANGE:
+          if (realValue._s64 >= searchValue1._s64 && realValue._s64 <= searchValue2._s64)
+          {
+            (*displayDump)->addData((u8 *)&address, sizeof(u64));
+            newdataDump->addData((u8 *)&realValue, sizeof(u64));
+            helperinfo.count++;
+          }
+          break;
+        case SEARCH_MODE_POINTER: //m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize
+          if ((realValue._u64 != 0))
+            if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
+            {
+              if ((m_forwarddump) && (address > realValue._u64) && (meminfo.type == MemType_Heap))
+                break;
+              (*displayDump)->addData((u8 *)&address, sizeof(u64));
+              newdataDump->addData((u8 *)&realValue, sizeof(u64));
+              helperinfo.count++;
+            }
+          break;
+        case SEARCH_MODE_NONE:
+        case SEARCH_MODE_SAME:
+        case SEARCH_MODE_DIFF:
+        case SEARCH_MODE_INC:
+        case SEARCH_MODE_DEC:
+          printf("search mode non !");
+          break;
+        }
+      }
+      if (helperinfo.count != 0)
+      {
+        helperinfo.address = meminfo.addr + offset;
+        helperinfo.size = bufferSize;
+        helperDump->addData((u8 *)&helperinfo, sizeof(helperinfo));
+        helperinfo.count = 0;
+      } // must be after write
+      offset += bufferSize;
+    }
+    delete[] buffer;
+  }
+  setLedState(false);
+  time_t unixTime2 = time(NULL);
+  printf("%s%lx\n", "Stop Time ", unixTime2);
+  printf("%s%ld\n", "Stop Time ", unixTime2 - unixTime1);
+  (*displayDump)->flushBuffer();
+  newdataDump->flushBuffer();
+  helperDump->flushBuffer();
+  delete helperDump;
+  delete newdataDump;
+  newstringDump->flushBuffer(); // temp
+  delete newstringDump;         //
+}
+// end new dev
 void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
 {
 #define M_ENTRY m_multisearch.Entries[m_selectedEntry / 6]
@@ -1649,9 +1849,9 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
           {
             delete m_memoryDump;
             if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
-              GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+              GuiCheats::MTsearchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
             else
-              GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+              GuiCheats::MTsearchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
           }
           else
           {

@@ -308,6 +308,11 @@ private:
                                     searchMode_t searchMode, searchRegion_t searchRegion,
                                     MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
 
+  void MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1,
+                                    searchValue_t searchValue2, searchType_t searchType,
+                                    searchMode_t searchMode, searchRegion_t searchRegion,
+                                    MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
+
   void searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t searchValue1,
                                      searchValue_t searchValue2, searchType_t searchType,
                                      searchMode_t searchMode, searchRegion_t searchRegion,
