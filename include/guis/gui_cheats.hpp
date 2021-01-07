@@ -98,12 +98,12 @@ private:
 
   #define M_ENTRY_MAX 10
   #define M_TARGET m_multisearch.Entries[m_multisearch.target]
-  #define M_ALIGNMENT 8
+  #define M_ALIGNMENT 16
   struct MultiSearch_t
   {
     char laber[40] = {0};
     u32 target = 0;
-    u32 count = 0, first = 0, last = 0, size = 0, adjustment = 0;
+    u32 count = 0, first = 0, last = 0, size = 0, adjustment = 0, target_offset = 0;
     MultiSearchEntry_t Entries[M_ENTRY_MAX];
   };
   MultiSearch_t m_multisearch;
