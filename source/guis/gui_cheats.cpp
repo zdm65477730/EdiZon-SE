@@ -1363,7 +1363,8 @@ void GuiCheats::drawEditRAMMenu2()
     {
       ss.str("");
       int i = 0;
-      ss << "z=" << m_bookmark.pointer.depth << " main"; //[0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_mainBaseAddr << "]";
+      ss << "z=" << std::dec << std::setfill('0') << std::setw(2) << m_depth_count << ((m_bookmark.heap)? " heap":" main"); //[0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_mainBaseAddr << "]";
+      m_depth_count = -1;
       u64 nextaddress = m_mainBaseAddr;
       for (int z = m_bookmark.pointer.depth; z >= 0; z--)
       {
@@ -1373,7 +1374,7 @@ void GuiCheats::drawEditRAMMenu2()
           if (address >= nextaddress)
             ss << "[" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress + m_addressmod << "]";
           else
-            ss << "[-" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod<< "]";
+            ss << "[-" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod << "]";
         }
         nextaddress += m_bookmark.pointer.offset[z];
         m_jump_stack[z].from = nextaddress;
@@ -1386,13 +1387,14 @@ void GuiCheats::drawEditRAMMenu2()
           ss << "(*access denied*)";
           break;
         }
+        m_depth_count++;
         if (z > 0)
         {
             ss << "(" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << nextaddress << ")";
         }
         m_jump_stack[z].to = nextaddress;
         i++;
-        if ((i == 5) || (i == 10))
+        if ((i == 6) || (i == 13))
           ss << "\n";
       }
       // ss << " " << dataTypes[m_bookmark.type];
@@ -2429,7 +2431,10 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
     u64 pointed_address;
     m_debugger->readMemory(&pointed_address, sizeof(u64), address);
-    m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+    if (m_z == m_bookmark.pointer.depth)
+      m_bookmark.pointer.offset[m_z] = address - ((m_bookmark.heap) ? m_heapBaseAddr : m_mainBaseAddr);
+    else
+      m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
     if ((pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend) || (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd))
     {
       if (m_z == 0)
@@ -2441,16 +2446,17 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
           {
             m_bookmark.pointer.offset[z]=m_bookmark.pointer.offset[z-1];
           }
-          m_bookmark.pointer.offset[1] = address - m_jump_stack[2].to;
+          m_z = 1;
+          // m_bookmark.pointer.offset[1] = address - m_jump_stack[2].to;
         }
         else
         {
-          m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+          // m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
         }
       }
       else
       {
-        m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+        // m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
         // m_jump_stack[m_z].from = address;
         // m_jump_stack[m_z].to = pointed_address;
       }
@@ -2459,11 +2465,11 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     { // change target
       if (m_z == 0)
       {
-        m_bookmark.pointer.offset[0] = address - m_jump_stack[1].to;
+        // m_bookmark.pointer.offset[0] = address - m_jump_stack[1].to;
       }
       else
       {
-        m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+        // m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
       }
     }
 
@@ -3341,7 +3347,7 @@ void GuiCheats::onInput(u32 kdown)
         {
           // bookmark_t bm;
           bookmark.pointer.offset[z] = offset[i];
-          printf("+%lx z=%d ", bookmark.pointer.offset[z], z);
+          printf("+%x z=%d ", bookmark.pointer.offset[z], z);
           nextaddress += bookmark.pointer.offset[z];
           printf("[%lx]", nextaddress);
           // m_memoryDumpBookmark->addData((u8 *)&nextaddress, sizeof(u64));
@@ -6537,7 +6543,7 @@ void GuiCheats::pointercheck()
         // printf("(&lx)", nextaddress);
         for (int z = pointer_chain.depth; z >= 0; z--)
         {
-          printf("+%lx z=%d ", pointer_chain.offset[z], z);
+          printf("+%x z=%d ", pointer_chain.offset[z], z);
           nextaddress += pointer_chain.offset[z];
           printf("[%lx]", nextaddress);
           MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
@@ -6935,7 +6941,7 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
       // m_pointeroffsetDump->flushBuffer(); // is this useful?
       printf("main");
       for (int z = m_bookmark.pointer.depth; z >= 0; z--)
-        printf("+%lx z=%d ", m_bookmark.pointer.offset[z], z);
+        printf("+%x z=%d ", m_bookmark.pointer.offset[z], z);
       printf("\n\n");
       m_pointer_found++;
       // return; // consider don't return to find more
@@ -7539,7 +7545,7 @@ bool GuiCheats::addcodetofile(u64 index)
     }
     ss << "780F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0] << "\n";
     ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(16) << realvalue._u64 << "\n";
-    printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
+    printf("index = %ld depth = %d offset = %d offset = %d offset = %d offset = %d\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
 
@@ -8165,7 +8171,7 @@ bool GuiCheats::addstaticcodetofile(u64 index)
     ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? 1 : 0) << "00000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.offset << " "
        << std::uppercase << std::hex << std::setfill('0') << ((dataTypeSizes[bookmark.type] == 8) ? std::setw(16) : std::setw(8))
        << ((dataTypeSizes[bookmark.type] == 8) ? realvalue._u64 : realvalue._u32) << "\n";
-    printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
+    printf("index = %ld depth = %d offset = %d offset = %d offset = %d offset = %d\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
     fputs(ss.str().c_str(), pfile);
@@ -8516,23 +8522,23 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool f
 };
 bool GuiCheats::unresolved2(pointer_chain_t *pointer)
 {
-  printf("source= %lx", pointer->depth);
+  printf("source= %x", pointer->depth);
   for (int z = pointer->depth; z >= 0; z--)
-    printf("+ %lx ", pointer->offset[z]);
+    printf("+ %x ", pointer->offset[z]);
   printf("\n");
   return true;
 }
 
 bool GuiCheats::unresolved(pointer_chain_t pointer)
 {
-  printf("z=%lx ", pointer.depth);
+  printf("z=%x ", pointer.depth);
   if (pointer.depth != 0)
   {
     printf("[main");
     u64 nextaddress = m_mainBaseAddr;
     for (int z = pointer.depth; z >= 0; z--)
     {
-      printf("+%lx]", pointer.offset[z]);
+      printf("+%x]", pointer.offset[z]);
       nextaddress += pointer.offset[z];
       MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
       if (meminfo.perm == Perm_Rw)

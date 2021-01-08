@@ -177,6 +177,7 @@ private:
     u64 to;
   };
   fromto_t m_jump_stack[MAX_POINTER_DEPTH + 1];
+  s16 m_depth_count = 0;
   u16 m_jump_stack_index = 0;
   u16 m_jump_stack_max = 0;
   u16 m_z = 0;
@@ -239,7 +240,7 @@ private:
     char label[19] = {0};
     searchType_t type;
     pointer_chain_t pointer;
-    bool heap = true;
+    bool heap = false;
     u64 offset = 0;
     bool deleted = false;
   };
