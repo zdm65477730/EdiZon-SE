@@ -1371,10 +1371,10 @@ void GuiCheats::drawEditRAMMenu2()
         ss << "+" << std::uppercase << std::hex << m_bookmark.pointer.offset[z];
         if (z == m_z)
         {
-          if (address >= nextaddress)
-            ss << "[" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress + m_addressmod << "]";
+          if (address + m_addressmod >= nextaddress)
+            ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress + m_addressmod << " ]";
           else
-            ss << "[-" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod << "]";
+            ss << "[ -" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod << " ]";
         }
         nextaddress += m_bookmark.pointer.offset[z];
         m_jump_stack[z].from = nextaddress;
@@ -2265,7 +2265,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
   }
   else if (kdown & KEY_R && !(kheld & KEY_ZL))
   {
-    if (m_z > 0) 
+    if (m_z > m_bookmark.pointer.depth - m_depth_count)
     {
       // if (m_jump_stack[m_z].to !=0)
       m_EditorBaseAddr = m_jump_stack[m_z].to;
@@ -2276,7 +2276,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     }
     else
     {
-      m_EditorBaseAddr = m_jump_stack[1].to + m_bookmark.pointer.offset[0];
+      m_EditorBaseAddr = m_jump_stack[m_z + 1].to + m_bookmark.pointer.offset[m_z];
       m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
       m_addressmod = m_EditorBaseAddr % 4;
       m_searchType = m_bookmark.type;
@@ -2364,11 +2364,19 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
     if (m_bookmark.pointer.depth > 0)
     {
-      s64 offset = address - m_BookmarkAddr + m_bookmark.pointer.offset[0];
-      if (offset >= 0 && offset < (s64)m_max_range)
+      u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+      if (m_z == m_bookmark.pointer.depth)
+        m_bookmark.pointer.offset[m_z] = address - ((m_bookmark.heap) ? m_heapBaseAddr : m_mainBaseAddr);
+      else
+        m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+      bookmark.pointer.depth = m_bookmark.pointer.depth - m_z;
+      bookmark.heap = m_bookmark.heap;
       {
-        memcpy(&(bookmark.pointer), &(m_bookmark.pointer), (m_bookmark.pointer.depth + 2) * 8);
-        bookmark.pointer.offset[0] = (u64)offset;
+        for (int z = m_bookmark.pointer.depth; z >= m_z; z--)
+        {
+          bookmark.pointer.offset[z-m_z] = m_bookmark.pointer.offset[z];
+        }
+        // memcpy(&(bookmark.pointer), &(m_bookmark.pointer[m_bookmark.pointer.depth - m_depth_count]), (m_depth_count + 2) * 8);
         m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
         m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
       }
