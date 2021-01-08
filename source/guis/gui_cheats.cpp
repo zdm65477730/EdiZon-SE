@@ -1371,16 +1371,18 @@ void GuiCheats::drawEditRAMMenu2()
         if (z == m_z)
         {
           if (address >= nextaddress)
-            ss << "[" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress << "]";
+            ss << "[" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress + m_addressmod << "]";
           else
-            ss << "[-" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address << "]";
+            ss << "[-" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod<< "]";
         }
         nextaddress += m_bookmark.pointer.offset[z];
+        m_jump_stack[z].from = nextaddress;
         MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
         if (meminfo.perm == Perm_Rw)
           m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
         else
         {
+          m_jump_stack[z].to = 0;
           ss << "(*access denied*)";
           break;
         }
@@ -1388,8 +1390,9 @@ void GuiCheats::drawEditRAMMenu2()
         {
             ss << "(" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << nextaddress << ")";
         }
+        m_jump_stack[z].to = nextaddress;
         i++;
-        if ((i == 8) || (i == 16))
+        if ((i == 5) || (i == 10))
           ss << "\n";
       }
       // ss << " " << dataTypes[m_bookmark.type];
@@ -2260,16 +2263,27 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
   }
   else if (kdown & KEY_R && !(kheld & KEY_ZL))
   {
-    if (m_z > 0)
+    if (m_z > 0) 
     {
+      // if (m_jump_stack[m_z].to !=0)
       m_EditorBaseAddr = m_jump_stack[m_z].to;
       m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+      m_addressmod = 0;
+      m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
       m_z--;
     }
     else
     {
       m_EditorBaseAddr = m_jump_stack[1].to + m_bookmark.pointer.offset[0];
       m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+      m_addressmod = m_EditorBaseAddr % 4;
+      m_searchType = m_bookmark.type;
+      if (m_addressmod % 2)
+        m_searchType = SEARCH_TYPE_UNSIGNED_8BIT;
+      else if (m_addressmod == 2)
+        m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+      else 
+        m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
     }
   }
   else if (kdown & KEY_L && !(kheld & KEY_ZL))
@@ -2279,6 +2293,8 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
       m_z++;
       m_EditorBaseAddr = m_jump_stack[m_z].from;
       m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+      m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
+      m_addressmod = 0;
     }
   }
   else if (kdown & KEY_UP)
@@ -2413,8 +2429,44 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
     u64 pointed_address;
     m_debugger->readMemory(&pointed_address, sizeof(u64), address);
+    m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
     if ((pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend) || (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd))
     {
+      if (m_z == 0)
+      {
+        if (m_bookmark.pointer.depth < MAX_POINTER_DEPTH) // expand pointer chain
+        {
+          m_bookmark.pointer.depth++;
+          for (int z = m_bookmark.pointer.depth; z > 0; z--)
+          {
+            m_bookmark.pointer.offset[z]=m_bookmark.pointer.offset[z-1];
+          }
+          m_bookmark.pointer.offset[1] = address - m_jump_stack[2].to;
+        }
+        else
+        {
+          m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+        }
+      }
+      else
+      {
+        m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+        // m_jump_stack[m_z].from = address;
+        // m_jump_stack[m_z].to = pointed_address;
+      }
+    }
+    else
+    { // change target
+      if (m_z == 0)
+      {
+        m_bookmark.pointer.offset[0] = address - m_jump_stack[1].to;
+      }
+      else
+      {
+        m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
+      }
+    }
+
       // if (m_jump_stack_index + 1 < MAX_JUMP_STACK)
       // {
       //   m_jump_stack[m_jump_stack_index] = address;
@@ -2430,7 +2482,8 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
       // {
       //   (new Snackbar("Jump Stack full!"))->show();
       // }
-    }
+
+    
     // std::stringstream ss;
     // ss << "0x" << std::uppercase << std::hex << address;
     // char input[16];
