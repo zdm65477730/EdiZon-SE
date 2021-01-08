@@ -148,11 +148,6 @@ private:
   u64 m_EditorBaseAddr = 0x00;
   u64 m_BookmarkAddr = 0;
   u8 m_addressmod = 0;
-  #define MAX_JUMP_STACK 50
-  u64 m_jump_stack [MAX_JUMP_STACK];
-  u16 m_jump_stack_index = 0;
-  u16 m_jump_stack_max = 0;
-  bool m_show_ptr = true;
   time_t m_Time1;
   struct helperinfo_t
   {
@@ -175,6 +170,17 @@ private:
 #define MAX_POINTER_RANGE 0x2000
 #define MAX_NUM_POINTER_OFFSET 30
 #define HAVESAVE (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr) //m_havesave
+  // #define MAX_JUMP_STACK 50
+  struct fromto_t
+  {
+    u64 from;
+    u64 to;
+  };
+  fromto_t m_jump_stack[MAX_POINTER_DEPTH + 1];
+  u16 m_jump_stack_index = 0;
+  u16 m_jump_stack_max = 0;
+  u16 m_z = 0;
+  bool m_show_ptr = true;
   bool m_havesave = true;
   void iconloadcheck();
   void removef(std::string filePath);

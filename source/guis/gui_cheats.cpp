@@ -1268,6 +1268,8 @@ std::string GuiCheats::buttonStr(u32 buttoncode)
 #define line1 10
 #define line2 80
 #define line3 120
+#define line4 160
+#define line5 195
 void GuiCheats::drawEditRAMMenu2()
 {
   std::stringstream ss;
@@ -1347,6 +1349,56 @@ void GuiCheats::drawEditRAMMenu2()
       Gui::drawTextAligned(font20, 360, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
     }
   };
+
+  // ss.str("");
+  // ss << "Bookmark line 1 drawTextAligned(font20, Gui::g_framebuffer_width - 100, line2, currTheme.text";
+  // Gui::drawTextAligned(font20, 30, line4, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+  // ss.str("");
+  // ss << "Bookmark line 2 Gui::drawTextAligned(font20, 1010, line2, m_searchMenuLocation == SEARCH_";
+  // Gui::drawTextAligned(font20, 30, line5, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+//ME1 Memory explorer pointer chain display 
+// if (false)
+  {
+    if (m_bookmark.pointer.depth > 0)
+    {
+      ss.str("");
+      int i = 0;
+      ss << "z=" << m_bookmark.pointer.depth << " main"; //[0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_mainBaseAddr << "]";
+      u64 nextaddress = m_mainBaseAddr;
+      for (int z = m_bookmark.pointer.depth; z >= 0; z--)
+      {
+        ss << "+" << std::uppercase << std::hex << m_bookmark.pointer.offset[z];
+        if (z == m_z)
+        {
+          if (address >= nextaddress)
+            ss << "[" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress << "]";
+          else
+            ss << "[-" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address << "]";
+        }
+        nextaddress += m_bookmark.pointer.offset[z];
+        MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
+        if (meminfo.perm == Perm_Rw)
+          m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
+        else
+        {
+          ss << "(*access denied*)";
+          break;
+        }
+        if (z > 0)
+        {
+            ss << "(" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << nextaddress << ")";
+        }
+        i++;
+        if ((i == 8) || (i == 16))
+          ss << "\n";
+      }
+      // ss << " " << dataTypes[m_bookmark.type];
+      Gui::drawTextAligned(font14, 30, line4, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+    }
+  }
+
+//
+
   // Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, line2, currTheme.textColor, "\uE0A5 \uE14A", ALIGNED_RIGHT); // the end bracket
   // Gui::drawTextAligned(font20, 260, line2, m_searchMenuLocation == SEARCH_TYPE ? currTheme.selectedColor : currTheme.textColor, "U8", ALIGNED_CENTER);
   // Gui::drawTextAligned(font20, 510, line2, m_searchMenuLocation == SEARCH_MODE ? currTheme.selectedColor : currTheme.textColor, "U16", ALIGNED_CENTER);
@@ -2185,7 +2237,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     }
   }
 }
-void GuiCheats::editor_input(u32 kdown, u32 kheld)
+void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory explorer
 {
   if (kdown & KEY_B && kheld & KEY_ZL)
   {
@@ -2198,7 +2250,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
     if (m_jump_stack_index > 0)
     {
       m_jump_stack_index--;
-      m_EditorBaseAddr = m_jump_stack[m_jump_stack_index];
+      // m_EditorBaseAddr = m_jump_stack[m_jump_stack_index];
       m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
     }
     else
@@ -2208,15 +2260,25 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_R && !(kheld & KEY_ZL))
   {
-    if (m_jump_stack_index < m_jump_stack_max - 1)
+    if (m_z > 0)
     {
-      m_jump_stack_index++;
-      m_EditorBaseAddr = m_jump_stack[m_jump_stack_index];
+      m_EditorBaseAddr = m_jump_stack[m_z].to;
       m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+      m_z--;
     }
     else
     {
-      (new Snackbar("Top of Stack reached!"))->show();
+      m_EditorBaseAddr = m_jump_stack[1].to + m_bookmark.pointer.offset[0];
+      m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+    }
+  }
+  else if (kdown & KEY_L && !(kheld & KEY_ZL))
+  {
+    if (m_z < m_bookmark.pointer.depth)
+    {
+      m_z++;
+      m_EditorBaseAddr = m_jump_stack[m_z].from;
+      m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
     }
   }
   else if (kdown & KEY_UP)
@@ -2353,21 +2415,21 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
     m_debugger->readMemory(&pointed_address, sizeof(u64), address);
     if ((pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend) || (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd))
     {
-      if (m_jump_stack_index + 1 < MAX_JUMP_STACK)
-      {
-        m_jump_stack[m_jump_stack_index] = address;
-        m_jump_stack_index++; 
-        m_jump_stack_max = m_jump_stack_index;
-        m_EditorBaseAddr = pointed_address;
-        m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
-        m_addressmod = m_EditorBaseAddr % 4;
-        if (m_addressmod % dataTypeSizes[m_searchType] != 0)
-          m_addressmod = 0;
-      }
-      else
-      {
-        (new Snackbar("Jump Stack full!"))->show();
-      }
+      // if (m_jump_stack_index + 1 < MAX_JUMP_STACK)
+      // {
+      //   m_jump_stack[m_jump_stack_index] = address;
+      //   m_jump_stack_index++; 
+      //   m_jump_stack_max = m_jump_stack_index;
+      //   m_EditorBaseAddr = pointed_address;
+      //   m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+      //   m_addressmod = m_EditorBaseAddr % 4;
+      //   if (m_addressmod % dataTypeSizes[m_searchType] != 0)
+      //     m_addressmod = 0;
+      // }
+      // else
+      // {
+      //   (new Snackbar("Jump Stack full!"))->show();
+      // }
     }
     // std::stringstream ss;
     // ss << "0x" << std::uppercase << std::hex << address;
@@ -2407,17 +2469,17 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld)
       if ((address >= m_mainBaseAddr && address <= m_mainend) || (address >= m_heapBaseAddr && address <= m_heapEnd))
       {
         // printf("valid %lx\n", address);
-        (new Snackbar("Address valid!"))->show();
-        if (m_jump_stack_index < MAX_JUMP_STACK)
-        {
-          m_jump_stack[m_jump_stack_index] = m_EditorBaseAddr;
-          m_jump_stack_index++;
-          m_EditorBaseAddr = address;
-        }
-        else
-        {
-          (new Snackbar("Jump Stack full!"))->show();
-        }
+        // (new Snackbar("Address valid!"))->show();
+        // if (m_jump_stack_index < MAX_JUMP_STACK)
+        // {
+        //   m_jump_stack[m_jump_stack_index] = m_EditorBaseAddr;
+        //   m_jump_stack_index++;
+        //   m_EditorBaseAddr = address;
+        // }
+        // else
+        // {
+        //   (new Snackbar("Jump Stack full!"))->show();
+        // }
       }
       else
       {
@@ -3478,24 +3540,20 @@ void GuiCheats::onInput(u32 kdown)
               for (int z = m_bookmark.pointer.depth; z > 0; z--)
               {
                 nextaddress += m_bookmark.pointer.offset[z];
-                m_jump_stack[m_jump_stack_index] = nextaddress;
-                m_jump_stack_index++;
+                m_jump_stack[z].from = nextaddress;
                 MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
                 if (meminfo.perm == Perm_Rw)
                   m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
                 else
                 {
-                   // printf("*access denied*");
+                  m_z = z ;
                   break;
                 }
-                m_jump_stack[m_jump_stack_index] = nextaddress;
-                m_jump_stack_index++;
+                m_jump_stack[z].to = nextaddress;
+                m_z = z - 1;
               }
             }
-            m_jump_stack[m_jump_stack_index] = m_EditorBaseAddr;
-            m_jump_stack_index++;
-            m_jump_stack_max = m_jump_stack_index;
-            //
+            //ME3 data init for memory explorer
           }
         }
 
