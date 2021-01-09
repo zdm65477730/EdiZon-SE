@@ -1546,7 +1546,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 2)
     {
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  ","~PTR"};
       // if (M_ENTRY.type != SEARCH_TYPE_POINTER)
       Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
     }
@@ -2046,7 +2046,10 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
       // m_multisearch.Entries[m_selectedEntry / 6].on = !m_multisearch.Entries[m_selectedEntry / 6].on;
       break;
     case 2:
-      M_ENTRY.mode = SEARCH_MODE_EQ;
+      if (M_ENTRY.mode == SEARCH_MODE_EQ)
+        M_ENTRY.mode = SEARCH_MODE_NOT_POINTER;
+      else
+        M_ENTRY.mode = SEARCH_MODE_EQ;
       break;
     case 3:
       if (M_ENTRY.type == SEARCH_TYPE_UNSIGNED_32BIT)
@@ -2370,7 +2373,6 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
       else
         m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
       bookmark.pointer.depth = m_bookmark.pointer.depth - m_z;
-      bookmark.heap = m_bookmark.heap;
       {
         for (int z = m_bookmark.pointer.depth; z >= m_z; z--)
         {
@@ -3600,6 +3602,7 @@ void GuiCheats::onInput(u32 kdown)
           if (m_memoryDump1 != nullptr)
           {
             m_searchType = m_bookmark.type;
+            m_bookmark.heap = false;
             // populate stack if on pointer
             if (m_bookmark.pointer.depth > 0)
             {
@@ -7558,7 +7561,11 @@ bool GuiCheats::addcodetofile(u64 index)
       }
       
     }
-    ss << "780F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0] << "\n";
+    if (bookmark.pointer.offset[0] >= 0)
+      ss << "780F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0] << "\n";
+    else
+      ss << "780F1000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0]*(-1) << "\n";
+
     ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(16) << realvalue._u64 << "\n";
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
@@ -8678,6 +8685,12 @@ bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
         }
         else
           return true;
+        break;
+      case SEARCH_MODE_NOT_POINTER: //m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize
+        if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
+        {
+          return true;
+        }
         break;
       default:
         break;

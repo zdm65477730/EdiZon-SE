@@ -240,7 +240,7 @@ private:
     char label[19] = {0};
     searchType_t type;
     pointer_chain_t pointer;
-    bool heap = false;
+    bool heap = true;
     u64 offset = 0;
     bool deleted = false;
   };
