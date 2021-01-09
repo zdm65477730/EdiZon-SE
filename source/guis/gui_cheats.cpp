@@ -4155,7 +4155,7 @@ void GuiCheats::onInput(u32 kdown)
     {
       if (m_searchMenuLocation == SEARCH_NONE)
       {
-        if (Config::getConfig()->extra_value)
+        if ((Config::getConfig()->extra_value) && (m_memoryDump->size() == 0))
         { // enter multi search
           m_searchMenuLocation = SEARCH_editExtraSearchValues;
           m_selectedEntrySave = m_selectedEntry;
