@@ -3355,7 +3355,7 @@ void GuiCheats::onInput(u32 kdown)
         {
           // bookmark_t bm;
           bookmark.pointer.offset[z] = offset[i];
-          printf("+%x z=%d ", bookmark.pointer.offset[z], z);
+          printf("+%lx z=%d ", bookmark.pointer.offset[z], z);
           nextaddress += bookmark.pointer.offset[z];
           printf("[%lx]", nextaddress);
           // m_memoryDumpBookmark->addData((u8 *)&nextaddress, sizeof(u64));
@@ -6551,7 +6551,7 @@ void GuiCheats::pointercheck()
         // printf("(&lx)", nextaddress);
         for (int z = pointer_chain.depth; z >= 0; z--)
         {
-          printf("+%x z=%d ", pointer_chain.offset[z], z);
+          printf("+%lx z=%d ", pointer_chain.offset[z], z);
           nextaddress += pointer_chain.offset[z];
           printf("[%lx]", nextaddress);
           MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
@@ -6949,7 +6949,7 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
       // m_pointeroffsetDump->flushBuffer(); // is this useful?
       printf("main");
       for (int z = m_bookmark.pointer.depth; z >= 0; z--)
-        printf("+%x z=%d ", m_bookmark.pointer.offset[z], z);
+        printf("+%lx z=%d ", m_bookmark.pointer.offset[z], z);
       printf("\n\n");
       m_pointer_found++;
       // return; // consider don't return to find more
@@ -7549,11 +7549,18 @@ bool GuiCheats::addcodetofile(u64 index)
     ss << ((m_32bitmode) ? "540F0000 " : "580F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
     for (int z = bookmark.pointer.depth - 1; z > 0; z--)
     {
-      ss << ((m_32bitmode) ? "540F1000 " : "580F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z] << "\n";
+      if (bookmark.pointer.offset[z] >= 0)
+        ss << ((m_32bitmode) ? "540F1000 " : "580F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z] << "\n";
+      else
+      {
+        ss << ((m_32bitmode) ? "740F1000 " : "780F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z]*(-1) << "\n";
+        ss << ((m_32bitmode) ? "540F1000 00000000" : "580F1000 00000000");
+      }
+      
     }
     ss << "780F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0] << "\n";
     ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(16) << realvalue._u64 << "\n";
-    printf("index = %ld depth = %d offset = %d offset = %d offset = %d offset = %d\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
+    printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
 
@@ -8179,7 +8186,7 @@ bool GuiCheats::addstaticcodetofile(u64 index)
     ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? 1 : 0) << "00000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.offset << " "
        << std::uppercase << std::hex << std::setfill('0') << ((dataTypeSizes[bookmark.type] == 8) ? std::setw(16) : std::setw(8))
        << ((dataTypeSizes[bookmark.type] == 8) ? realvalue._u64 : realvalue._u32) << "\n";
-    printf("index = %ld depth = %d offset = %d offset = %d offset = %d offset = %d\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
+    printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
     fputs(ss.str().c_str(), pfile);
@@ -8530,23 +8537,23 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool f
 };
 bool GuiCheats::unresolved2(pointer_chain_t *pointer)
 {
-  printf("source= %x", pointer->depth);
+  printf("source= %lx", pointer->depth);
   for (int z = pointer->depth; z >= 0; z--)
-    printf("+ %x ", pointer->offset[z]);
+    printf("+ %lx ", pointer->offset[z]);
   printf("\n");
   return true;
 }
 
 bool GuiCheats::unresolved(pointer_chain_t pointer)
 {
-  printf("z=%x ", pointer.depth);
+  printf("z=%lx ", pointer.depth);
   if (pointer.depth != 0)
   {
     printf("[main");
     u64 nextaddress = m_mainBaseAddr;
     for (int z = pointer.depth; z >= 0; z--)
     {
-      printf("+%x]", pointer.offset[z]);
+      printf("+%lx]", pointer.offset[z]);
       nextaddress += pointer.offset[z];
       MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
       if (meminfo.perm == Perm_Rw)
