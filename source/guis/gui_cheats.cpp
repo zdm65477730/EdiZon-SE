@@ -1558,7 +1558,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 4)
     {
-      if (M_ENTRY.mode != SEARCH_MODE_POINTER)
+      if ((M_ENTRY.mode != SEARCH_MODE_POINTER) && (M_ENTRY.mode != SEARCH_MODE_NOT_POINTER))
         Gui::drawTextAligned(font20, c5, 160 + linegape * (1 + i / 6), cellColor, _getValueDisplayString(m_multisearch.Entries[i / 6].value1, m_multisearch.Entries[i / 6].type).c_str(), ALIGNED_CENTER);
     }
     else if ((i % 6) == 5)
@@ -2230,7 +2230,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     if (m_selectedEntry % 6 < 5)
       m_selectedEntry++;
   }
-  if (M_ENTRY.mode == SEARCH_MODE_POINTER)
+  if (M_ENTRY.mode == SEARCH_MODE_POINTER || M_ENTRY.mode == SEARCH_MODE_NOT_POINTER)
   {
     if (m_selectedEntry % 6 > 2)
     {
