@@ -230,8 +230,8 @@ private:
   bool m_forwarddump = false; // reduce from 138 to 26
   struct pointer_chain_t
   {
-    u32 depth = 0;
-    s32 offset[MAX_POINTER_DEPTH + 1] = {0}; // offset to address pointed by pointer
+    u64 depth = 0;
+    s64 offset[MAX_POINTER_DEPTH + 1] = {0}; // offset to address pointed by pointer
     // below is for debugging can consider removing;
     // u64 fileoffset[MAX_POINTER_DEPTH + 1] = {0}; // offset to the file that has the address where the pointer was stored in this instance for debugging
   };

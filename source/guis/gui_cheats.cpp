@@ -1368,7 +1368,7 @@ void GuiCheats::drawEditRAMMenu2()
       u64 nextaddress = m_mainBaseAddr;
       for (int z = m_bookmark.pointer.depth; z >= 0; z--)
       {
-        ss << "+" << std::uppercase << std::hex << m_bookmark.pointer.offset[z];
+        ss << "+" << std::uppercase << std::hex << (s32)m_bookmark.pointer.offset[z];
         if (z == m_z)
         {
           if (address + m_addressmod >= nextaddress)
