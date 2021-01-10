@@ -325,6 +325,8 @@ private:
                                      searchMode_t searchMode, searchRegion_t searchRegion,
                                      MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
 
+  void prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> memInfos);
+
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,
                                       searchMode_t searchMode, bool use_range, MemoryDump **displayDump);
