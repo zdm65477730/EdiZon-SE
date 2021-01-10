@@ -1949,12 +1949,13 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
       ss << "" << std::dec << (u16)i + 1;
       strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     }
+    m_multisearch.Entries[0].on = TARGET;
   }
   else if (kdown & KEY_MINUS && (kheld & KEY_ZL))
   {
     u8 i = 0;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
+    m_multisearch.Entries[i].on = TARGET;
     m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
     m_multisearch.Entries[i].value1._u64 = 0;
@@ -3592,7 +3593,10 @@ void GuiCheats::onInput(u32 kdown)
         {
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
           m_BookmarkAddr = m_EditorBaseAddr;
-          m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+          if (m_memoryDump1 != nullptr)
+            m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+          else
+            m_bookmark.pointer.depth = 0;
           m_searchMenuLocation = SEARCH_editRAM2;
           m_selectedEntrySave = m_selectedEntry;
           m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
@@ -8616,6 +8620,8 @@ void GuiCheats::load_meminfos()
 #define M_ENTRYi m_multisearch.Entries[i]
 static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2)
 {
+  if (e1.on != OFF && e2.on == OFF)
+    return true;
   return (e1.offset < e2.offset);
 };
 void GuiCheats::save_multisearch_setup()
@@ -8648,6 +8654,8 @@ void GuiCheats::load_multisearch_setup()
   MemoryDump *multisearch = new MemoryDump((m_edizon_dir + "/multisearch.dat").c_str(), DumpType::UNDEFINED, false);
   if ((multisearch->size() > 0) && (multisearch->size() % sizeof(m_multisearch) == 0))
     multisearch->getData(0, (u8 *)&m_multisearch, sizeof(m_multisearch));
+  else
+    m_multisearch.Entries[0].on = TARGET;
   delete multisearch;
 }
 bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
