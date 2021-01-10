@@ -1956,12 +1956,15 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
       strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
     }
     m_multisearch.Entries[0].on = TARGET;
+    m_multisearch.target = 0;
   }
   else if (kdown & KEY_MINUS && (kheld & KEY_ZL))
   {
+    m_multisearch.Entries[0].on = TARGET;
+    m_multisearch.target = 0;
     u8 i = 0;
     m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = TARGET;
+    m_multisearch.Entries[i].on = OFF;
     m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
     m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
     m_multisearch.Entries[i].value1._u64 = 0;
@@ -2025,16 +2028,28 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     ss << "Range 64-";
 
     strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
-    // u8 i = 6;
-    // m_multisearch.Entries[i].offset = i * 0x8;
-    // m_multisearch.Entries[i].on = OFF;
-    // m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
-    // m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
-    // m_multisearch.Entries[i].value1._u64 = 0;
-    // m_multisearch.Entries[i].value2._u64 = 0;
-    // ss.str("");
-    // ss << "Item " << std::dec << (u16)i + 1;
-    // strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+
+    i = 6;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = OFF;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_64BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+    m_multisearch.Entries[i].value1._u64 = m_heapBaseAddr;
+    m_multisearch.Entries[i].value2._u64 = m_heapEnd;
+    ss.str("");
+    ss << "Heap " << std::dec << (u16)i + 1;
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+
+    i = 7;
+    m_multisearch.Entries[i].offset = i * 0x8;
+    m_multisearch.Entries[i].on = OFF;
+    m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_64BIT;
+    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+    m_multisearch.Entries[i].value1._u64 = m_mainBaseAddr;
+    m_multisearch.Entries[i].value2._u64 = m_mainend;
+    ss.str("");
+    ss << "Main " << std::dec << (u16)i + 1;
+    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
   }
   else if (kdown & KEY_X && !(kheld & KEY_ZL))
   {
