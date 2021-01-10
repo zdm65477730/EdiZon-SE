@@ -1479,8 +1479,8 @@ void GuiCheats::drawEditRAMMenu2()
   }
 
   // key hits
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE0E3 Follow pointer \uE0EF BM add  \uE0E7 PageDown  \uE0E0 Edit value  \uE0E5 Forward  \uE0E1 Back", ALIGNED_RIGHT); //\uE0E4 Change Mode  
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E1 JumpBack", ALIGNED_RIGHT); //\uE0E4 Change Mode  
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E7 PageDown  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
 }
 void GuiCheats::drawEditExtraSearchValues()
 {
@@ -1511,6 +1511,7 @@ void GuiCheats::drawEditExtraSearchValues()
 #define c6 1010 + shift1 + shift2
 #define linegape 30
 #define M_ENTRY m_multisearch.Entries[i / 6]
+#define M_ENTRYi m_multisearch.Entries[i]
 #define labelline 145
   color_t cellColor;
   Gui::drawTextAligned(font20, c0, labelline, currTheme.textColor, "LABEL", ALIGNED_CENTER);
@@ -1583,7 +1584,7 @@ void GuiCheats::drawEditExtraSearchValues()
                                                                                        "Each line you enable will be used to narrow down the target. Pointer is 64bit values that falls in the range of either main or heap.\n"
                                                                                        "Move the cursor to the field you want to modify. Press \uE0A4 \uE0A5 to modify. Press \uE0A0 to edit numeric Values.\n"
                                                                                        "Use \uE0A6 + \uE0A0 to edit label. Use \uE0A2 to toggle on/off. Use \uE0A6 + \uE0A2 to toggle Hex mode. Use \uE0A3 to jump cursor to value1.\n"
-                                                                                       "Press \uE0A1 to exit this screen.",
+                                                                                       "Press \uE0A7 to jump to target value1. Press \uE0A1 to exit this screen.",
                        ALIGNED_CENTER);
   //  "Press quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==/!=\n"
   //  "If you search type is floating point \uE0A5 negate the number. \uE0C4 cycle float type \uE0C5 presets \uE0A3 cycle integer type",
@@ -1767,6 +1768,7 @@ void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t
         case SEARCH_MODE_DIFF:
         case SEARCH_MODE_INC:
         case SEARCH_MODE_DEC:
+        case SEARCH_MODE_NOT_POINTER:
           printf("search mode non !");
           break;
         }
@@ -1809,6 +1811,10 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
     GuiCheats::save_multisearch_setup();
     m_selectedEntry = m_selectedEntrySave;
     m_searchMenuLocation = SEARCH_NONE;
+  }
+  else if (kdown & KEY_ZR && !(kheld & KEY_ZL))
+  {
+    m_selectedEntry = m_multisearch.target * 6 + 4;
   }
   else if (kdown & KEY_B && (kheld & KEY_ZL))
   {
@@ -2253,6 +2259,87 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     m_selectedEntry = m_selectedEntrySave;
     m_searchMenuLocation = SEARCH_NONE;
     m_addressmod = 0;
+  }
+  else if (kdown & KEY_RSTICK && !(kheld & KEY_ZL))
+  {
+    u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+    searchValue_t value = {0};
+    u8 *ram_buffer = new u8[M_ENTRY_MAX * sizeof(u64)];
+    u64 startaddress = address - 0x20 - (address % 16);
+    m_debugger->readMemory(ram_buffer, M_ENTRY_MAX * sizeof(u64), startaddress);
+    for (int i = 0; i < M_ENTRY_MAX; i++)
+    {
+      if (i == (int)(4 + (address / sizeof(u64)) % 2))
+      {
+        M_ENTRYi.on = TARGET;
+        M_ENTRYi.type = m_searchType;
+        M_ENTRYi.mode = SEARCH_MODE_EQ;
+        M_ENTRYi.offset = address % 16 + 0x20;
+        memcpy(&value, ram_buffer + M_ENTRYi.offset, dataTypeSizes[m_searchType]);
+        M_ENTRYi.value1._s64 = value._s64;
+      }
+      else
+      {
+        M_ENTRYi.on = ON;
+        M_ENTRYi.type = SEARCH_TYPE_UNSIGNED_64BIT;
+        value = {0};
+        memcpy(&value, ram_buffer + i * sizeof(u64), sizeof(u64));
+        if (((value._u64 >= m_mainBaseAddr) && (value._u64 <= (m_mainend))) || ((value._u64 >= m_heapBaseAddr) && (value._u64 <= (m_heapEnd))))
+        {
+          M_ENTRYi.mode = SEARCH_MODE_POINTER;
+          M_ENTRYi.offset = i * sizeof(u64);
+        }
+        else
+        {
+          value = {0};
+          memcpy(&value, ram_buffer + i * sizeof(u64), sizeof(u32));
+          if (value._f32 > 0.001 && value._f32 < 1000000)
+          {
+            M_ENTRYi.mode = SEARCH_MODE_RANGE;
+            M_ENTRYi.type = SEARCH_TYPE_FLOAT_32BIT;
+            M_ENTRYi.offset = i * sizeof(u64);
+            M_ENTRYi.value1._f32 = 0.001;
+            M_ENTRYi.value2._f32 = 1000000;
+          }
+          else if (value._f32 < -0.001 && value._f32 > -1000000)
+          {
+            M_ENTRYi.mode = SEARCH_MODE_RANGE;
+            M_ENTRYi.type = SEARCH_TYPE_FLOAT_32BIT;
+            M_ENTRYi.offset = i * sizeof(u64);
+            M_ENTRYi.value1._f32 = -0.001;
+            M_ENTRYi.value2._f32 = -1000000;
+          }
+          else
+          {
+            value = {0};
+            memcpy(&value, ram_buffer + i * sizeof(u64) + sizeof(u32), sizeof(u32));
+            if (value._f32 > 0.001 && value._f32 < 1000000)
+            {
+              M_ENTRYi.mode = SEARCH_MODE_RANGE;
+              M_ENTRYi.type = SEARCH_TYPE_FLOAT_32BIT;
+              M_ENTRYi.offset = i * sizeof(u64) + sizeof(u32);
+              M_ENTRYi.value1._f32 = 0.001;
+              M_ENTRYi.value2._f32 = 1000000;
+            }
+            else if (value._f32 < -0.001 && value._f32 > -1000000)
+            {
+              M_ENTRYi.mode = SEARCH_MODE_RANGE;
+              M_ENTRYi.type = SEARCH_TYPE_FLOAT_32BIT;
+              M_ENTRYi.offset = i * sizeof(u64) + sizeof(u32);
+              M_ENTRYi.value1._f32 = -0.001;
+              M_ENTRYi.value2._f32 = -1000000;
+            }
+            else
+            {
+              M_ENTRYi.mode = SEARCH_MODE_NOT_POINTER;
+              M_ENTRYi.offset = i * sizeof(u64);
+            }
+          }
+        }
+      }
+    }
+    (new Snackbar("Multi search setup created!"))->show();
+    GuiCheats::save_multisearch_setup();
   }
   else if (kdown & KEY_B && !(kheld & KEY_ZL))
   {
@@ -5290,6 +5377,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
         case SEARCH_MODE_DIFF:
         case SEARCH_MODE_INC:
         case SEARCH_MODE_DEC:
+        case SEARCH_MODE_NOT_POINTER:
           printf("search mode non !");
           break;
         }
@@ -5539,6 +5627,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         }
         break;
       case SEARCH_MODE_NONE:
+      case SEARCH_MODE_NOT_POINTER:
         break;
       }
     }
@@ -5839,6 +5928,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         }
         break;
       case SEARCH_MODE_NONE:
+      case SEARCH_MODE_NOT_POINTER:
         break;
       }
     }
@@ -6161,6 +6251,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
         case SEARCH_MODE_EQ:
         case SEARCH_MODE_GT:
         case SEARCH_MODE_LT:
+        case SEARCH_MODE_NOT_POINTER:
           printf("error 123\n");
           break;
         }
@@ -6473,6 +6564,7 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
       case SEARCH_MODE_EQ:
       case SEARCH_MODE_GT:
       case SEARCH_MODE_LT:
+      case SEARCH_MODE_NOT_POINTER:
         break;
       }
     }
@@ -8617,7 +8709,7 @@ void GuiCheats::load_meminfos()
   }
   delete scaninfo;
 }
-#define M_ENTRYi m_multisearch.Entries[i]
+
 static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2)
 {
   if (e1.on != OFF && e2.on == OFF)
