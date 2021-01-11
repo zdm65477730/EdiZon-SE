@@ -3320,6 +3320,7 @@ void GuiCheats::onInput(u32 kdown)
       m_selectedEntry = 1;
       m_searchValue[0]._u64 = 0x1000000000;
       m_searchValue[1]._u64 = 0x8000000000;
+      Config::getConfig()->exclude_ptr_candidates = false;
     }
     if ((kdown & KEY_LSTICK) && m_menuLocation == CHEATS && (kheld & KEY_ZL))
     {
@@ -7225,33 +7226,26 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
 }
 // printf("not found \n");
 // return;
-
 // m_targetmemInfos.clear();
 // m_target = address;
 // m_max_depth = depth;
 // m_max_range = range;
 // m_numoffset = num;
-
 // std::vector<MemoryInfo> mainInfos;
 // mainInfos.clear();
 // m_low_main_heap_addr = 0x100000000000;
 // m_high_main_heap_addr = 0;
-
 // for (MemoryInfo meminfo : m_memoryInfo)
 // {
 //   // if (m_searchRegion == SEARCH_REGION_RAM)
 //   //   if ((meminfo.perm & Perm_Rw) != Perm_Rw) continue; else
 //   if (meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)
 //     continue;
-
 //   if (meminfo.addr < m_low_main_heap_addr)
 //     m_low_main_heap_addr = meminfo.addr;
-
 //   if ((meminfo.addr + meminfo.size) > m_high_main_heap_addr)
 //     m_high_main_heap_addr = (meminfo.addr + meminfo.size);
-
 //   m_targetmemInfos.push_back(meminfo);
-
 //   if (meminfo.type == MemType_CodeWritable || meminfo.type == MemType_CodeMutable)
 //   {
 //     mainInfos.push_back(meminfo);
@@ -7267,12 +7261,10 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
 //     //
 //   }
 // }
-
 // m_Time1 = time(NULL);
 // printf("searching pointer for address %lx\n Range %lx .. %lx ", m_target, m_low_main_heap_addr, m_high_main_heap_addr);
 // for (u8 i = 0; i < 20; i++)
 //   m_hitcount.offset[i] = 0;
-
 // for (MemoryInfo meminfo : mainInfos)
 // {
 //   if (meminfo.addr < m_mainBaseAddr)
@@ -7298,7 +7290,6 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
 //   printf("hit count depth");
 //   for (u8 i = 0; i < 20; i++)
 //     printf("%d= %d ", i, m_hitcount.offset[i]);
-
 // void GuiCheats::searchpointer(u64 address, u64 depth, u64 range, struct pointer_chain_t pointerchain) //assumed range don't extend beyond a segment, need to make seperate call to cover multi segment
 // {
 //   // using global to reduce overhead
@@ -7391,7 +7382,6 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
 //   }
 //   delete[] buffer;
 // }
-
 /**
  * Primary:
  *  Initial full memory dump regardless of type
@@ -8531,8 +8521,10 @@ void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t 
   // delete newstringDump;
 }
 //
+// #define inc_prep
 void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> memInfos)
 {
+#ifdef inc_prep
   u8 j = 1;
   int k = -1;
   while (access(m_PCDump_filename.str().c_str(), F_OK) == 0)
@@ -8545,16 +8537,21 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
     if (j > 100)
       k = -3;
   }
-  if (j == 1)
-    j++;
-  std::stringstream m_PCAttr_filename;
-  m_PCAttr_filename << m_PCDump_filename.str().c_str();
-  m_PCAttr_filename.seekp(k - 3, std::ios_base::end);
-  m_PCAttr_filename << "att" << (j - 1);
+  // if (j == 1)
+  //   j++;
+  // std::stringstream m_PCAttr_filename;
+  // m_PCAttr_filename << m_PCDump_filename.str().c_str();
+  // m_PCAttr_filename.seekp(k - 3, std::ios_base::end);
+  // m_PCAttr_filename << "att" << (j - 1);
+#endif
 
-  std::stringstream m_PCDumpM_filename;
+  m_PCAttr_filename.str("");
+  m_PCAttr_filename << m_PCDump_filename.str().c_str() << "A";
   m_PCDumpM_filename.str("");
   m_PCDumpM_filename << m_PCDump_filename.str().c_str() << "M";
+
+// check if pre is needed; need to have more here ****************  
+if (access(m_PCDump_filename.str().c_str(), F_OK) == 0) return;
 
   MemoryDump *PCDump;
   PCDump = new MemoryDump(m_PCDump_filename.str().c_str(), DumpType::DATA, true);
@@ -8924,6 +8921,13 @@ bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
       case SEARCH_MODE_EQ:
         if (realValue._s64 == M_ENTRYi.value1._s64)
         {
+          if (Config::getConfig()->exclude_ptr_candidates)
+          {
+            memset(&realValue, 0, 8);
+            memcpy(&realValue, buffer + index + (M_ENTRYi.offset - M_ENTRYi.offset % 8) - m_multisearch.adjustment, 8);
+            if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
+              return true;
+          }
           // printf("match EQ\n");
         }
         else
@@ -8932,7 +8936,13 @@ bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
       case SEARCH_MODE_RANGE:
         if (realValue._s64 >= M_ENTRYi.value1._s64 && realValue._s64 <= M_ENTRYi.value2._s64)
         {
-          // printf("Match Range\n");
+          if (Config::getConfig()->exclude_ptr_candidates)
+          {
+            memset(&realValue, 0, 8);
+            memcpy(&realValue, buffer + index + (M_ENTRYi.offset - M_ENTRYi.offset % 8) - m_multisearch.adjustment, 8);
+            if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
+              return true;
+          }
         }
         else
           return true;

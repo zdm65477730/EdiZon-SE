@@ -249,6 +249,8 @@ private:
   pointer_chain_t m_hitcount; // maybe not used
 
   std::stringstream m_PCDump_filename;
+  std::stringstream m_PCAttr_filename;
+  std::stringstream m_PCDumpM_filename;
   void PCdump();
   enum MemoryType
   {
