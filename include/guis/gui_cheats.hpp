@@ -27,6 +27,12 @@ struct MultiSearchEntry_t
   searchMode_t mode = SEARCH_MODE_EQ;
   searchValue_t value1 = {0}, value2 = {0};
 };
+struct fromto32_t
+{
+  u32 from;
+  u32 to;
+  u32 hits;
+};
 enum
 {
   FORMAT_DEC,
@@ -78,6 +84,7 @@ private:
     SEARCH_VALUE,
     SEARCH_editRAM,
     SEARCH_editRAM2,
+    SEARCH_pickjump,
     SEARCH_editExtraSearchValues,
     SEARCH_POINTER
   } m_searchMenuLocation = SEARCH_NONE;
@@ -95,6 +102,8 @@ private:
   MemoryDump *m_AttributeDumpBookmark;
   MemoryDump *m_pointeroffsetDump;
   MemoryDump *m_dataDump;
+  MemoryDump *m_PC_Dump = nullptr;
+  MemoryDump *m_PC_DumpM = nullptr;
 
   #define M_ENTRY_MAX 10
   #define M_TARGET m_multisearch.Entries[m_multisearch.target]
@@ -176,6 +185,17 @@ private:
     u64 from;
     u64 to;
   };
+
+  struct jump_table_entry_t
+  {
+    u32 start_address;
+    u32 table_index;
+    u32 table_entrysize;
+  };
+  jump_table_entry_t *m_jumptable;
+  fromto32_t *m_fromto32;
+  u32 m_fromto32_size = 0;
+
   fromto_t m_jump_stack[MAX_POINTER_DEPTH + 1];
   s16 m_depth_count = 0;
   u16 m_jump_stack_index = 0;
@@ -306,11 +326,13 @@ private:
   std::string buttonStr(u32 buttoncode);
   void drawEditRAMMenu2();
   void drawEditExtraSearchValues();
+  void drawSEARCH_pickjump();
   bool m_editCheat = false;
   bool m_32bitmode = false;
   void editor_input(u32 kdown, u32 kheld);
   void EditExtraSearchValues_input(u32 kdown, u32 kheld);
   void easymode_input(u32 kdown, u32 kheld);
+  void pickjump_input(u32 kdown, u32 kheld);
   void drawSearchPointerMenu();
   void searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1,
                                     searchValue_t searchValue2, searchType_t searchType,
@@ -328,6 +350,8 @@ private:
                                      MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
 
   void prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> memInfos);
+
+  void prep_backjump_stack(u64 address);
 
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,

@@ -72,7 +72,7 @@ static searchValue_t _get_entry(searchValue_t value, searchType_t type);
 // static void _moveLonelyCheats(u8 *buildID, u64 titleID);
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2);
-
+static bool comparefromto(fromto32_t e1, fromto32_t e2);
 GuiCheats::GuiCheats() : Gui()
 {
   if (Config::getConfig()->deletebookmark)
@@ -536,6 +536,12 @@ GuiCheats::~GuiCheats()
 
   if (m_cheats != nullptr)
     delete[] m_cheats;
+
+  if (m_PC_Dump != nullptr)
+    delete m_PC_Dump;
+
+  if (m_PC_DumpM != nullptr)
+    delete m_PC_DumpM;
 
   if (m_sysmodulePresent)
   {
@@ -1083,6 +1089,7 @@ void GuiCheats::draw()
     drawEditRAMMenu();
     drawEditRAMMenu2();
     drawEditExtraSearchValues();
+    drawSEARCH_pickjump();
     drawSearchPointerMenu();
     Gui::endDraw();
   }
@@ -1270,6 +1277,7 @@ std::string GuiCheats::buttonStr(u32 buttoncode)
 #define line3 120
 #define line4 160
 #define line5 195
+
 void GuiCheats::drawEditRAMMenu2()
 {
   std::stringstream ss;
@@ -1365,7 +1373,11 @@ void GuiCheats::drawEditRAMMenu2()
       int i = 0;
       ss << "z=" << std::dec << std::setfill('0') << std::setw(2) << m_depth_count << ((m_bookmark.heap)? " heap":" main"); //[0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_mainBaseAddr << "]";
       m_depth_count = -1;
-      u64 nextaddress = m_mainBaseAddr;
+      u64 nextaddress;
+      if (m_bookmark.heap)
+        nextaddress = m_heapBaseAddr;
+      else
+        nextaddress = m_mainBaseAddr;
       for (int z = m_bookmark.pointer.depth; z >= 0; z--)
       {
         ss << "+" << std::uppercase << std::hex << (s32)m_bookmark.pointer.offset[z];
@@ -1590,6 +1602,114 @@ void GuiCheats::drawEditExtraSearchValues()
   //  "If you search type is floating point \uE0A5 negate the number. \uE0C4 cycle float type \uE0C5 presets \uE0A3 cycle integer type",
 }
 // new dev
+void GuiCheats::drawSEARCH_pickjump()
+{
+  std::stringstream ss;
+  if (m_searchMenuLocation != SEARCH_pickjump)
+    return;
+  Gui::drawRectangled(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x00, 0x00, 0x00, 0xA0));
+  // Gui::drawRectangle(50, 50, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
+  Gui::drawRectangle(0, 50, Gui::g_framebuffer_width, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
+  Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
+  {
+      static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
+      ss.str("");
+      ss << "\uE132   Pick Source for JumpBack";
+      ss << "   [ " << regionNames[m_searchRegion] << " ]";
+      // ss << " line = " << m_selectedEntry / 6;
+  }
+  Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
+  ss.str("");
+#define shift1 15 + 50
+#define shift2 40
+#define c0 75
+#define c1 135 + shift1
+#define c2 260 + shift1
+#define c3 385 + shift1
+#define c4 510 + shift1
+#define c5 760 + shift1 - shift2
+#define c6 1010 + shift1 + shift2
+#define linegape 30
+#define M_ENTRY m_multisearch.Entries[i / 6]
+#define M_ENTRYi m_multisearch.Entries[i]
+#define labelline 145
+  color_t cellColor;
+  Gui::drawTextAligned(font20, c0, labelline, currTheme.textColor, "LABEL", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c1, labelline, currTheme.textColor, "OFFSET", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c2, labelline, currTheme.textColor, "On/OFF", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c3, labelline, currTheme.textColor, "MODE", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c4, labelline, currTheme.textColor, "TYPE", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c5, labelline, currTheme.textColor, "VALUE 1", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, c6, labelline, currTheme.textColor, "VALUE 2", ALIGNED_CENTER);
+
+  for (u8 i = 0; i < 60; i++) // 10 Row X 6 column
+  {
+    if (m_selectedEntry == i)
+      cellColor = currTheme.selectedColor;
+    else
+      cellColor = currTheme.textColor;
+    if ((i % 6) == 0)
+    {
+      ss.str("");
+      ss << M_ENTRY.label;
+      Gui::drawTextAligned((ss.str().size() > 8) ? font14 : font20, c0, 160 + linegape * (1 + i / 6), ((i / 6) == (m_selectedEntry / 6)) ? currTheme.selectedColor : currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+
+      ss.str("");
+      ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(3) << m_multisearch.Entries[i / 6].offset;
+      Gui::drawTextAligned(font20, c1, 160 + linegape * (1 + i / 6), cellColor, ss.str().c_str(), ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 1)
+    {
+      if (M_ENTRY.on == TARGET) //(i / 6 == m_multisearch.target)
+        Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, "Target", ALIGNED_CENTER);
+      else
+        Gui::drawTextAligned(font20, c2, 160 + linegape * (1 + i / 6), cellColor, (m_multisearch.Entries[i / 6].on == ON) ? "On" : "OFF", ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 2)
+    {
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  ","~PTR"};
+      // if (M_ENTRY.type != SEARCH_TYPE_POINTER)
+      Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 3)
+    {
+      static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "pointer"};
+      // if (M_ENTRY.mode != SEARCH_MODE_POINTER)
+      Gui::drawTextAligned(font20, c4, 160 + linegape * (1 + i / 6), cellColor, typeNames[m_multisearch.Entries[i / 6].type], ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 4)
+    {
+      if ((M_ENTRY.mode != SEARCH_MODE_POINTER) && (M_ENTRY.mode != SEARCH_MODE_NOT_POINTER))
+        Gui::drawTextAligned(font20, c5, 160 + linegape * (1 + i / 6), cellColor, _getValueDisplayString(m_multisearch.Entries[i / 6].value1, m_multisearch.Entries[i / 6].type).c_str(), ALIGNED_CENTER);
+    }
+    else if ((i % 6) == 5)
+    {
+      if ((m_multisearch.Entries[i / 6].mode == SEARCH_MODE_RANGE) && (M_ENTRY.type != SEARCH_TYPE_POINTER))
+        Gui::drawTextAligned(font20, c6, 160 + linegape * (1 + i / 6), cellColor, _getValueDisplayString(m_multisearch.Entries[i / 6].value2, m_multisearch.Entries[i / 6].type).c_str(), ALIGNED_CENTER);
+    }
+  }
+  // if (m_selectedEntry == 1)
+  //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 155, 345, 310, 90, currTheme.highlightColor);
+  // if (m_searchType != SEARCH_TYPE_NONE && m_searchMode != SEARCH_MODE_NONE && m_searchRegion != SEARCH_REGION_NONE)
+  // {
+  //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 150, 350, 300, 80, currTheme.selectedColor);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 375, currTheme.backgroundColor, "Search Now!", ALIGNED_CENTER);
+  // }
+  // else
+  // {
+  //   Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 150, 350, 300, 80, currTheme.selectedButtonColor);
+  //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 375, currTheme.separatorColor, "Search Now!", ALIGNED_CENTER);
+  // }
+  Gui::drawTextAligned(font14, Gui::g_framebuffer_width / 2, 520, currTheme.textColor, "Set the value(s) you want to search for. Put the cursor on the target and press \uE0A6 + \uE0B3 to mark it as target. Press \uE0B3 to start the search\n"
+                                                                                       "Each line you enable will be used to narrow down the target. Pointer is 64bit values that falls in the range of either main or heap.\n"
+                                                                                       "Move the cursor to the field you want to modify. Press \uE0A4 \uE0A5 to modify. Press \uE0A0 to edit numeric Values.\n"
+                                                                                       "Use \uE0A6 + \uE0A0 to edit label. Use \uE0A2 to toggle on/off. Use \uE0A6 + \uE0A2 to toggle Hex mode. Use \uE0A3 to jump cursor to value1.\n"
+                                                                                       "Press \uE0A7 to jump to target value1. Press \uE0A1 to exit this screen.",
+                       ALIGNED_CENTER);
+  //  "Press quick set keys to change the search mode \uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0B3 A..B \uE0B4 ==/!=\n"
+  //  "If you search type is floating point \uE0A5 negate the number. \uE0C4 cycle float type \uE0C5 presets \uE0A3 cycle integer type",
+}
+//
 void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
 {
   (*displayDump) = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, true);
@@ -2369,14 +2489,24 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     //   (new Snackbar("Jump Stack empty!"))->show();
     // }
     {
-      Gui::beginDraw();
-      Gui::drawRectangle(70, 420, 1150, 65, currTheme.backgroundColor);
-      Gui::drawTextAligned(font20, 70, 420, currTheme.textColor, "Preparing for pointer search", ALIGNED_LEFT);
-      Gui::endDraw();
-
+      u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
       GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
-      // GuiCheats::searchMemoryAddressesPrimary2(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
-      (new Snackbar("Preparation for pointer search completed"))->show();
+      GuiCheats::prep_backjump_stack(address);
+      m_searchMenuLocation = SEARCH_pickjump;
+
+      // pick key need to do this
+      // {
+      //   u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+      //   m_bookmark.pointer.offset[m_z] = m_fromto32(m_pick).to - address + m_heapBaseAddr;
+      //   m_z++;
+      //   m_jump_stack[m_z].from = m_fromto32(m_pick).from + m_heapBaseAddr;
+      //   m_jump_stack[m_z].to = m_fromto32(m_pick).to + m_heapBaseAddr;
+      //   m_EditorBaseAddr = m_jump_stack[m_z].from;
+      //   m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+      //   m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
+      //   m_addressmod = 0;
+      //   place head here;
+      // }
     }
   }
   else if (kdown & KEY_R && !(kheld & KEY_ZL))
@@ -2513,14 +2643,6 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
   {
     m_EditorBaseAddr += 0x80;
   }
-  else if (kdown & KEY_R && !(kheld & KEY_ZL))
-  {
-
-  }
-  else if (kdown & KEY_L && !(kheld & KEY_ZL))
-  {
-
-  }
   else if (kdown & KEY_R && kheld & KEY_ZL) // change type
   {
     m_addressmod = 0;
@@ -2564,11 +2686,14 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
       {
         if (m_bookmark.pointer.depth < MAX_POINTER_DEPTH) // expand pointer chain
         {
+          // if (m_bookmark.pointer.depth == 0)
+          //   m_bookmark.heap = true;
           m_bookmark.pointer.depth++;
           for (int z = m_bookmark.pointer.depth; z > 0; z--)
           {
             m_bookmark.pointer.offset[z]=m_bookmark.pointer.offset[z-1];
           }
+          m_bookmark.pointer.offset[0] = 0;
           m_z = 1;
           // m_bookmark.pointer.offset[1] = address - m_jump_stack[2].to;
         }
@@ -2991,12 +3116,95 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
     }
   }
 }
+void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
+{
+  if (kdown & KEY_Y)
+  {
+    m_searchMenuLocation = SEARCH_editRAM2;
+  }
+  else if (kdown & KEY_MINUS)
+  {
+    Gui::g_nextGui = GUI_FIRST_RUN;
+  }
+  else if (kdown & KEY_UP)
+  {
+    if (m_selectedEntry > 0)
+      m_selectedEntry--;
+    if (m_selectedEntry + 1 == cheatListOffset && cheatListOffset > 0)
+      cheatListOffset-=8;
+  }
+  else if (kdown & KEY_DOWN) //
+  {
+    if (m_selectedEntry < (m_cheatCnt - 1))
+      m_selectedEntry++;
+    if (m_selectedEntry == (cheatListOffset + 8) && cheatListOffset < (m_cheatCnt - 8))
+      cheatListOffset+=8;
+  }
+  else if (kdown & KEY_ZR)
+  {
+    cheatListOffset += 8;
+    m_selectedEntry += 8;
+    if (cheatListOffset >= m_cheatCnt)
+    {
+      cheatListOffset -= 8;
+      m_selectedEntry -= 8;
+    }
+    if (m_selectedEntry + 1 > m_cheatCnt)
+      m_selectedEntry = m_cheatCnt - 1;
+  }
+  else if (kdown & KEY_ZL)
+  {
+    if (cheatListOffset >= 8)
+    {
+      cheatListOffset -= 8;
+      m_selectedEntry -= 8;
+    }
+    else
+    {
+      cheatListOffset = 0;
+      m_selectedEntry = 0;
+    }
+    
+  }
+  else if (kdown & KEY_A)
+  {
+    if (m_cheatCnt == 0)
+      return;
+    // count total opcode
+    u32 opcodecount = m_cheats[m_selectedEntry].definition.num_opcodes;
+    for (u32 i = 0; i < m_cheatCnt; i++)
+    {
+      if (m_cheats[i].enabled)
+        opcodecount += m_cheats[i].definition.num_opcodes;
+    }
+    if (opcodecount > 0x400)
+    {
+      (new Snackbar("Total opcode count would exceed 1024!"))->show();
+      return;
+    }
+    dmntchtToggleCheat(m_cheats[m_selectedEntry].cheat_id);
+    u64 cheatCnt = 0;
+    dmntchtGetCheatCount(&cheatCnt);
+    if (cheatCnt > 0)
+    {
+      delete[] m_cheats;
+      m_cheats = new DmntCheatEntry[cheatCnt];
+      dmntchtGetCheats(m_cheats, cheatCnt, 0, &m_cheatCnt);
+    }
+  }
+}
+
 void GuiCheats::onInput(u32 kdown)
 {
   u32 kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
   if (m_searchMenuLocation == SEARCH_editRAM2)
   {
     editor_input(kdown, kheld);
+    return;
+  };
+  if (m_searchMenuLocation == SEARCH_pickjump)
+  {
+    pickjump_input(kdown, kheld);
     return;
   };
   if (m_searchMenuLocation == SEARCH_editExtraSearchValues)
@@ -3408,7 +3616,10 @@ void GuiCheats::onInput(u32 kdown)
           if (opcode == 5 && FSA == 0)
           {
             i++;
-            offset[depth] = cheat.opcodes[i];
+            if (M == 0)
+              offset[depth] = cheat.opcodes[i];
+            else
+              offset[depth] = m_heapBaseAddr - m_mainBaseAddr + cheat.opcodes[i];
             depth++;
           }
           continue;
@@ -3716,10 +3927,11 @@ void GuiCheats::onInput(u32 kdown)
           m_addressmod = m_EditorBaseAddr % 4;
           if (m_addressmod % dataTypeSizes[m_searchType] != 0)
             m_addressmod = 0;
+          m_z = 0;
+          m_bookmark.heap = false;
           if (m_memoryDump1 != nullptr)
           {
             m_searchType = m_bookmark.type;
-            m_bookmark.heap = false;
             // populate stack if on pointer
             if (m_bookmark.pointer.depth > 0)
             {
@@ -3742,6 +3954,7 @@ void GuiCheats::onInput(u32 kdown)
             }
             //ME3 data init for memory explorer
           }
+          printf("bookmarkdepth =%ld m_z=%d\n", m_bookmark.pointer.depth, m_z);
         }
 
         if ((kdown & KEY_LSTICK) && (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) && (m_memoryDump1 != nullptr))
@@ -7660,7 +7873,11 @@ bool GuiCheats::addcodetofile(u64 index)
     ss.str("");
     ss << "[" << bookmark.label << "]"
        << "\n";
-    ss << ((m_32bitmode) ? "540F0000 " : "580F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+    if (bookmark.pointer.offset[bookmark.pointer.depth] > 0 && bookmark.pointer.offset[bookmark.pointer.depth] <= (s64)(m_mainend - m_mainBaseAddr))
+      ss << ((m_32bitmode) ? "540F0000 " : "580F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+    else
+      ss << ((m_32bitmode) ? "541F0000 " : "581F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+
     for (int z = bookmark.pointer.depth - 1; z > 0; z--)
     {
       if (bookmark.pointer.offset[z] >= 0)
@@ -8544,17 +8761,32 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   // m_PCAttr_filename.seekp(k - 3, std::ios_base::end);
   // m_PCAttr_filename << "att" << (j - 1);
 #endif
-
+  if (m_PC_Dump != nullptr)
+    return;
   m_PCAttr_filename.str("");
   m_PCAttr_filename << m_PCDump_filename.str().c_str() << "A";
   m_PCDumpM_filename.str("");
   m_PCDumpM_filename << m_PCDump_filename.str().c_str() << "M";
 
-// check if pre is needed; need to have more here ****************  
-if (access(m_PCDump_filename.str().c_str(), F_OK) == 0) return;
-
   MemoryDump *PCDump;
+  // check if data is already for use
+  if (access(m_PCDump_filename.str().c_str(), F_OK) == 0)
+  {
+    PCDump = new MemoryDump(m_PCDump_filename.str().c_str(), DumpType::DATA, false);
+    if (PCDump->getDumpInfo().heapBaseAddress == m_heapBaseAddr)
+    {
+      m_PC_Dump = PCDump;
+      m_PC_DumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, false);
+      return;
+    };
+    delete PCDump;
+  }
+
+  (new MessageBox("Preparing JumpBack data.\n \nThis may take a while...", MessageBox::NONE))->show();
+  requestDraw();
+
   PCDump = new MemoryDump(m_PCDump_filename.str().c_str(), DumpType::DATA, true);
+  PCDump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
   MemoryDump *PCDumpM;
   PCDumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, true);
   MemoryDump *PCAttr;
@@ -8653,12 +8885,56 @@ if (access(m_PCDump_filename.str().c_str(), F_OK) == 0) return;
   if (PCDump->m_compress)
     printf("mcompress = true\n");
   PCDump->flushBuffer();
-  delete PCDump;
+  // delete PCDump;
+  m_PC_Dump = PCDump;
   PCDumpM->flushBuffer();
-  delete PCDumpM;
+  // delete PCDumpM;
+  PCDumpM = PCDumpM;
   PCAttr->flushBuffer();
   delete PCAttr;
   dmntchtResumeCheatProcess();
+  Gui::g_currMessageBox->hide();
+}
+void GuiCheats::prep_backjump_stack(u64 address)
+{
+  const u16 tablesize = 0xFFFF;
+  fromto32_t *fromto = new fromto32_t[tablesize];
+  u32 file_range = 0x10000;
+  u32 targetaddress = address - m_heapBaseAddr;
+  u32 offset = 0;
+  u32 count = 0;
+  u64 bufferSize = MAX_BUFFER_SIZE;
+  u8 *buffer = new u8[bufferSize];
+  u32 distance;
+  while (offset < m_PC_Dump->size())
+  {
+    if (m_PC_Dump->size() - offset < bufferSize)
+      bufferSize = m_PC_Dump->size() - offset;
+    m_PC_Dump->getData(offset, buffer, bufferSize); // BM4
+
+    for (u64 i = 0; i < bufferSize; i += sizeof(fromto)) // for (size_t i = 0; i < (bufferSize / sizeof(u64)); i++)
+    {
+      if (m_abort)
+        return;
+      u32 pointedaddress = *reinterpret_cast<u32 *>(&buffer[i]+4);
+      if (targetaddress >= pointedaddress)
+      {
+        distance = targetaddress - pointedaddress;
+        if (distance <= file_range)
+        {
+          fromto[count].from = *reinterpret_cast<u32 *>(&buffer[i]);
+          fromto[count].to = pointedaddress;
+          fromto[count].hits = 0;
+          count++;
+        }
+      }
+    }
+    offset += bufferSize;
+  }
+  printf("count = %x\n",count);
+  std::sort(fromto,fromto + count, comparefromto);
+  m_fromto32_size = count;
+  m_fromto32 = fromto;
 }
 
 //
@@ -8871,6 +9147,10 @@ static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2)
   if (e1.on != OFF && e2.on == OFF)
     return true;
   return (e1.offset < e2.offset);
+};
+static bool comparefromto(fromto32_t e1, fromto32_t e2)
+{
+  return (e1.to < e2.to);
 };
 void GuiCheats::save_multisearch_setup()
 {
