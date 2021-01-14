@@ -193,8 +193,10 @@ private:
     u32 table_entrysize;
   };
   jump_table_entry_t *m_jumptable;
-  fromto32_t *m_fromto32;
+  fromto32_t *m_fromto32 = nullptr;
+  u64 m_fromto32_offset = 0;
   u32 m_fromto32_size = 0;
+  u64 m_selectedJumpSource = 0;
 
   fromto_t m_jump_stack[MAX_POINTER_DEPTH + 1];
   s16 m_depth_count = 0;
