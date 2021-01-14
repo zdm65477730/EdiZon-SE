@@ -1609,7 +1609,7 @@ void GuiCheats::drawSEARCH_pickjump()
     return;
   Gui::drawRectangled(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x00, 0x00, 0x00, 0xA0));
   // Gui::drawRectangle(50, 50, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
-  Gui::drawRectangle(0, 50, Gui::g_framebuffer_width, Gui::g_framebuffer_height - 100, currTheme.backgroundColor);
+  Gui::drawRectangle(0, 50, Gui::g_framebuffer_width, Gui::g_framebuffer_height , currTheme.backgroundColor);
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
   {
       // static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
@@ -1628,6 +1628,7 @@ void GuiCheats::drawSEARCH_pickjump()
   // Gui::drawTextAligned(font20, c4, labelline, currTheme.textColor, "TYPE", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, c5, labelline, currTheme.textColor, "Target", ALIGNED_CENTER);
   // Gui::drawTextAligned(font20, c6, labelline, currTheme.textColor, "VALUE 2", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E4 Page UP   \uE0E5 Page Down   \uE0E6+\uE0E2 Rescan pointers      \uE0E3 Pick Source     \uE0E1 Exit", ALIGNED_RIGHT);
   u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
   for (u8 i = 0; i < 15; i++) // 15 Row 
   {
@@ -3119,7 +3120,19 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
     if (m_fromto32_offset >= 15)
       m_fromto32_offset -= 15;
   }
+  else if (kdown & KEY_X && (kheld & KEY_ZL))  
+  {
+    m_redo_prep_pointersearch = true;
+    u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+    GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
+    GuiCheats::prep_backjump_stack(address);
+  }
+  else if (kdown & KEY_B)
+  {
+    m_searchMenuLocation = SEARCH_editRAM2;
+  }
 }
+// WIP ***************
 
 void GuiCheats::onInput(u32 kdown)
 {
@@ -8692,7 +8705,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   // m_PCAttr_filename.seekp(k - 3, std::ios_base::end);
   // m_PCAttr_filename << "att" << (j - 1);
 #endif
-  if (m_PC_Dump != nullptr)
+  if ((m_PC_Dump != nullptr) && !m_redo_prep_pointersearch)
   {
     // refresh_fromto();
     return;
@@ -8707,7 +8720,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   if (access(m_PCDump_filename.str().c_str(), F_OK) == 0)
   {
     PCDump = new MemoryDump(m_PCDump_filename.str().c_str(), DumpType::DATA, false);
-    if (PCDump->getDumpInfo().heapBaseAddress == m_heapBaseAddr)
+    if ((PCDump->getDumpInfo().heapBaseAddress == m_heapBaseAddr) && !m_redo_prep_pointersearch)
     {
       m_PC_Dump = PCDump;
       m_PC_DumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, false);
@@ -8716,7 +8729,12 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
     };
     delete PCDump;
   }
-
+  if (m_redo_prep_pointersearch)
+  {
+    m_redo_prep_pointersearch = false;
+    delete m_PC_Dump;
+    delete m_PC_DumpM;
+  };
   (new MessageBox("Preparing JumpBack data.\n \nThis may take a while...", MessageBox::NONE))->show();
   requestDraw();
 

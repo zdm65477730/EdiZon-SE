@@ -274,6 +274,7 @@ private:
   std::stringstream m_PCAttr_filename;
   std::stringstream m_PCDumpM_filename;
   std::stringstream m_PCDumpR_filename;
+  bool m_redo_prep_pointersearch = false;
 
   void PCdump();
   enum MemoryType
