@@ -1643,7 +1643,10 @@ void GuiCheats::drawSEARCH_pickjump()
     Gui::drawTextAligned(font20, c1, 160 + linegape * (1 + i), cellColor, ss.str().c_str(), ALIGNED_CENTER);
 
     ss.str("");
-    ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_heapBaseAddr + m_fromto32[i + m_fromto32_offset].from;
+    if (m_fromto32[i + m_fromto32_offset].from == 0)
+      ss << "Main+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << get_main_offset32(m_fromto32[i + m_fromto32_offset].to);
+    else
+      ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_heapBaseAddr + m_fromto32[i + m_fromto32_offset].from;
     Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i), cellColor, ss.str().c_str(), ALIGNED_CENTER);
 
     ss.str("");
@@ -3065,10 +3068,7 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
   {
     m_searchMenuLocation = SEARCH_editRAM2;
     u64 m_pick = m_selectedJumpSource + m_fromto32_offset;
-    if (m_fromto32[m_pick].from == 0)
-    {
       // Need to get main
-    }
     // u64 address = (m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod);
     if (m_z == 0)
       m_bookmark.pointer.offset[m_z] =  (m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod) - (m_fromto32[m_pick].to + m_heapBaseAddr) ;
@@ -3078,7 +3078,12 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
       // printf("m_jump_stack[m_z].from %lx - (m_fromto32[m_pick].to + m_heapBaseAddr) %lx \n",m_jump_stack[m_z].from, (m_fromto32[m_pick].to + m_heapBaseAddr));
     }
     m_z++;
-    m_jump_stack[m_z].from = m_fromto32[m_pick].from + m_heapBaseAddr;
+    if (m_fromto32[m_pick].from == 0)
+    {
+      m_jump_stack[m_z].from = get_main_offset32(m_fromto32[m_pick].to) + m_mainBaseAddr;
+    }
+    else
+      m_jump_stack[m_z].from = m_fromto32[m_pick].from + m_heapBaseAddr;
     m_jump_stack[m_z].to = m_fromto32[m_pick].to + m_heapBaseAddr;
     m_EditorBaseAddr = m_jump_stack[m_z].from;
     m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
@@ -8819,13 +8824,37 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   m_PC_Dump = PCDump;
   PCDumpM->flushBuffer();
   // delete PCDumpM;
-  PCDumpM = PCDumpM;
+  m_PC_DumpM = PCDumpM;
   PCAttr->flushBuffer();
   delete PCAttr;
   dmntchtResumeCheatProcess();
   Gui::g_currMessageBox->hide();
 }
 
+
+u32 GuiCheats::get_main_offset32(u32 address)
+{
+  u32 offset = 0;
+  if (m_PC_DumpM == nullptr) 
+  {
+    printf("m_PC_DumpM == nullptr \n");
+    return offset;
+  }
+  u64 bufferSize = m_PC_DumpM->size();
+  // printf("m_PC_DumpM->size() %lx\n",m_PC_DumpM->size());
+  u8 *buffer = new u8[bufferSize];
+  m_PC_DumpM->getData(0, buffer, bufferSize);
+  for (u64 i = 0; i < bufferSize; i += sizeof(fromto32_t))
+  {
+    if (address == *reinterpret_cast<u32 *>(&buffer[i] + 4))
+    {
+      offset = *reinterpret_cast<u32 *>(&buffer[i]);
+      printf("Main offset = %x for heap offset = %x\n", offset, address);
+    };
+  }
+  delete[] buffer;
+  return offset;
+}
 
 void GuiCheats::refresh_fromto()
 {
