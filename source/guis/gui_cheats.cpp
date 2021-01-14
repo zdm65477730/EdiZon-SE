@@ -1616,7 +1616,7 @@ void GuiCheats::drawSEARCH_pickjump()
       ss.str("");
       ss << "\uE132   Pick Source for JumpBack";
       // ss << "   [ " << regionNames[m_searchRegion] << " ]";
-      // ss << " line = " << m_selectedEntry / 6;
+      ss << " line = " << m_selectedJumpSource + m_fromto32_offset + 1 << " / " << m_fromto32_size;
   }
   Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
   ss.str("");
@@ -1635,6 +1635,8 @@ void GuiCheats::drawSEARCH_pickjump()
       cellColor = currTheme.selectedColor;
     else
       cellColor = currTheme.textColor;
+    if (i + m_fromto32_offset >= m_fromto32_size)
+      break;
 
     ss.str("");
     ss << std::uppercase << std::hex << std::setfill('0') << std::setw(3) << address - (m_fromto32[i + m_fromto32_offset].to + m_heapBaseAddr)  ;
@@ -2972,6 +2974,7 @@ void GuiCheats::drawSearchRAMMenu()
   case SEARCH_editRAM2:
   case SEARCH_POINTER:
   case SEARCH_editExtraSearchValues:
+  case SEARCH_pickjump:
     break;
   }
 }
@@ -3089,15 +3092,27 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
   {
     if (m_selectedJumpSource > 0)
       m_selectedJumpSource--;
-    if (m_selectedJumpSource + 1 == m_fromto32_offset && m_fromto32_offset > 0)
-      m_fromto32_offset-=15;
+    // if (m_selectedJumpSource + 1 == m_fromto32_offset && m_fromto32_offset > 0)
+    //   m_fromto32_offset-=15;
   }
   else if (kdown & KEY_DOWN) //
   {
-    if (m_selectedJumpSource < 15)
+    if ((m_selectedJumpSource < 14) && (m_selectedJumpSource + m_fromto32_offset + 1 < m_fromto32_size))
       m_selectedJumpSource++;
-    if (m_selectedJumpSource == (m_fromto32_offset + 15) && m_fromto32_offset < (m_fromto32_size - 15))
-      m_fromto32_offset+=15;
+    // if (m_selectedJumpSource == (m_fromto32_offset + 15) && m_fromto32_offset < (m_fromto32_size - 15))
+    //   m_fromto32_offset+=15;
+  }
+  else if (kdown & KEY_R)
+  {
+    if ( m_fromto32_offset  + 15 < m_fromto32_size )
+      m_fromto32_offset += 15;
+    if (m_selectedJumpSource + m_fromto32_offset >= m_fromto32_size)
+      m_selectedJumpSource = m_fromto32_size - m_fromto32_offset -1;
+  }
+  else if (kdown & KEY_L)
+  {
+    if (m_fromto32_offset >= 15)
+      m_fromto32_offset -= 15;
   }
 }
 
@@ -4479,6 +4494,7 @@ void GuiCheats::onInput(u32 kdown)
 
           break;
         case SEARCH_editExtraSearchValues:
+        case SEARCH_pickjump:
           break;
         }
       }
@@ -4515,6 +4531,7 @@ void GuiCheats::onInput(u32 kdown)
 
           break;
         case SEARCH_editExtraSearchValues:
+        case SEARCH_pickjump:
           break;
         }
       }
@@ -4544,6 +4561,7 @@ void GuiCheats::onInput(u32 kdown)
             m_selectedEntry--;
           break;
         case SEARCH_editExtraSearchValues:
+        case SEARCH_pickjump:
           break;
         }
       }
@@ -4573,6 +4591,7 @@ void GuiCheats::onInput(u32 kdown)
             m_selectedEntry++;
           break;
         case SEARCH_editExtraSearchValues:
+        case SEARCH_pickjump:
           break;
         }
       }
@@ -8669,7 +8688,10 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   // m_PCAttr_filename << "att" << (j - 1);
 #endif
   if (m_PC_Dump != nullptr)
+  {
+    // refresh_fromto();
     return;
+  };
   m_PCAttr_filename.str("");
   m_PCAttr_filename << m_PCDump_filename.str().c_str() << "A";
   m_PCDumpM_filename.str("");
@@ -8684,6 +8706,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
     {
       m_PC_Dump = PCDump;
       m_PC_DumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, false);
+      refresh_fromto();
       return;
     };
     delete PCDump;
@@ -8802,6 +8825,104 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   dmntchtResumeCheatProcess();
   Gui::g_currMessageBox->hide();
 }
+
+
+void GuiCheats::refresh_fromto()
+{
+  return;
+  dmntchtPauseCheatProcess();
+  bool ledOn = true;
+  time_t unixTime1 = time(NULL);
+  MemoryDump *PCDump;
+  m_PCDumpR_filename.str("");
+  m_PCDumpR_filename << m_PCDump_filename.str().c_str() << "R";
+  PCDump = new MemoryDump(m_PCDumpR_filename.str().c_str(), DumpType::DATA, true);
+  {
+    u64 counting_pointers = 0;
+    u64 Foffset = 0;
+    u64 bufferSize = MAX_BUFFER_SIZE; 
+    u8 *buffer = new u8[bufferSize];
+    u64 FbufferSize = MAX_BUFFER_SIZE - MAX_BUFFER_SIZE % sizeof(fromto32_t);
+    fromto32_t fromto_data1, fromto_data2;
+    u8 *Fbuffer = new u8[FbufferSize];
+    
+
+    {
+      while (Foffset < m_PC_Dump->size())
+      {
+        setLedState(ledOn);
+        ledOn = !ledOn;
+        if (m_PC_Dump->size() - Foffset < FbufferSize)
+          FbufferSize = m_PC_Dump->size() - Foffset;
+
+        m_PC_Dump->getData(Foffset, Fbuffer, FbufferSize);
+        memcpy(&fromto_data1, Fbuffer, sizeof(fromto32_t));
+        memcpy(&fromto_data2, Fbuffer + (FbufferSize - sizeof(fromto32_t)), sizeof(fromto32_t));
+
+        int i = 0;
+        MemoryInfo meminfo;
+        u64 memsize, address, start_address, last_address, new_to;
+        while (fromto_data1.from <= fromto_data2.from)
+        {
+          {
+            memsize = fromto_data2.from - fromto_data1.from;
+            address = fromto_data1.from + m_heapBaseAddr;
+            meminfo = m_debugger->queryMemory(address);
+            if (memsize < bufferSize) // don't read usless data
+              bufferSize = memsize;
+            start_address = address;  
+            last_address = meminfo.addr + meminfo.size;
+            memsize = last_address - address;
+            if (memsize < bufferSize) // don't read past the segment
+              bufferSize = memsize;
+
+            m_debugger->readMemory(buffer, bufferSize, address);
+
+            while (address < last_address)
+            {
+                memcpy(&new_to, buffer + address - start_address, sizeof(u64));
+
+                if (new_to == fromto_data1.to + m_heapBaseAddr)
+                // if (((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
+                {
+                  PCDump->addData((u8 *)&fromto_data1, sizeof(fromto32_t));
+                  counting_pointers++;
+                }
+
+              i++;
+              memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+              address = fromto_data1.from + m_heapBaseAddr;
+            }
+            i++;
+            memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+          }
+        };
+
+        Foffset += FbufferSize;
+      }
+    }
+    printf("count,%lx\n", counting_pointers);
+    delete[] buffer;
+    delete[] Fbuffer;
+  };
+  setLedState(false);
+  time_t unixTime2 = time(NULL);
+  printf("%s%lx\n", "Stop Time ", unixTime2);
+  printf("%s%ld\n", "Stop Time ", unixTime2 - unixTime1);
+  if (PCDump->m_compress)
+    printf("mcompress = true\n");
+
+// clean up and rename file
+
+  PCDump->flushBuffer();
+  delete m_PC_Dump;
+  m_PC_Dump = PCDump;
+  // PCDumpM->flushBuffer();
+  // PCDumpM = PCDumpM;
+  dmntchtResumeCheatProcess();
+}
+
+
 void GuiCheats::prep_backjump_stack(u64 address)
 {
   const u16 tablesize = 0xFFFF;
@@ -8838,6 +8959,12 @@ void GuiCheats::prep_backjump_stack(u64 address)
     }
     offset += bufferSize;
   }
+  // refresh the list
+
+
+
+
+  //
   printf("count = %x\n",count);
   delete buffer;
   std::sort(fromto,fromto + count, comparefromto);

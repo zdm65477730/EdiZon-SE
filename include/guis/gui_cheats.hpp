@@ -273,6 +273,8 @@ private:
   std::stringstream m_PCDump_filename;
   std::stringstream m_PCAttr_filename;
   std::stringstream m_PCDumpM_filename;
+  std::stringstream m_PCDumpR_filename;
+  
   void PCdump();
   enum MemoryType
   {
@@ -352,6 +354,8 @@ private:
                                      MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
 
   void prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> memInfos);
+  
+  void refresh_fromto();
 
   void prep_backjump_stack(u64 address);
 
