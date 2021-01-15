@@ -1283,7 +1283,10 @@ void GuiCheats::drawEditRAMMenu2()
   std::stringstream ss;
   if (m_searchMenuLocation != SEARCH_editRAM2)
     return;
-  Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);//background
+  if (m_EditorBaseAddr >= m_mainBaseAddr && m_EditorBaseAddr <= m_mainend)
+    Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0xFF, 0xFF, 0xC0, 0x40));
+  else
+    Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor); //background
   Gui::drawText(font24, 30, 10 , currTheme.textColor, "\uE132   Memory Explorer");
   Gui::drawRectangle(10, 70 , Gui::g_framebuffer_width - 10, 1, currTheme.textColor);//the line
 
@@ -1384,9 +1387,9 @@ void GuiCheats::drawEditRAMMenu2()
         if (z == m_z)
         {
           if (address + m_addressmod >= nextaddress)
-            ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress + m_addressmod << " ]";
+            ss << "[\uE130 " << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << address - nextaddress + m_addressmod << " ]";
           else
-            ss << "[ -" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod << " ]";
+            ss << "[\uE130 -" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << nextaddress - address - m_addressmod << " ]";
         }
         nextaddress += m_bookmark.pointer.offset[z];
         m_jump_stack[z].from = nextaddress;
@@ -1490,7 +1493,7 @@ void GuiCheats::drawEditRAMMenu2()
     }
   }
 
-  // key hits
+  // key hints
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E1 JumpBack", ALIGNED_RIGHT); //\uE0E4 Change Mode  
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E7 PageDown  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
 }
@@ -2439,11 +2442,17 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     //   (new Snackbar("Jump Stack empty!"))->show();
     // }
     {
-      u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-      GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
-      GuiCheats::prep_backjump_stack(address);
-      m_searchMenuLocation = SEARCH_pickjump;
-
+      if (m_EditorBaseAddr >= m_mainBaseAddr && m_EditorBaseAddr <= m_mainend)
+      {
+        (new Snackbar("Already at Main!"))->show();
+      }
+      else
+      {
+        u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+        GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
+        GuiCheats::prep_backjump_stack(address);
+        m_searchMenuLocation = SEARCH_pickjump;
+      }
       // pick key need to do this
       // {
       //   u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
