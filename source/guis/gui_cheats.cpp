@@ -8901,7 +8901,7 @@ u32 GuiCheats::get_main_offset32(u32 address)
 
 void GuiCheats::refresh_fromto()
 {
-  return;
+  // return;
   dmntchtPauseCheatProcess();
   bool ledOn = true;
   time_t unixTime1 = time(NULL);
@@ -8929,54 +8929,61 @@ void GuiCheats::refresh_fromto()
         printf("FbufferSize = %lx\n", FbufferSize);
         m_PC_Dump->getData(Foffset, Fbuffer, FbufferSize);
         memcpy(&fromto_data1, Fbuffer, sizeof(fromto32_t));
-        memcpy(&fromto_data2, Fbuffer + (FbufferSize - sizeof(fromto32_t)), sizeof(fromto32_t));
+        memcpy(&fromto_data2, Fbuffer + (FbufferSize - sizeof(fromto32_t)*2), sizeof(fromto32_t));
         printf("fromto_data1 form = %x ,to = %x , fromto_data2 from = %x , to = %x \n ", fromto_data1.from, fromto_data1.to, fromto_data2.from, fromto_data2.to);
         size_t i = 0;
         MemoryInfo meminfo;
         u64 memsize, address, start_address, last_address, new_to;
+        bool inc = false;
         while (i < FbufferSize) //(fromto_data1.from <= fromto_data2.from)
         {
+
+          bufferSize = MAX_BUFFER_SIZE;
+          memsize = fromto_data2.from - fromto_data1.from;
+          address = fromto_data1.from + m_heapBaseAddr;
+          meminfo = m_debugger->queryMemory(address);
+          if (memsize < bufferSize) // don't read usless data
+            bufferSize = memsize;
+
+          start_address = address;
+          last_address = meminfo.addr + meminfo.size;
+          memsize = last_address - address;
+          // printf("start address = %lx last address = %lx memsize = %lx i= %lx\n", start_address, last_address, memsize, i);
+          if (memsize < bufferSize) // don't read past the segment
+            bufferSize = memsize;
+
+          m_debugger->readMemory(buffer, bufferSize, address);
+
+          while (address < start_address + bufferSize)
           {
-            bufferSize = MAX_BUFFER_SIZE;
-            memsize = fromto_data2.from - fromto_data1.from;
-            address = fromto_data1.from + m_heapBaseAddr;
-            meminfo = m_debugger->queryMemory(address);
-            if (memsize < bufferSize) // don't read usless data
-              bufferSize = memsize;
+            memcpy(&new_to, buffer + address - start_address, sizeof(u64));
 
-            start_address = address;  
-            last_address = meminfo.addr + meminfo.size;
-            memsize = last_address - address;
-            printf("start address = %lx last address = %lx memsize = %lx \n", start_address, last_address, memsize );
-            if (memsize < bufferSize) // don't read past the segment
-              bufferSize = memsize;
-
-            m_debugger->readMemory(buffer, bufferSize, address);
-
-            while (address < start_address + bufferSize)
+            if (new_to == (fromto_data1.to + m_heapBaseAddr))
+            // if (((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
             {
-                memcpy(&new_to, buffer + address - start_address, sizeof(u64));
-
-                if (new_to == (fromto_data1.to + m_heapBaseAddr))
-                // if (((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
-                {
-                  PCDump->addData((u8 *)&fromto_data1, sizeof(fromto32_t));
-                  counting_pointers++;
-                }
-              if (i < FbufferSize)
-              {
-              i+=sizeof(fromto32_t);
+              PCDump->addData((u8 *)&fromto_data1, sizeof(fromto32_t));
+              counting_pointers++;
+            }
+            i += sizeof(fromto32_t);
+            if (i < FbufferSize)
+            {
               memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
               address = fromto_data1.from + m_heapBaseAddr;
-              }
-              else break;
+              inc = true;
             }
-            printf("next address = %lx \n", address);
-            // i+=sizeof(fromto32_t);
-            // memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+            else
+              break;
           }
+          if (!inc)
+          {
+            printf("not able to access address = %lx i= %lx\n", address, i);
+            i += sizeof(fromto32_t);
+            if  (i < FbufferSize)
+              memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+          }
+          inc = false;
         };
-
+        printf("next Fbuf\n");
         Foffset += FbufferSize;
       }
     }
