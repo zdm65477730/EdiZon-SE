@@ -2426,6 +2426,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
         }
       }
     }
+    delete [] ram_buffer;
     (new Snackbar("Multi search setup created!"))->show();
     GuiCheats::save_multisearch_setup();
   }
@@ -3915,8 +3916,8 @@ void GuiCheats::onInput(u32 kdown)
           printf("\nstart scan range select ....................\n");
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
           MemoryInfo meminfo = {0};
-          u64 t_start = m_EditorBaseAddr - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
-          u64 t_end = m_EditorBaseAddr + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+          u64 t_start = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+          u64 t_end = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
           if (t_end > m_heapEnd && m_heapEnd != 0)
             t_end = m_heapEnd;
           meminfo = m_debugger->queryMemory(t_start);
@@ -7931,6 +7932,7 @@ bool GuiCheats::editcodefile() // not used work in progress
       }
     }
   }
+  delete [] s;
   // WIP
   pfile = fopen(filebuildIDStr.str().c_str(), "w+b");
   std::stringstream ss;
@@ -7969,7 +7971,7 @@ bool GuiCheats::reloadcheatsfromfile(u8 *buildID, u64 titleID)
     pfile = fopen(realCheatPath.str().c_str(), "r+b");
     fseek(pfile, 0, SEEK_END);
     u64 bufferSize = ftell(pfile);
-    u8 *s = new u8[bufferSize + 1];
+    u8 *s = new u8[bufferSize + 1]; // watch out for memory leak
     /* Read cheats into buffer. */
     fseek(pfile, 0, SEEK_SET);
     fread(s, sizeof(bufferSize), 1, pfile);
@@ -8541,6 +8543,7 @@ void GuiCheats::PCdump()
       }
     }
     offset += bufferSize;
+    delete[] buffer;
   }
   PCDump->flushBuffer();
   delete PCDump;
@@ -8803,9 +8806,9 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
               realValue._u64 = realValue._u64 - m_heapBaseAddr;
               PCDumpM->addData((u8 *)&address, sizeof(u32));
               PCDumpM->addData((u8 *)&realValue, sizeof(u32));
-              address = 0;
-              PCDump->addData((u8 *)&address, sizeof(u32));
-              PCDump->addData((u8 *)&realValue, sizeof(u32));
+              // address = 0;
+              // PCDump->addData((u8 *)&address, sizeof(u32));
+              // PCDump->addData((u8 *)&realValue, sizeof(u32));
               counting_pointers++;
             }
         }
@@ -9055,6 +9058,34 @@ void GuiCheats::prep_backjump_stack(u64 address)
     }
     offset += bufferSize;
   }
+// repeat for main
+  offset = 0;
+  bufferSize = MAX_BUFFER_SIZE;
+  while (offset < m_PC_DumpM->size())
+  {
+    if (m_PC_DumpM->size() - offset < bufferSize)
+      bufferSize = m_PC_DumpM->size() - offset;
+    m_PC_DumpM->getData(offset, buffer, bufferSize); // BM4
+
+    for (u64 i = 0; i < bufferSize; i += sizeof(fromto)) // for (size_t i = 0; i < (bufferSize / sizeof(u64)); i++)
+    {
+      if (m_abort)
+        return;
+      u32 pointedaddress = *reinterpret_cast<u32 *>(&buffer[i]+4);
+      if (targetaddress >= pointedaddress)
+      {
+        distance = targetaddress - pointedaddress;
+        if (distance <= file_range)
+        {
+          fromto[count].from = 0;
+          fromto[count].to = pointedaddress;
+          // fromto[count].hits = 0;
+          count++;
+        }
+      }
+    }
+    offset += bufferSize;
+  }
   // refresh the list
 
 
@@ -9178,6 +9209,7 @@ void GuiCheats::updatebookmark(bool clearunresolved, bool importbookmark, bool f
             tempdump->addData((u8 *)&bookmark, sizeof(bookmark_t));
           }
           printf("found %d good ones\n", goodcount);
+          delete [] buffer;
           (new Snackbar("Bookmark file imported"))->show();
         }
         else
