@@ -31,7 +31,6 @@ struct fromto32_t
 {
   u32 from;
   u32 to;
-  u32 hits;
 };
 enum
 {
@@ -197,6 +196,7 @@ private:
   u64 m_fromto32_offset = 0;
   u32 m_fromto32_size = 0;
   u64 m_selectedJumpSource = 0;
+  u32 m_selectedJumpSource_offset = 0;
 
   fromto_t m_jump_stack[MAX_POINTER_DEPTH + 1];
   s16 m_depth_count = 0;

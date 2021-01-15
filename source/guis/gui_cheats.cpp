@@ -1645,7 +1645,11 @@ void GuiCheats::drawSEARCH_pickjump()
 
     ss.str("");
     if (m_fromto32[i + m_fromto32_offset].from == 0)
-      ss << "Main+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << get_main_offset32(m_fromto32[i + m_fromto32_offset].to);
+    {
+      u32 temp_offset = get_main_offset32(m_fromto32[i + m_fromto32_offset].to);
+      if (m_selectedJumpSource == i) m_selectedJumpSource_offset = temp_offset;
+      ss << "Main+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << temp_offset;
+    }
     else
       ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_heapBaseAddr + m_fromto32[i + m_fromto32_offset].from;
     Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i), cellColor, ss.str().c_str(), ALIGNED_CENTER);
@@ -3081,7 +3085,7 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
     m_z++;
     if (m_fromto32[m_pick].from == 0)
     {
-      m_jump_stack[m_z].from = get_main_offset32(m_fromto32[m_pick].to) + m_mainBaseAddr;
+      m_jump_stack[m_z].from = m_selectedJumpSource_offset + m_mainBaseAddr; //get_main_offset32(m_fromto32[m_pick].to)
     }
     else
       m_jump_stack[m_z].from = m_fromto32[m_pick].from + m_heapBaseAddr;
@@ -8744,12 +8748,12 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   PCDumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, true);
   MemoryDump *PCAttr;
   PCAttr = new MemoryDump(m_PCAttr_filename.str().c_str(), DumpType::DATA, true);
-  PCDump->addData((u8 *)&m_mainBaseAddr, sizeof(u64));
-  PCDump->addData((u8 *)&m_mainend, sizeof(u64));
-  PCDump->addData((u8 *)&m_heapBaseAddr, sizeof(u64));
-  PCDump->addData((u8 *)&m_heapEnd, sizeof(u64));
-  PCDump->addData((u8 *)&m_EditorBaseAddr, sizeof(u64)); // first entry is the target address
-  PCDump->flushBuffer();
+  // PCDump->addData((u8 *)&m_mainBaseAddr, sizeof(u64));
+  // PCDump->addData((u8 *)&m_mainend, sizeof(u64));
+  // PCDump->addData((u8 *)&m_heapBaseAddr, sizeof(u64));
+  // PCDump->addData((u8 *)&m_heapEnd, sizeof(u64));
+  // PCDump->addData((u8 *)&m_EditorBaseAddr, sizeof(u64)); // first entry is the target address
+  // PCDump->flushBuffer();
   PCDump->m_compress = false;
   bool ledOn = false;
   time_t unixTime1 = time(NULL);
@@ -8852,7 +8856,14 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
 
 u32 GuiCheats::get_main_offset32(u32 address)
 {
-  u32 offset = 0;
+  static u32 last_address = 0, last_count = 0;
+  bool found_next_count = false;
+  if (address != last_address)
+  {
+    last_address = address;
+    last_count = 0;
+  }
+  u32 offset = 0, count = 0, first_offset = 0;
   if (m_PC_DumpM == nullptr) 
   {
     printf("m_PC_DumpM == nullptr \n");
@@ -8867,10 +8878,24 @@ u32 GuiCheats::get_main_offset32(u32 address)
     if (address == *reinterpret_cast<u32 *>(&buffer[i] + 4))
     {
       offset = *reinterpret_cast<u32 *>(&buffer[i]);
-      printf("Main offset = %x for heap offset = %x\n", offset, address);
+      count ++;
+      if (count == 1) first_offset = offset; 
+      printf("Main offset = %x for heap offset = %x count = %x\n", offset, address, count);
+      if (count == last_count +1)
+      {
+        last_count++;
+        found_next_count = true;
+        break;
+      }
     };
   }
+  if (!found_next_count)
+  {
+    last_count = 1;
+    offset = first_offset;
+  }
   delete[] buffer;
+  printf("get main count = %d\n",count);
   return offset;
 }
 
@@ -8887,9 +8912,9 @@ void GuiCheats::refresh_fromto()
   {
     u64 counting_pointers = 0;
     u64 Foffset = 0;
-    u64 bufferSize = MAX_BUFFER_SIZE; 
+    size_t bufferSize = MAX_BUFFER_SIZE; 
     u8 *buffer = new u8[bufferSize];
-    u64 FbufferSize = MAX_BUFFER_SIZE - MAX_BUFFER_SIZE % sizeof(fromto32_t);
+    size_t FbufferSize = MAX_BUFFER_SIZE - MAX_BUFFER_SIZE % sizeof(fromto32_t);
     fromto32_t fromto_data1, fromto_data2;
     u8 *Fbuffer = new u8[FbufferSize];
     
@@ -8901,47 +8926,54 @@ void GuiCheats::refresh_fromto()
         ledOn = !ledOn;
         if (m_PC_Dump->size() - Foffset < FbufferSize)
           FbufferSize = m_PC_Dump->size() - Foffset;
-
+        printf("FbufferSize = %lx\n", FbufferSize);
         m_PC_Dump->getData(Foffset, Fbuffer, FbufferSize);
         memcpy(&fromto_data1, Fbuffer, sizeof(fromto32_t));
         memcpy(&fromto_data2, Fbuffer + (FbufferSize - sizeof(fromto32_t)), sizeof(fromto32_t));
-
-        int i = 0;
+        printf("fromto_data1 form = %x ,to = %x , fromto_data2 from = %x , to = %x \n ", fromto_data1.from, fromto_data1.to, fromto_data2.from, fromto_data2.to);
+        size_t i = 0;
         MemoryInfo meminfo;
         u64 memsize, address, start_address, last_address, new_to;
-        while (fromto_data1.from <= fromto_data2.from)
+        while (i < FbufferSize) //(fromto_data1.from <= fromto_data2.from)
         {
           {
+            bufferSize = MAX_BUFFER_SIZE;
             memsize = fromto_data2.from - fromto_data1.from;
             address = fromto_data1.from + m_heapBaseAddr;
             meminfo = m_debugger->queryMemory(address);
             if (memsize < bufferSize) // don't read usless data
               bufferSize = memsize;
+
             start_address = address;  
             last_address = meminfo.addr + meminfo.size;
             memsize = last_address - address;
+            printf("start address = %lx last address = %lx memsize = %lx \n", start_address, last_address, memsize );
             if (memsize < bufferSize) // don't read past the segment
               bufferSize = memsize;
 
             m_debugger->readMemory(buffer, bufferSize, address);
 
-            while (address < last_address)
+            while (address < start_address + bufferSize)
             {
                 memcpy(&new_to, buffer + address - start_address, sizeof(u64));
 
-                if (new_to == fromto_data1.to + m_heapBaseAddr)
+                if (new_to == (fromto_data1.to + m_heapBaseAddr))
                 // if (((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
                 {
                   PCDump->addData((u8 *)&fromto_data1, sizeof(fromto32_t));
                   counting_pointers++;
                 }
-
-              i++;
+              if (i < FbufferSize)
+              {
+              i+=sizeof(fromto32_t);
               memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
               address = fromto_data1.from + m_heapBaseAddr;
+              }
+              else break;
             }
-            i++;
-            memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+            printf("next address = %lx \n", address);
+            // i+=sizeof(fromto32_t);
+            // memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
           }
         };
 
@@ -8967,6 +8999,7 @@ void GuiCheats::refresh_fromto()
   // PCDumpM->flushBuffer();
   // PCDumpM = PCDumpM;
   dmntchtResumeCheatProcess();
+  printf("refresh fromto done\n");
 }
 
 
@@ -8999,7 +9032,7 @@ void GuiCheats::prep_backjump_stack(u64 address)
         {
           fromto[count].from = *reinterpret_cast<u32 *>(&buffer[i]);
           fromto[count].to = pointedaddress;
-          fromto[count].hits = 0;
+          // fromto[count].hits = 0;
           count++;
         }
       }
