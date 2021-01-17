@@ -8905,7 +8905,7 @@ u64 GuiCheats::get_main_offset32(u64 address)
         count++;
         if (count == 1)
           first_offset = offset;
-        printf("Main offset = %x for heap offset = %x count = %x\n", offset, address, count);
+        printf("Main offset = %lx for heap offset = %lx count = %lx\n", offset, address, count);
         if (count == last_count + 1)
         {
           last_count++;
@@ -8925,7 +8925,7 @@ u64 GuiCheats::get_main_offset32(u64 address)
         count++;
         if (count == 1)
           first_offset = offset;
-        printf("Main offset = %x for heap offset = %x count = %x\n", offset, address, count);
+        printf("Main offset = %lx for heap offset = %lx count = %lx\n", offset, address, count);
         if (count == last_count + 1)
         {
           last_count++;
@@ -8942,14 +8942,14 @@ u64 GuiCheats::get_main_offset32(u64 address)
     offset = first_offset;
   }
   delete[] buffer;
-  printf("get main count = %d\n",count);
+  printf("get main count = %ld\n",count);
   return offset;
 }
 
 void GuiCheats::refresh_fromto()
 {
-  if (m_64bit_offset)
-    return;
+  // if (m_64bit_offset)
+  //   return;
   dmntchtPauseCheatProcess();
   bool ledOn = true;
   time_t unixTime1 = time(NULL);
@@ -8962,8 +8962,19 @@ void GuiCheats::refresh_fromto()
     u64 Foffset = 0;
     size_t bufferSize = MAX_BUFFER_SIZE; 
     u8 *buffer = new u8[bufferSize];
-    size_t FbufferSize = MAX_BUFFER_SIZE - MAX_BUFFER_SIZE % sizeof(fromto32_t);
-    fromto32_t fromto_data1, fromto_data2;
+    u32 buffer_inc, data_inc;
+    if (m_64bit_offset)
+    {
+      buffer_inc = sizeof(fromto_t);
+      data_inc = sizeof(u64);
+    }
+    else
+    {
+      buffer_inc = sizeof(fromto32_t);
+      data_inc = sizeof(u32);
+    }
+    size_t FbufferSize = MAX_BUFFER_SIZE - MAX_BUFFER_SIZE % buffer_inc;
+    fromto_t fromto_data1 = {0}, fromto_data2 = {0};
     u8 *Fbuffer = new u8[FbufferSize];
     {
       while (Foffset < m_PC_Dump->size())
@@ -8974,9 +8985,11 @@ void GuiCheats::refresh_fromto()
           FbufferSize = m_PC_Dump->size() - Foffset;
         printf("FbufferSize = %lx\n", FbufferSize);
         m_PC_Dump->getData(Foffset, Fbuffer, FbufferSize);
-        memcpy(&fromto_data1, Fbuffer, sizeof(fromto32_t));
-        memcpy(&fromto_data2, Fbuffer + (FbufferSize - sizeof(fromto32_t)*2), sizeof(fromto32_t));
-        printf("fromto_data1 form = %x ,to = %x , fromto_data2 from = %x , to = %x \n ", fromto_data1.from, fromto_data1.to, fromto_data2.from, fromto_data2.to);
+        memcpy(&(fromto_data1.from), Fbuffer, data_inc);
+        memcpy(&(fromto_data1.to), Fbuffer + data_inc, data_inc);
+        memcpy(&(fromto_data2.from), Fbuffer + (FbufferSize - buffer_inc*2), data_inc);//double check this not including the last two
+        memcpy(&(fromto_data2.to), Fbuffer + data_inc + (FbufferSize - buffer_inc*2), data_inc);
+        printf("fromto_data1 form = %lx ,to = %lx , fromto_data2 from = %lx , to = %lx \n ", fromto_data1.from, fromto_data1.to, fromto_data2.from, fromto_data2.to);
         size_t i = 0;
         MemoryInfo meminfo;
         u64 memsize, address, start_address, last_address, new_to;
@@ -9007,13 +9020,15 @@ void GuiCheats::refresh_fromto()
             if (new_to == (fromto_data1.to + m_heapBaseAddr))
             // if (((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd))))
             {
-              PCDump->addData((u8 *)&fromto_data1, sizeof(fromto32_t));
+              PCDump->addData((u8 *)&fromto_data1.from, data_inc);
+              PCDump->addData((u8 *)&fromto_data1.to, data_inc);
               counting_pointers++;
             }
-            i += sizeof(fromto32_t);
+            i += buffer_inc;
             if (i < FbufferSize)
             {
-              memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+              memcpy(&(fromto_data1.from), Fbuffer + i, data_inc);
+              memcpy(&(fromto_data1.to), Fbuffer + data_inc + i, data_inc);
               address = fromto_data1.from + m_heapBaseAddr;
               inc = true;
             }
@@ -9023,9 +9038,12 @@ void GuiCheats::refresh_fromto()
           if (!inc)
           {
             printf("not able to access address = %lx i= %lx\n", address, i);
-            i += sizeof(fromto32_t);
-            if  (i < FbufferSize)
-              memcpy(&fromto_data1, Fbuffer + i, sizeof(fromto32_t));
+            i += buffer_inc;
+            if (i < FbufferSize)
+            {
+              memcpy(&(fromto_data1.from), Fbuffer + i, data_inc);
+              memcpy(&(fromto_data1.to), Fbuffer + data_inc + i, data_inc);
+            }
           }
           inc = false;
         };
@@ -9144,7 +9162,7 @@ void GuiCheats::prep_backjump_stack(u64 address)
 
 
   //
-  printf("count = %x\n",count);
+  printf("count = %lx\n",count);
   delete buffer;
   std::sort(fromto,fromto + count, comparefromto);
   m_fromto32_size = count;
