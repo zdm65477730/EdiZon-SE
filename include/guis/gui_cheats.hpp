@@ -108,10 +108,25 @@ private:
   MemoryDump *m_dataDump;
   MemoryDump *m_PC_Dump = nullptr;
   MemoryDump *m_PC_DumpM = nullptr;
+  MemoryDump *m_PC_DumpP = nullptr; // Pointer distance to main file ptr_distance_t
+  MemoryDump *m_PC_DumpTo = nullptr; // File to hold list of "To" to be process next
 
   #define M_ENTRY_MAX 10
   #define M_TARGET m_multisearch.Entries[m_multisearch.target]
   #define M_ALIGNMENT 16
+  #define FORWARD_DEPTH 2
+  struct forward_chain_t
+  {
+    u32 length [FORWARD_DEPTH];
+    u32 offset [FORWARD_DEPTH];
+    u32 target [FORWARD_DEPTH];
+  };
+  // #define SET_BIT(i) 0x1 << i
+  // #define GET_BIT(i) & (SET_BIT(i)) >> i
+  struct ptr_distance_t
+  {
+    bool main:1,l1:1,l2:1,l3:1,l4:1,l5:1,l6:1,l7:1;
+  };
   struct MultiSearch_t
   {
     char laber[40] = {0};
@@ -272,10 +287,12 @@ private:
   bookmark_t bookmark;        //used in add book mark
   pointer_chain_t m_hitcount; // maybe not used
 
-  std::stringstream m_PCDump_filename;
-  std::stringstream m_PCAttr_filename;
-  std::stringstream m_PCDumpM_filename;
-  std::stringstream m_PCDumpR_filename;
+  std::stringstream m_PCDump_filename; // Pointer base file
+  std::stringstream m_PCAttr_filename; // For information only
+  std::stringstream m_PCDumpM_filename; // main pointer data
+  std::stringstream m_PCDumpP_filename; // Pointer distance to main file ptr_distance_t
+  std::stringstream m_PCDumpT_filename; // list of "To" for processing
+  std::stringstream m_PCDumpR_filename; // Pointer refresh file
   bool m_redo_prep_pointersearch = false;
 
   void PCdump();
@@ -363,6 +380,8 @@ private:
   void refresh_fromto();
 
   void prep_backjump_stack(u64 address);
+
+  void prep_forward_stack();
 
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,

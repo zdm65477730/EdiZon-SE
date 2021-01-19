@@ -73,6 +73,7 @@ static searchValue_t _get_entry(searchValue_t value, searchType_t type);
 static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2);
 static bool comparefromto(fromto_t e1, fromto_t e2);
+static bool comparefromto32(fromto32_t e1, fromto32_t e2);
 GuiCheats::GuiCheats() : Gui()
 {
   if (Config::getConfig()->deletebookmark)
@@ -2456,6 +2457,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
       {
         u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
         GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
+        if (m_PC_DumpP == nullptr) printf("m_PC_DumpP is null 3\n");
         GuiCheats::prep_backjump_stack(address);
         m_searchMenuLocation = SEARCH_pickjump;
       }
@@ -3141,10 +3143,11 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_X && (kheld & KEY_ZL))  
   {
+    m_searchMenuLocation = SEARCH_editRAM2;
     m_redo_prep_pointersearch = true;
-    u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-    GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
-    GuiCheats::prep_backjump_stack(address);
+    // u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+    // GuiCheats::prep_pointersearch(m_debugger, m_memoryInfo);
+    // GuiCheats::prep_backjump_stack(address);
   }
   else if (kdown & KEY_B)
   {
@@ -3862,7 +3865,7 @@ void GuiCheats::onInput(u32 kdown)
         }
         // add bookmark end
         // show memory editor
-        // BM1
+
         if (kdown & KEY_RSTICK && (kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
         {
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
@@ -8238,8 +8241,8 @@ void GuiCheats::testlz()
     index += bufferSize;
     total +=count;
   }
-  delete buffer;
-  delete outbuffer;
+  delete[] buffer;
+  delete[] outbuffer;
   time_t unixTime2 = time(NULL);
   printf("%s%ld\n", "Stop Time ", unixTime2 - unixTime1);
   float r = (float) total / (float) S;
@@ -8735,6 +8738,10 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   m_PCAttr_filename << m_PCDump_filename.str().c_str() << "A";
   m_PCDumpM_filename.str("");
   m_PCDumpM_filename << m_PCDump_filename.str().c_str() << "M";
+  m_PCDumpP_filename.str("");
+  m_PCDumpP_filename << m_PCDump_filename.str().c_str() << "P";
+  m_PCDumpT_filename.str("");
+  m_PCDumpT_filename << m_PCDump_filename.str().c_str() << "T";
 
   MemoryDump *PCDump;
   // check if data is already for use
@@ -8743,9 +8750,11 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
     PCDump = new MemoryDump(m_PCDump_filename.str().c_str(), DumpType::DATA, false);
     if ((PCDump->getDumpInfo().heapBaseAddress == m_heapBaseAddr) && !m_redo_prep_pointersearch)
     {
+      if (m_PC_DumpP == nullptr) printf("m_PC_DumpP is null 4\n");
       m_PC_Dump = PCDump;
       m_PC_DumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, false);
-      refresh_fromto();
+      m_PC_DumpP = new MemoryDump(m_PCDumpP_filename.str().c_str(), DumpType::DATA, false);
+      // refresh_fromto();
       return;
     };
     delete PCDump;
@@ -8755,7 +8764,11 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
     m_redo_prep_pointersearch = false;
     delete m_PC_Dump;
     delete m_PC_DumpM;
+    delete m_PC_DumpP;
+    m_PC_DumpP = nullptr;
+    if (m_PC_DumpP == nullptr) printf("m_PC_DumpP is null 1\n");
   };
+
   (new MessageBox("Preparing JumpBack data.\n \nThis may take a while...", MessageBox::NONE))->show();
   requestDraw();
 
@@ -8763,6 +8776,10 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   PCDump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
   MemoryDump *PCDumpM;
   PCDumpM = new MemoryDump(m_PCDumpM_filename.str().c_str(), DumpType::DATA, true);
+  MemoryDump *PCDumpP;
+  PCDumpP = new MemoryDump(m_PCDumpP_filename.str().c_str(), DumpType::DATA, true);
+  m_PC_DumpTo = new MemoryDump(m_PCDumpT_filename.str().c_str(), DumpType::DATA, true);
+  ptr_distance_t ptr_distance = {0};
   MemoryDump *PCAttr;
   PCAttr = new MemoryDump(m_PCAttr_filename.str().c_str(), DumpType::DATA, true);
   // PCDump->addData((u8 *)&m_mainBaseAddr, sizeof(u64));
@@ -8802,7 +8819,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
           bufferSize = meminfo.size - offset;
         debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
         searchValue_t realValue = {0};
-        for (u64 i = 0; i < bufferSize; i += 4)
+        for (u64 i = 0; i < bufferSize; i += 8)
         {
           u64 address = meminfo.addr + offset + i - m_mainBaseAddr;
           memset(&realValue, 0, 8);
@@ -8816,6 +8833,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
               realValue._u64 = realValue._u64 - m_heapBaseAddr;
               PCDumpM->addData((u8 *)&address, data_inc);
               PCDumpM->addData((u8 *)&realValue, data_inc);
+              m_PC_DumpTo->addData((u8 *)&realValue, data_inc);
               // address = 0;
               // PCDump->addData((u8 *)&address, data_inc);
               // PCDump->addData((u8 *)&realValue, data_inc);
@@ -8833,7 +8851,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
           bufferSize = meminfo.size - offset;
         debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
         searchValue_t realValue = {0};
-        for (u64 i = 0; i < bufferSize; i += 4)
+        for (u64 i = 0; i < bufferSize; i += 8)
         {
           u64 address = meminfo.addr + offset + i - m_heapBaseAddr;
           memset(&realValue, 0, 8);
@@ -8847,6 +8865,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
               realValue._u64 = realValue._u64 - m_heapBaseAddr;
               PCDump->addData((u8 *)&address, data_inc);
               PCDump->addData((u8 *)&realValue, data_inc);
+              PCDumpP->addData((u8 *)&ptr_distance, sizeof(ptr_distance_t));
               counting_pointers++;
             }
         }
@@ -8867,12 +8886,19 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   // delete PCDump;
   m_PC_Dump = PCDump;
   PCDumpM->flushBuffer();
+  PCDumpP->flushBuffer();
+  m_PC_DumpTo->flushBuffer();
+  printf("size of m_PC_DumpTo =%ld \n ", m_PC_DumpTo->size());
+  delete m_PC_DumpTo;
+  delete PCDumpP;
   // delete PCDumpM;
   m_PC_DumpM = PCDumpM;
+  // m_PC_DumpP = PCDumpP;
   PCAttr->flushBuffer();
   delete PCAttr;
   dmntchtResumeCheatProcess();
   Gui::g_currMessageBox->hide();
+  if (m_PC_DumpP == nullptr) printf("m_PC_DumpP is null 2\n");
 }
 
 
@@ -9075,6 +9101,7 @@ void GuiCheats::refresh_fromto()
 
 void GuiCheats::prep_backjump_stack(u64 address)
 {
+  prep_forward_stack();
   const u16 tablesize = 0xFFFF;
   fromto_t *fromto = new fromto_t[tablesize];
   u64 file_range = 0x10000;
@@ -9156,19 +9183,156 @@ void GuiCheats::prep_backjump_stack(u64 address)
     }
     offset += bufferSize;
   }
-  // refresh the list
+  // repeat for level 2
+
+  // repeat for level 3
 
 
 
 
   //
   printf("count = %lx\n",count);
-  delete buffer;
+  delete[] buffer;
   std::sort(fromto,fromto + count, comparefromto);
   m_fromto32_size = count;
   if (m_fromto32 !=nullptr) delete m_fromto32;
   m_fromto32 = fromto;
   m_fromto32_offset = 0;
+}
+
+// BM1
+void GuiCheats::prep_forward_stack()
+{
+  printf("prep forward stack\n");
+  if (m_PC_DumpP != nullptr)
+    return;
+  u32 buffer_inc, data_inc;
+  if (m_64bit_offset)
+  {
+    buffer_inc = sizeof(fromto_t);
+    data_inc = sizeof(u64);
+  }
+  else
+  {
+    buffer_inc = sizeof(fromto32_t);
+    data_inc = sizeof(u32);
+  }
+  fromto_t fromto ={0};
+  u64 file_range = 0x10000;
+  u64 offset = 0; // for m_PC_Dump
+  u64 To_count = 0;
+  u64 address = 0;
+  u64 bufferSize = MAX_BUFFER_SIZE;
+  u8 *buffer = new u8[bufferSize];
+  u64 PbufferSize = MAX_BUFFER_SIZE / buffer_inc;
+  u8 *Pbuffer = new u8[PbufferSize];
+  size_t PC_Dump_size = m_PC_Dump->size();
+  m_PC_DumpTo = new MemoryDump(m_PCDumpT_filename.str().c_str(), DumpType::DATA, false);
+  m_PC_DumpP = new MemoryDump(m_PCDumpP_filename.str().c_str(), DumpType::DATA, false);
+
+  // u8 mask = 0x2; // depth itterator
+  for (u8 mask = 2; mask < 0x10; mask = mask * 2)
+  {
+    size_t ToFilesize = m_PC_DumpTo->size();
+    size_t To_bufferSize = ToFilesize;
+    size_t To_File_offset = 0;
+    if (To_bufferSize > MAX_BUFFER_SIZE)
+    {
+      To_bufferSize = MAX_BUFFER_SIZE;
+    };
+    printf("prep forward stack m_PC_DumpTo->size() %ld mask = %x \n", To_bufferSize, mask);
+    u8 *To_buffer = new u8[To_bufferSize];
+    m_PC_DumpTo->getData(0, To_buffer, To_bufferSize);
+    // time_t unixTime1 = time(NULL);
+    if (m_64bit_offset)
+    {
+      u64 *to;
+      to = (u64 *)(To_buffer);
+      std::sort(to, to + To_bufferSize / data_inc);
+    }
+    else
+    {
+      u32 *to;
+      to = (u32 *)(To_buffer);
+      std::sort(to, to + To_bufferSize / data_inc);
+    }
+    // debug check file
+    // m_PC_DumpTo->putData(0, To_buffer, To_bufferSize);
+    // m_PC_DumpTo->flushBuffer();
+    // return;
+    //
+    m_PC_DumpTo->clear();
+    offset = 0;
+    bufferSize = MAX_BUFFER_SIZE;
+    PbufferSize = bufferSize / buffer_inc;
+    To_count = 0;
+
+    memcpy(&address, To_buffer + To_count * data_inc, data_inc); //()
+
+    while ((offset < PC_Dump_size) && ((To_count + To_File_offset) < ToFilesize))
+    {
+      if (PC_Dump_size - offset < bufferSize)
+      {
+        bufferSize = PC_Dump_size - offset;
+        PbufferSize = bufferSize / buffer_inc;
+      };
+      m_PC_Dump->getData(offset, buffer, bufferSize);                 // BM4
+      // break;
+      m_PC_DumpP->getData((offset / buffer_inc), Pbuffer, PbufferSize); // ptr_distance_t i/buffer_inc
+      for (u64 i = 0; i < bufferSize; i += buffer_inc) // for (size_t i = 0; i < (bufferSize / sizeof(u64)); i++)
+      {
+        if (m_abort)
+          return;
+        memcpy(&(fromto.from), buffer + i, data_inc);
+        memcpy(&(fromto.to), buffer + i + data_inc, data_inc);
+        // printf("fromto.from = %lx ,address = %lx \n", fromto.from, address);
+
+        if (fromto.from >= address && fromto.from <= address + file_range)
+        {
+          // narrow down opportunity, skip forward for address below not possible if used
+          m_PC_DumpTo->addData((u8 *)&(fromto.to), data_inc); // action
+          Pbuffer[i / buffer_inc] = Pbuffer[i / buffer_inc] | mask;
+          // printf("Pbuffer[i / buffer_inc] %x\n",Pbuffer[i / buffer_inc]);
+        }
+        else if (fromto.from > address + file_range)
+        {
+          // inc address
+          if ((To_count + To_File_offset == ToFilesize - 1))
+            break; // break out done here
+          while ((address < fromto.from) && (To_count + To_File_offset < ToFilesize - 1))
+          {
+            To_count++;
+            if (To_count == To_bufferSize)
+            {
+              To_File_offset += To_bufferSize;
+              if (ToFilesize - To_File_offset < To_bufferSize)
+              {
+                To_bufferSize = ToFilesize - To_File_offset;
+              }
+              m_PC_DumpTo->getData(To_File_offset, To_buffer, To_bufferSize);
+              To_count = 0;
+            }
+            memcpy(&address, To_buffer + To_count * data_inc, data_inc);
+            if (fromto.from >= address && fromto.from <= address + file_range) // make sure current fromto is not lost, maybe "i" need to jump back for narrow down
+            {
+              m_PC_DumpTo->addData((u8 *)&(fromto.to), data_inc); //action
+              Pbuffer[i / buffer_inc] = Pbuffer[i / buffer_inc] | mask;
+              break;
+            }
+          } ; // skip forward limited to "same" others not possible if using narrow down
+        }
+      }
+      m_PC_DumpP->putData((offset / buffer_inc), Pbuffer, PbufferSize); // write the data back to file
+      offset += bufferSize;
+    }
+    delete[] To_buffer; // need a new size To_buffer, may need to use similar construct as buffer if this size is too big
+    m_PC_DumpTo->flushBuffer();
+    m_PC_DumpP->flushBuffer();
+  }
+  delete m_PC_DumpTo;
+  // delete m_PC_DumpP; // this was created by pre_pointer and close here consider letting it be later
+  delete[] buffer;
+  delete[] Pbuffer;
 }
 
 //
@@ -9384,6 +9548,10 @@ static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2)
   return (e1.offset < e2.offset);
 };
 static bool comparefromto(fromto_t e1, fromto_t e2)
+{
+  return (e1.to > e2.to);
+};
+static bool comparefromto32(fromto32_t e1, fromto32_t e2)
 {
   return (e1.to > e2.to);
 };
