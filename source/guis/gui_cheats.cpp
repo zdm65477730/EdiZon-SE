@@ -669,7 +669,7 @@ void GuiCheats::draw_easymode()
     else if (m_mainBaseAddr == 0)
       Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_CENTER);
     else if (m_cheatsPresent && m_memoryDump->size() == 0)
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Cheats for this game present but title version or region doesn't match!", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "You may have Cheats for a different version of this game !", ALIGNED_CENTER);
     else
       Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "No cheats available for this game", ALIGNED_CENTER);
 
@@ -946,7 +946,7 @@ void GuiCheats::draw()
     else if (m_mainBaseAddr == 0)
       Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_CENTER);
     else if (m_cheatsPresent && m_memoryDump->size() == 0)
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Cheats for this game present but title version or region doesn't match!", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "You may have Cheats for a different version of this game !", ALIGNED_CENTER);
 
     if (m_memoryDump->getDumpInfo().dumpType == DumpType::DATA)
     {
