@@ -37,6 +37,12 @@ struct fromto_t
   u64 from;
   u64 to;
 };
+struct fromtoP_t
+{
+  u64 from;
+  u64 to;
+  u8 P;
+};
 enum
 {
   FORMAT_DEC,
@@ -155,6 +161,7 @@ private:
   u64 m_max_source = 200;
   u64 m_max_depth = 2;
   u64 m_max_range = 0x800;
+  u64 m_max_P_range = 0x800;
   u64 m_low_main_heap_addr = 0x100000000;
   u64 m_high_main_heap_addr = 0x10000000000;
   u64 m_pointer_found = 0;
@@ -209,7 +216,7 @@ private:
     u32 table_entrysize;
   };
   jump_table_entry_t *m_jumptable;
-  fromto_t *m_fromto32 = nullptr;
+  fromtoP_t *m_fromto32 = nullptr;
   u64 m_fromto32_offset = 0;
   u32 m_fromto32_size = 0;
   u64 m_selectedJumpSource = 0;
