@@ -96,7 +96,8 @@ private:
     SEARCH_editRAM2,
     SEARCH_pickjump,
     SEARCH_editExtraSearchValues,
-    SEARCH_POINTER
+    SEARCH_POINTER,
+    SEARCH_POINTER2
   } m_searchMenuLocation = SEARCH_NONE;
 
   searchType_t m_searchType = SEARCH_TYPE_NONE;
@@ -159,7 +160,7 @@ private:
   u64 m_target = 0;
   u64 m_numoffset = 3;
   u64 m_max_source = 200;
-  u64 m_max_depth = 2;
+  u64 m_max_depth = 5;
   u64 m_max_range = 0x800;
   u64 m_max_P_range = 0x800;
   u64 m_low_main_heap_addr = 0x100000000;
