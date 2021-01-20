@@ -9122,6 +9122,7 @@ void GuiCheats::prep_backjump_stack(u64 address)
 {
   if (m_fromto32 !=nullptr) delete m_fromto32;
   prep_forward_stack();
+  m_max_P_range = m_PC_DumpP->getDumpInfo().maxrange;
   const u16 tablesize = 0x1000;
   fromtoP_t *fromto = new fromtoP_t[tablesize];
   u64 file_range = 0x10000;
@@ -9357,6 +9358,7 @@ void GuiCheats::prep_forward_stack()
     printf("Cumulative Time taken for forward search =%ld\n", time(NULL) - m_Time1);
   }
   delete m_PC_DumpTo;
+  m_PC_DumpP->setPointerSearchParams(0,0,m_max_P_range,m_buildID); // save m_max_P_range in P file
   // delete m_PC_DumpP; // this was created by pre_pointer and close here consider letting it be later
   delete[] buffer;
   delete[] Pbuffer;
