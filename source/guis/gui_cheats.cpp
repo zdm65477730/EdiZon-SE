@@ -1103,7 +1103,7 @@ void GuiCheats::draw()
 
 void GuiCheats::drawSearchPointerMenu()
 {
-  if (m_searchMenuLocation == SEARCH_POINTER)
+  if (m_searchMenuLocation == SEARCH_POINTER2)
   {
     static u32 cursorBlinkCnt = 0;
     u32 strWidth = 0;
@@ -1175,7 +1175,7 @@ void GuiCheats::drawSearchPointerMenu()
 
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6+\uE0E3 Make Dump for pointersearcher SE    \uE0EF Start Search   \uE0E1 Abort     \uE0E4 \uE0E5 Edit Value", ALIGNED_RIGHT);
   }
-  if (m_searchMenuLocation == SEARCH_POINTER2)
+  if (m_searchMenuLocation == SEARCH_POINTER)
   {
     static u32 cursorBlinkCnt = 0;
     u32 strWidth = 0;
@@ -7895,6 +7895,11 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
             (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
         }
       }
+      else
+      {
+        rename(realCheatPathold.str().c_str(),realCheatPath.str().c_str());
+      }
+      
     }
   }//
   // else
