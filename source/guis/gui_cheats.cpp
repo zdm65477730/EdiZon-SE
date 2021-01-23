@@ -590,7 +590,7 @@ void GuiCheats::draw_easymode()
   }
   m_menuLocation = CHEATS;
   {
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Check for update  \uE0E6 Page Up  \uE0E7 Page Down  \uE0E0 Cheat on/off  \uE0E1 Quit", ALIGNED_RIGHT);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF Update Cheats  \uE0F0 Check for update  \uE0E6 Page Up  \uE0E7 Page Down  \uE0E0 Cheat on/off  \uE0E1 Quit", ALIGNED_RIGHT);
   }
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
@@ -3096,6 +3096,13 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   else if (kdown & KEY_MINUS)
   {
     Gui::g_nextGui = GUI_FIRST_RUN;
+  }
+  else if (kdown & KEY_PLUS)
+  {
+    Config::readConfig();
+    Config::getConfig()->enablecheats = true;
+    Config::writeConfig();
+    _moveLonelyCheats(m_buildID, m_debugger->getRunningApplicationTID());
   }
   else if (kdown & KEY_UP)
   {
@@ -7820,6 +7827,9 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
     }
     else
       (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+    Config::readConfig();  
+    Config::getConfig()->enablecheats = false;  
+    Config::writeConfig();
   }
   // Move cheat from code database if exist
   std::stringstream zipPath;
@@ -7844,14 +7854,24 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
     zipper::Unzipper cheatzip(zipPath.str().c_str()); // cheatzip;
     if (!(access(realCheatPath.str().c_str(), F_OK) == 0) || Config::getConfig()->enablecheats || Config::getConfig()->easymode)
     {
-      Config::getConfig()->enablecheats = false;
       std::stringstream realCheatPathold;
       realCheatPathold.str("");
       realCheatPathold << realCheatPath.str() << ".old";
       if ((access(realCheatPath.str().c_str(), F_OK) == 0))
       {
-      REPLACEFILE(realCheatPath.str().c_str(),realCheatPathold.str().c_str());
+        if (Config::getConfig()->enablecheats)
+        {
+          REPLACEFILE(realCheatPath.str().c_str(), realCheatPathold.str().c_str());
+
+        }
+        else
+        {
+          cheatpathStr = realCheatPath.str();
+          Config::getConfig()->enablecheats = false;
+          return;
+        }
       };
+      Config::getConfig()->enablecheats = false;
       if (cheatzip.extractEntry(zipCheatPath.str().c_str(), realCheatPath.str().c_str()))
       {
         if (!(m_debugger->m_dmnt))
