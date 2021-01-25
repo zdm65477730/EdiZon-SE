@@ -3457,6 +3457,7 @@ void GuiCheats::onInput(u32 kdown)
     }
     if (kdown & KEY_R)
     {
+      m_redo_prep_pointersearch = true;
       if (m_selectedEntry == 0 && m_max_depth < MAX_POINTER_DEPTH)
       {
         m_max_depth++;
@@ -3480,6 +3481,7 @@ void GuiCheats::onInput(u32 kdown)
     }
     if (kdown & KEY_L)
     {
+      m_redo_prep_pointersearch = true;
       if (m_selectedEntry == 0 && m_max_depth > 0)
       {
         m_max_depth--;
@@ -7449,6 +7451,11 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
     buffer_inc = sizeof(fromto32_t);
     data_inc = sizeof(u32);
   }
+  if (PS_depth >= (m_max_depth - 1))
+  {
+    // printf("max pointer depth reached\n\n");
+    return;
+  }
   if (!m_PS_resume)
   {
     u8 mask = 0x80 >> (m_max_depth - 2 - depth);
@@ -7485,6 +7492,9 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
     u8 *buffer = new u8[bufferSize];
     u64 PbufferSize = MAX_BUFFER_SIZE / buffer_inc;
     u8 *Pbuffer = new u8[PbufferSize];
+    u64 MbufferSize = m_PC_DumpM->size();
+    u8 *Mbuffer = new u8[MbufferSize];
+    m_PC_DumpM->getData(0, Mbuffer, MbufferSize);
     fromto_t fromto ={0};
     u64 distance;
     u64 minimum = m_max_range; // a large number to start
@@ -7516,16 +7526,13 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
             if ((Pbuffer[i / buffer_inc] & 0x80) == 0x80)
             {
               fromto_t Mfromto = {0};
-              u64 bufferSize = m_PC_DumpM->size();
-              u8 *buffer = new u8[bufferSize];
-              m_PC_DumpM->getData(0, buffer, bufferSize);
-              for (u64 i = 0; i < bufferSize; i += buffer_inc)
+              for (u64 i = 0; i < MbufferSize; i += buffer_inc)
               {
-                memcpy(&(Mfromto.to), buffer + i + data_inc, data_inc);
+                memcpy(&(Mfromto.to), Mbuffer + i + data_inc, data_inc);
                 u64 mdistance = fromto.from - Mfromto.to;
                 if (mdistance <= minimum)
                 {
-                  memcpy(&(Mfromto.from), buffer + i, data_inc);
+                  memcpy(&(Mfromto.from), Mbuffer + i, data_inc);
                   m_bookmark.pointer.offset[PS_depth+2] = Mfromto.from;
                   m_bookmark.pointer.depth = PS_depth+2;
                   m_bookmark.pointer.offset[PS_depth+1] = mdistance;
@@ -7536,15 +7543,12 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
                     m_bookmark.pointer.offset[z] = m_PointerSearch->sources[z][m_PointerSearch->index[z]].offset;
                   }
                   m_AttributeDumpBookmark->addData((u8 *)&m_bookmark, sizeof(bookmark_t));
-                  m_AttributeDumpBookmark->flushBuffer();
                   m_memoryDumpBookmark->addData((u8 *)&m_mainBaseAddr, sizeof(u64)); //need to update
-                  m_memoryDumpBookmark->flushBuffer();
                   m_pointer_found++;
                 };
               }
-              delete [] buffer;
             }
-            if (((Pbuffer[i / buffer_inc] & 0x7F) >= mask) && (PS_depth < (m_max_depth - 2)))
+            if ((Pbuffer[i / buffer_inc] & 0x7F) >= mask) 
             {
               sourceinfo.foffset = fromto.from;
               sourceinfo.offset = distance;
@@ -7585,11 +7589,6 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
       //   break;
       offset += bufferSize;
     }
-    if (PS_depth >= (m_max_depth -2))
-    {
-      // printf("max pointer depth reached\n\n");
-      return;
-    }
     PS_num_sources = 0;
     for (u32 j = 0; j < sources.size(); j++)
     {
@@ -7605,9 +7604,11 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
       if (PS_num_sources > m_max_source)
         break;
     }
-
+    m_AttributeDumpBookmark->flushBuffer();
+    m_memoryDumpBookmark->flushBuffer();
     delete[] buffer; // release memory use for the search of sources
     delete[] Pbuffer;
+    delete[] Mbuffer;
     // printf("**Found %ld sources for address %lx at depth %ld\n", PS_num_sources, targetaddress, PS_depth);
     PS_index = 0;
   }
