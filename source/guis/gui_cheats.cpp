@@ -338,7 +338,7 @@ if (!(m_debugger->m_dmnt)){
 
   m_memoryDump->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
 
-  // start mod bookmark BM2
+  // start mod bookmark
   std::stringstream filebuildIDStr;
   {
     std::stringstream buildIDStr;
@@ -1103,7 +1103,7 @@ void GuiCheats::draw()
 
 void GuiCheats::drawSearchPointerMenu()
 {
-  if (m_searchMenuLocation == SEARCH_POINTER2)
+  if (m_searchMenuLocation == SEARCH_POINTER)
   {
     static u32 cursorBlinkCnt = 0;
     u32 strWidth = 0;
@@ -1175,7 +1175,7 @@ void GuiCheats::drawSearchPointerMenu()
 
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6+\uE0E3 Make Dump for pointersearcher SE    \uE0EF Start Search   \uE0E1 Abort     \uE0E4 \uE0E5 Edit Value", ALIGNED_RIGHT);
   }
-  if (m_searchMenuLocation == SEARCH_POINTER)
+  if (m_searchMenuLocation == SEARCH_POINTER2)
   {
     static u32 cursorBlinkCnt = 0;
     u32 strWidth = 0;
@@ -3420,7 +3420,7 @@ void GuiCheats::onInput(u32 kdown)
     }
 
     if ((kdown & KEY_PLUS) && !(kheld & KEY_ZL))
-    {
+    { // going for V2
       m_abort = false;
       // (new Snackbar("Starting pointer search"))->show();
       // m_searchMenuLocation = SEARCH_NONE;
@@ -3480,7 +3480,7 @@ void GuiCheats::onInput(u32 kdown)
     }
     if (kdown & KEY_L)
     {
-      if (m_selectedEntry == 0 && m_max_depth > 2)
+      if (m_selectedEntry == 0 && m_max_depth > 0)
       {
         m_max_depth--;
       }
@@ -7395,7 +7395,11 @@ void GuiCheats::startpointersearch2(u64 targetaddress) // using global m_bookmar
   // m_PointerSearch->index = {0}; //
   try
   {
-    pointersearch2(targetaddress, 0); //&m_memoryDump, &m_dataDump,
+    prep_pointersearch(m_debugger, m_memoryInfo);
+    m_max_P_range = m_max_range;
+    printf("m_max_P_range = %ld m_max_depth  = %ld\n", m_max_P_range, m_max_depth);
+    prep_forward_stack();
+    pointersearch2(targetaddress-m_heapBaseAddr, 0); //&m_memoryDump, &m_dataDump,
   }
   catch (...)
   {
@@ -7418,97 +7422,151 @@ void GuiCheats::resumepointersearch2()
   {
     m_PS_resume = true;
     m_PS_pause = false;
-    m_dataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, false);
+    prep_pointersearch(m_debugger, m_memoryInfo);
+    m_max_P_range = m_max_range;
+    printf("m_max_P_range = %ld m_max_depth  = %ld\n", m_max_P_range, m_max_depth);
+    prep_forward_stack();
+    // m_dataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, false);
     pointersearch2(0, 0);
-    delete m_dataDump;
+    // delete m_dataDump;
     if (!m_PS_pause)
     {
       delete m_PointerSearch;
     }
   }
 }
-
+// BM2
 void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **displayDump, MemoryDump **dataDump,
 {
+  u32 buffer_inc, data_inc;
+  if (m_64bit_offset)
+  {
+    buffer_inc = sizeof(fromto_t);
+    data_inc = sizeof(u64);
+  }
+  else
+  {
+    buffer_inc = sizeof(fromto32_t);
+    data_inc = sizeof(u32);
+  }
   if (!m_PS_resume)
   {
+    u8 mask = 0x80 >> (m_max_depth - 2 - depth);
     // printf("targetaddress %lx PS_depth %ld PS_index %ld PS_num_sources %ld\n", targetaddress, PS_depth, PS_index, PS_num_sources);
-    if ((m_mainBaseAddr <= targetaddress) && (targetaddress <= (m_mainend)))
-    {
+    // if ((m_mainBaseAddr <= targetaddress) && (targetaddress <= (m_mainend)))
+    // {
 
-      printf("\ntarget reached!=========================\n");
-      printf("final offset is %lx \n", targetaddress - m_mainBaseAddr);
-      m_bookmark.pointer.offset[PS_depth] = targetaddress - m_mainBaseAddr;
-      m_bookmark.pointer.depth = PS_depth;
-      for (int z = PS_depth - 1; z >= 0; z--)
-      {
-        m_bookmark.pointer.offset[z] = m_PointerSearch->sources[z][m_PointerSearch->index[z]].offset;
-      }
+    //   printf("\ntarget reached!=========================\n");
+    //   printf("final offset is %lx \n", targetaddress - m_mainBaseAddr);
+    //   m_bookmark.pointer.offset[PS_depth] = targetaddress - m_mainBaseAddr;
+    //   m_bookmark.pointer.depth = PS_depth;
+    //   for (int z = PS_depth - 1; z >= 0; z--)
+    //   {
+    //     m_bookmark.pointer.offset[z] = m_PointerSearch->sources[z][m_PointerSearch->index[z]].offset;
+    //   }
 
-      m_AttributeDumpBookmark->addData((u8 *)&m_bookmark, sizeof(bookmark_t));
-      m_AttributeDumpBookmark->flushBuffer();
-      m_memoryDumpBookmark->addData((u8 *)&m_mainBaseAddr, sizeof(u64)); //need to update
-      m_memoryDumpBookmark->flushBuffer();
-      // m_pointeroffsetDump->addData((u8 *)&pointerchain, sizeof(pointer_chain_t));
-      // m_pointeroffsetDump->flushBuffer(); // is this useful?
-      printf("main");
-      for (int z = m_bookmark.pointer.depth; z >= 0; z--)
-        printf("+%lx z=%d ", m_bookmark.pointer.offset[z], z);
-      printf("\n\n");
-      m_pointer_found++;
-      // return; // consider don't return to find more
-    };
-    if (PS_depth == m_max_depth)
-    {
-      // printf("max pointer depth reached\n\n");
-      return;
-    }
+    //   m_AttributeDumpBookmark->addData((u8 *)&m_bookmark, sizeof(bookmark_t));
+    //   m_AttributeDumpBookmark->flushBuffer();
+    //   m_memoryDumpBookmark->addData((u8 *)&m_mainBaseAddr, sizeof(u64)); //need to update
+    //   m_memoryDumpBookmark->flushBuffer();
+    //   // m_pointeroffsetDump->addData((u8 *)&pointerchain, sizeof(pointer_chain_t));
+    //   // m_pointeroffsetDump->flushBuffer(); // is this useful?
+    //   printf("main");
+    //   for (int z = m_bookmark.pointer.depth; z >= 0; z--)
+    //     printf("+%lx z=%d ", m_bookmark.pointer.offset[z], z);
+    //   printf("\n\n");
+    //   m_pointer_found++;
+    //   // return; // consider don't return to find more
+    // };
+
     u64 offset = 0;
     // u64 thefileoffset;
     u64 bufferSize = MAX_BUFFER_SIZE;
     u8 *buffer = new u8[bufferSize];
+    u64 PbufferSize = MAX_BUFFER_SIZE / buffer_inc;
+    u8 *Pbuffer = new u8[PbufferSize];
+    fromto_t fromto ={0};
     u64 distance;
     u64 minimum = m_max_range; // a large number to start
     sourceinfo_t sourceinfo;
     std::vector<std::vector<sourceinfo_t>> sources = {{}};
     // printf("PS_num_sources %d ", PS_num_sources);
     PS_num_sources = 0;
-    while (offset < m_dataDump->size())
+    while (offset < m_PC_Dump->size())
     {
-      if (m_dataDump->size() - offset < bufferSize)
-        bufferSize = m_dataDump->size() - offset;
-      m_dataDump->getData(offset, buffer, bufferSize); // BM4
-
-      for (u64 i = 0; i < bufferSize; i += sizeof(u64)) // for (size_t i = 0; i < (bufferSize / sizeof(u64)); i++)
+      if (m_PC_Dump->size() - offset < bufferSize)
+      {
+        bufferSize = m_PC_Dump->size() - offset;
+        PbufferSize = bufferSize / buffer_inc;
+      };
+      m_PC_Dump->getData(offset, buffer, bufferSize); // BM4
+      m_PC_DumpP->getData((offset / buffer_inc), Pbuffer, PbufferSize);
+      for (u64 i = 0; i < bufferSize; i += buffer_inc) // for (size_t i = 0; i < (bufferSize / sizeof(u64)); i++)
       {
         if (m_abort)
           return;
-        u64 pointedaddress = *reinterpret_cast<u64 *>(&buffer[i]);
-        if (targetaddress >= pointedaddress)
+        memcpy(&(fromto.from), buffer + i, data_inc);
+        memcpy(&(fromto.to), buffer + i + data_inc, data_inc);
+        // u64 pointedaddress = *reinterpret_cast<u64 *>(&buffer[i]);
+        if (targetaddress >= fromto.to)
         {
-          distance = targetaddress - pointedaddress;
+          distance = targetaddress - fromto.to;
           if (distance <= minimum)
           {
-            sourceinfo.foffset = offset + i;
-            sourceinfo.offset = distance;
-            // PS_sources[PS_num_sources] = sourceinfo;
-            // PS_num_sources++;
-            for (u32 j = 0; j < sources.size(); j++)
+            if ((Pbuffer[i / buffer_inc] & 0x80) == 0x80)
             {
+              fromto_t Mfromto = {0};
+              u64 bufferSize = m_PC_DumpM->size();
+              u8 *buffer = new u8[bufferSize];
+              m_PC_DumpM->getData(0, buffer, bufferSize);
+              for (u64 i = 0; i < bufferSize; i += buffer_inc)
+              {
+                memcpy(&(Mfromto.to), buffer + i + data_inc, data_inc);
+                u64 mdistance = fromto.from - Mfromto.to;
+                if (mdistance <= minimum)
+                {
+                  memcpy(&(Mfromto.from), buffer + i, data_inc);
+                  m_bookmark.pointer.offset[PS_depth+2] = Mfromto.from;
+                  m_bookmark.pointer.depth = PS_depth+2;
+                  m_bookmark.pointer.offset[PS_depth+1] = mdistance;
+                  m_bookmark.pointer.offset[PS_depth] = distance;
+                  // m_bookmark.pointer.offset[PS_depth] = targetaddress - m_mainBaseAddr;
+                  for (int z = PS_depth-1 ; z >= 0; z--)
+                  {
+                    m_bookmark.pointer.offset[z] = m_PointerSearch->sources[z][m_PointerSearch->index[z]].offset;
+                  }
+                  m_AttributeDumpBookmark->addData((u8 *)&m_bookmark, sizeof(bookmark_t));
+                  m_AttributeDumpBookmark->flushBuffer();
+                  m_memoryDumpBookmark->addData((u8 *)&m_mainBaseAddr, sizeof(u64)); //need to update
+                  m_memoryDumpBookmark->flushBuffer();
+                  m_pointer_found++;
+                };
+              }
+              delete [] buffer;
+            }
+            if (((Pbuffer[i / buffer_inc] & 0x7F) >= mask) && (PS_depth < (m_max_depth - 2)))
+            {
+              sourceinfo.foffset = fromto.from;
+              sourceinfo.offset = distance;
+              // PS_sources[PS_num_sources] = sourceinfo;
+              // PS_num_sources++;
+              for (u32 j = 0; j < sources.size(); j++)
+              {
 
-              if (sources[j].size() == 0 || sources[j][0].offset == distance)
-              {
-                sources[j].push_back(sourceinfo);
-                break;
-              }
-              else if (sources[j][0].offset > distance)
-              {
-                sources.insert(sources.begin() + j, {sourceinfo});
-                break;
-              }
-              else if (j == sources.size() - 1)
-              {
-                sources.push_back({sourceinfo});
+                if (sources[j].size() == 0 || sources[j][0].offset == distance)
+                {
+                  sources[j].push_back(sourceinfo);
+                  break;
+                }
+                else if (sources[j][0].offset > distance)
+                {
+                  sources.insert(sources.begin() + j, {sourceinfo});
+                  break;
+                }
+                else if (j == sources.size() - 1)
+                {
+                  sources.push_back({sourceinfo});
+                }
               }
             }
           }
@@ -7527,7 +7585,11 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
       //   break;
       offset += bufferSize;
     }
-
+    if (PS_depth >= (m_max_depth -2))
+    {
+      // printf("max pointer depth reached\n\n");
+      return;
+    }
     PS_num_sources = 0;
     for (u32 j = 0; j < sources.size(); j++)
     {
@@ -7545,6 +7607,7 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
     }
 
     delete[] buffer; // release memory use for the search of sources
+    delete[] Pbuffer;
     // printf("**Found %ld sources for address %lx at depth %ld\n", PS_num_sources, targetaddress, PS_depth);
     PS_index = 0;
   }
@@ -7584,8 +7647,8 @@ void GuiCheats::pointersearch2(u64 targetaddress, u64 depth) //MemoryDump **disp
     Gui::drawTextAligned(font20, 70, 420, currTheme.textColor, SS.str().c_str(), ALIGNED_LEFT);
     Gui::endDraw();
 
-    u64 newtargetaddress;
-    m_memoryDump1->getData(PS_sources[PS_index].foffset, &newtargetaddress, sizeof(u64)); // fileoffset is in byte
+    u64 newtargetaddress = PS_sources[PS_index].foffset;
+    // m_memoryDump1->getData(PS_sources[PS_index].foffset, &newtargetaddress, sizeof(u64)); // fileoffset is in byte
     if (m_forwardonly)
     {
       if ((targetaddress > newtargetaddress) || ((m_mainBaseAddr <= newtargetaddress) && (newtargetaddress <= (m_mainend))))
@@ -9405,7 +9468,7 @@ void GuiCheats::prep_backjump_stack(u64 address)
         {
           fromto[count].from = 0;
           fromto[count].to = pointedaddress;
-          fromto[count].P = 0x80;
+          fromto[count].P = 0x00;
           // fromto[count].hits = 0;
           count++;
         }
@@ -9457,8 +9520,11 @@ void GuiCheats::prep_forward_stack()
 
   // u8 mask = 0x2; // depth itterator
   m_Time1 = time(NULL);
-  u8 mask = 0x80;
-  for (u16 i = 0; i < 7; i++)
+  u16 level = m_max_depth - 1;
+  if (level > 8)
+    level = 8;
+  u16 mask = 0x100;
+  for (u16 i = 0; i < level; i++)
   {
     mask = mask / 2;
     size_t ToFilesize = m_PC_DumpTo->size();
