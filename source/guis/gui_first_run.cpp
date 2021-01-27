@@ -85,7 +85,7 @@ void Guifirstrun::draw() {
   Gui::drawTextAligned(font24, 70, 23, currTheme.textColor, "        欢迎使用EdiZon SE", ALIGNED_LEFT);
     Gui::drawTextAligned(fontHuge, 100, 180, Gui::makeColor(0xFB, 0xA6, 0x15, 0xFF), "EdiZon SE v" VERSION_STRING, ALIGNED_LEFT);
   Gui::drawTextAligned(font20, 130, 190, currTheme.separatorColor, "由Tomvita制作", ALIGNED_LEFT);
-  Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, Config::getConfig()->easymode ? currTheme.textColor : COLOR_RED, Config::getConfig()->easymode ? "\uE0E2 建议模式" : "\uE0E2 专家模式", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, Config::getConfig()->easymode ? currTheme.textColor : COLOR_RED, Config::getConfig()->easymode ? "\uE0E2 简易模式" : "\uE0E2 专家模式", ALIGNED_LEFT);
   if (updateAvailable)
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF 程序更新检查                       \uE0F0 安装更新     \uE0E1 忽略", ALIGNED_RIGHT);
   else
