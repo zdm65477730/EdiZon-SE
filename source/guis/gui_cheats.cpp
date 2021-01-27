@@ -741,7 +741,7 @@ void GuiCheats::draw()
     }
     else
     {
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0EF BM添加   \uE105 修改  \uE0F2 删除  \uE0E6+\uE104 写入文件  \uE0E6+\uE0E1 解附加  \uE0E4 书签切换   \uE0E3 内存搜索   \uE0E0 金手指开|关   \uE0E1 退出", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0EF 书签添加   \uE105 修改  \uE0F2 删除  \uE0E6+\uE104 写入文件  \uE0E6+\uE0E1 解附加  \uE0E4 书签切换   \uE0E3 内存搜索   \uE0E0 金手指开|关   \uE0E1 退出", ALIGNED_RIGHT);
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E5+\uE0E1 在下次启动时显示选项 \uE0E6+\uE105 删除条件键  \uE0E6+\uE0E2 准备指针搜索", ALIGNED_RIGHT);
     }
   }
@@ -760,7 +760,7 @@ void GuiCheats::draw()
     {
       if (m_memoryDump->size() > 0)
       {
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 调试器解附加  \uE0E4 书签切换 \uE0E5 十六进制模式  \uE0EF BM添加 \uE0F0 重置搜索 \uE0E3 重新搜索 \uE0E2 锁定值  \uE0E0 编辑值   \uE0E1 退出", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 调试器解附加  \uE0E4 书签切换 \uE0E5 十六进制模式  \uE0EF 书签添加 \uE0F0 重置搜索 \uE0E3 重新搜索 \uE0E2 锁定值  \uE0E0 编辑值   \uE0E1 退出", ALIGNED_RIGHT);
         Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 类型  \uE0E5+\uE0E1 在下次启动时显示选项 \uE0E6+\uE0E2 准备指针搜索  \uE0E6+\uE0E7 上一页  \uE0E7 下一页  \uE105 内存编辑器", ALIGNED_RIGHT);
       }
       else
@@ -771,7 +771,7 @@ void GuiCheats::draw()
   {
     if (m_memoryDumpBookmark->size() > 0)
     {
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 解附加  \uE0E4 书签切换   \uE0E5 十六进制模式  \uE0EF BM标签  \uE0E6+\uE0E0 添加金手指  \uE0F0 删除BM   \uE0E2 锁定值  \uE0E7 下一页  \uE0E0 编辑值  \uE0E1 退出", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 解附加  \uE0E4 书签切换   \uE0E5 十六进制模式  \uE0EF 书签标签  \uE0E6+\uE0E0 添加金手指  \uE0F0 删除书签   \uE0E2 锁定值  \uE0E7 下一页  \uE0E0 编辑值  \uE0E1 退出", ALIGNED_RIGHT);
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 更改类型  \uE0E6+\uE0F0 刷新书签  \uE0E6+\uE0EF 导入书签  \uE0E6+\uE0E3 指针搜索  \uE0E6+\uE0E7 上一页  \uE105 内存编辑器", ALIGNED_RIGHT);
       //
     }
@@ -1577,7 +1577,7 @@ void GuiCheats::drawEditRAMMenu2()
   }
 
   // key hints
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE105 搜索标记 \uE0E3 更改偏移 \uE0EF 添加BM \uE0E0 编辑值 \uE0E4 向后 \uE0E5 向前 \uE0E1 回跳", ALIGNED_RIGHT); //\uE0E4 Change Mode
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE105 搜索标记 \uE0E3 更改偏移 \uE0EF 添加书签 \uE0E0 编辑值 \uE0E4 向后 \uE0E5 向前 \uE0E1 回跳", ALIGNED_RIGHT); //\uE0E4 Change Mode
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 更改类型  \uE0E6+\uE0E3 转到任意地址  \uE0E7 下一页  \uE0E6+\uE0E7 上一页  \uE0E6+\uE0E1 退出", ALIGNED_RIGHT);
 }
 
