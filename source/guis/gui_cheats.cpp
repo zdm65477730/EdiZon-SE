@@ -1154,24 +1154,24 @@ void GuiCheats::drawSearchPointerMenu()
     if (cursorBlinkCnt++ % 60 > 10 && m_selectedEntry == 3)
       Gui::drawRectangled(622 + strWidth, 280, 3, 35, currTheme.highlightColor);
 
-    // Gui::drawText(font20, 310, 320, currTheme.textColor, "Link Chain");
-    // ss.str("");
-    // if (m_forwarddump)
-    //   ss << "YES";
-    // else
-    //   ss << "NO";
-    // Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
-    // Gui::drawTextAligned(font20, 620, 320, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-    // if (cursorBlinkCnt++ % 60 > 10 && m_selectedEntry == 4)
-    //   Gui::drawRectangled(622 + strWidth, 320, 3, 35, currTheme.highlightColor);
+    Gui::drawText(font20, 310, 320, currTheme.textColor, "Narrow Down");
+    ss.str("");
+    if (m_narrow_down)
+      ss << "YES";
+    else
+      ss << "NO";
+    Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
+    Gui::drawTextAligned(font20, 620, 320, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+    if (cursorBlinkCnt++ % 60 > 10 && m_selectedEntry == 4)
+      Gui::drawRectangled(622 + strWidth, 320, 3, 35, currTheme.highlightColor);
 
-    // Gui::drawText(font20, 310, 360, currTheme.textColor, "Max num of Offsets");
-    // ss.str("");
-    // ss << "0x" << std::uppercase << std::hex << m_numoffset;
-    // Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
-    // Gui::drawTextAligned(font20, 620, 360, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-    // if (cursorBlinkCnt++ % 60 > 10 && m_selectedEntry == 5)
-    //   Gui::drawRectangled(622 + strWidth, 360, 3, 35, currTheme.highlightColor);
+    Gui::drawText(font20, 310, 360, currTheme.textColor, "Max num of Offsets");
+    ss.str("");
+    ss << "0x" << std::uppercase << std::hex << m_numoffset;
+    Gui::getTextDimensions(font20, ss.str().c_str(), &strWidth, nullptr);
+    Gui::drawTextAligned(font20, 620, 360, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+    if (cursorBlinkCnt++ % 60 > 10 && m_selectedEntry == 5)
+      Gui::drawRectangled(622 + strWidth, 360, 3, 35, currTheme.highlightColor);
 
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0E6+\uE0E3 Make Dump for pointersearcher SE    \uE0EF Start Search   \uE0E1 Abort     \uE0E4 \uE0E5 Edit Value", ALIGNED_RIGHT);
   }
@@ -1714,7 +1714,8 @@ void GuiCheats::drawSEARCH_pickjump()
   // Gui::drawTextAligned(font20, c6, labelline, currTheme.textColor, "VALUE 2", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E2 Edit P Range   \uE0E4 Page UP   \uE0E5 Page Down   \uE0E6+\uE0E2 Clear data      \uE0E3 Pick Source     \uE0E1 Exit", ALIGNED_RIGHT);
   u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-  for (u8 i = 0; i < 15; i++) // 15 Row 
+  // u64 last_to = 0;
+  for (u64 i = 0; i < 15; i++) // 15 Row 
   {
     if (m_selectedJumpSource == i)
       cellColor = currTheme.selectedColor;
@@ -1734,7 +1735,8 @@ void GuiCheats::drawSEARCH_pickjump()
     ss.str("");
     if (m_fromto32[i + m_fromto32_offset].from == 0)
     {
-      u32 temp_offset = get_main_offset32(m_fromto32[i + m_fromto32_offset].to);
+      // last_to = m_fromto32[i + m_fromto32_offset].to;
+      u32 temp_offset = get_main_offset32(i);
       if (m_selectedJumpSource == i) m_selectedJumpSource_offset = temp_offset;
       ss << "Main+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << temp_offset;
     }
@@ -1746,6 +1748,22 @@ void GuiCheats::drawSEARCH_pickjump()
     ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_heapBaseAddr + m_fromto32[i + m_fromto32_offset].to;
     Gui::drawTextAligned(font20, c5, 160 + linegape * (1 + i), cellColor, ss.str().c_str(), ALIGNED_CENTER);
   }
+ // exhaust the same offset if there is remaining on main
+
+  // if (last_to == m_fromto32[14 + m_fromto32_offset].to)
+  // {
+  //   int i = 15;
+  //   while (m_fromto32[i + m_fromto32_offset].to == last_to) // exhaust last offset
+  //   {
+  //     if (m_fromto32[i + m_fromto32_offset].from == 0)
+  //     {
+  //       u64 extra = get_main_offset32(m_fromto32[i + m_fromto32_offset].to);
+  //       printf("extra = %lx \n", extra);
+  //       i++;
+  //       if (i > 30) break;
+  //     }
+  //   }
+  // }
 }
 //
 void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
@@ -3457,13 +3475,14 @@ void GuiCheats::onInput(u32 kdown)
     }
     if (kdown & KEY_R)
     {
-      m_redo_prep_pointersearch = true;
       if (m_selectedEntry == 0 && m_max_depth < MAX_POINTER_DEPTH)
       {
+        m_redo_prep_pointersearch = true;
         m_max_depth++;
       }
       else if (m_selectedEntry == 1 && m_max_range < MAX_POINTER_RANGE)
       {
+        m_redo_prep_pointersearch = true;
         m_max_range += 0x100;
       }
       else if (m_selectedEntry == 2 && m_max_source < MAX_NUM_SOURCE_POINTER)
@@ -3472,7 +3491,7 @@ void GuiCheats::onInput(u32 kdown)
       }
       else if (m_selectedEntry == 4)
       {
-        m_forwarddump = !m_forwarddump;
+        m_narrow_down = !m_narrow_down;
       }
       else if (m_selectedEntry == 5 && m_numoffset < MAX_NUM_POINTER_OFFSET)
       {
@@ -3481,13 +3500,13 @@ void GuiCheats::onInput(u32 kdown)
     }
     if (kdown & KEY_L)
     {
-      m_redo_prep_pointersearch = true;
-      if (m_selectedEntry == 0 && m_max_depth > 0)
+      if (m_selectedEntry == 0 && m_max_depth > 1)
       {
         m_max_depth--;
       }
       else if (m_selectedEntry == 1 && m_max_range > 0x100)
       {
+        m_redo_prep_pointersearch = true;
         m_max_range -= 0x100;
       }
       else if (m_selectedEntry == 2 && m_max_source > 10)
@@ -4625,6 +4644,7 @@ void GuiCheats::onInput(u32 kdown)
         { // in bookmark mode
           m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
           m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+          m_selectedEntry = 0;
           m_searchMenuLocation = SEARCH_POINTER;
           PSresumeSTATE();
           // m_showpointermenu = true;
@@ -9183,10 +9203,29 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   if (m_PC_DumpP == nullptr) printf("m_PC_DumpP is null 2\n");
 }
 
-
-u64 GuiCheats::get_main_offset32(u64 address)
-{
-  static u64 last_address = 0, last_count = 0;
+// BM1
+u64 GuiCheats::get_main_offset32(u64 i_in)
+{ 
+  struct cache_t
+  {
+    u64 to;
+    u64 from;
+  };
+  u64 address = m_fromto32[i_in + m_fromto32_offset].to;
+  static u64 last_address = 0, last_count = 0, last_m_fromto32_offset = 0xFFFFFFFF;
+  static cache_t cache[15] = {0};
+  if (last_m_fromto32_offset == m_fromto32_offset)
+  {
+    if (cache[i_in].to == address)
+    {
+      return cache[i_in].from;
+    }
+  }
+  else
+  {
+    last_m_fromto32_offset = m_fromto32_offset;
+    memset(cache, 0, sizeof(cache));
+  };
   bool found_next_count = false;
   if (address != last_address)
   {
@@ -9251,6 +9290,8 @@ u64 GuiCheats::get_main_offset32(u64 address)
   }
   delete[] buffer;
   printf("get main count = %ld\n",count);
+  cache[i_in].from = offset;
+  cache[i_in].to = address;
   return offset;
 }
 
@@ -9383,11 +9424,17 @@ void GuiCheats::refresh_fromto()
 
 void GuiCheats::prep_backjump_stack(u64 address)
 {
-  if (m_fromto32 !=nullptr) delete m_fromto32;
+  // if (m_fromto32 !=nullptr) delete m_fromto32;
   prep_forward_stack();
   m_max_P_range = m_PC_DumpP->getDumpInfo().maxrange;
   const u16 tablesize = 0x1000;
-  fromtoP_t *fromto = new fromtoP_t[tablesize];
+  fromtoP_t *fromto; 
+  if (m_fromto32 == nullptr)
+    fromto = new fromtoP_t[tablesize];
+  else
+  {
+    fromto = m_fromto32;
+  }
   u64 file_range = 0x10000;
   u64 targetaddress = address - m_heapBaseAddr;
   u64 offset = 0;
@@ -9433,7 +9480,7 @@ void GuiCheats::prep_backjump_stack(u64 address)
         // {
         //   printf("0x18 offset %lx,i %lx\n",offset,i);
         // }
-        if (distance <= file_range)
+        if ((distance <= file_range) && (count < tablesize))
         {
           fromto[count].from = 0; //*reinterpret_cast<u64 *>(&buffer[i]);
           memcpy(&(fromto[count].from), buffer + i, data_inc);
@@ -9491,6 +9538,148 @@ void GuiCheats::prep_backjump_stack(u64 address)
 
 // BM1
 void GuiCheats::prep_forward_stack()
+{
+  printf("prep forward stack\n");
+  if (m_PC_DumpP != nullptr)
+    return;
+  u32 buffer_inc, data_inc;
+  if (m_64bit_offset)
+  {
+    buffer_inc = sizeof(fromto_t);
+    data_inc = sizeof(u64);
+  }
+  else
+  {
+    buffer_inc = sizeof(fromto32_t);
+    data_inc = sizeof(u32);
+  }
+  fromto_t fromto ={0};
+  u64 file_range = m_max_P_range; //0x10000;
+  u64 offset = 0; // for m_PC_Dump
+  u64 To_count = 0;
+  u64 address = 0;
+  u64 bufferSize = MAX_BUFFER_SIZE;
+  u8 *buffer = new u8[bufferSize];
+  u64 PbufferSize = MAX_BUFFER_SIZE / buffer_inc;
+  u8 *Pbuffer = new u8[PbufferSize];
+  size_t PC_Dump_size = m_PC_Dump->size();
+  m_PC_DumpTo = new MemoryDump(m_PCDumpT_filename.str().c_str(), DumpType::DATA, false);
+  m_PC_DumpP = new MemoryDump(m_PCDumpP_filename.str().c_str(), DumpType::DATA, false);
+
+  // u8 mask = 0x2; // depth itterator
+  m_Time1 = time(NULL);
+  u16 level = m_max_depth - 1;
+  if (level > 8)
+    level = 8;
+  u16 mask = 0x100;
+  for (u16 i = 0; i < level; i++)
+  {
+    mask = mask / 2;
+    size_t ToFilesize = m_PC_DumpTo->size();
+    size_t To_bufferSize = ToFilesize;
+    size_t To_File_offset = 0;
+    if (To_bufferSize > MAX_BUFFER_SIZE)
+    {
+      To_bufferSize = MAX_BUFFER_SIZE;
+    };
+    printf("prep forward stack m_PC_DumpTo->size() %ld mask = %x \n", To_bufferSize, mask);
+    u8 *To_buffer = new u8[To_bufferSize];
+    m_PC_DumpTo->getData(0, To_buffer, To_bufferSize);
+    // time_t unixTime1 = time(NULL);
+    if (m_64bit_offset)
+    {
+      u64 *to;
+      to = (u64 *)(To_buffer);
+      std::sort(to, to + To_bufferSize / data_inc);
+    }
+    else
+    {
+      u32 *to;
+      to = (u32 *)(To_buffer);
+      std::sort(to, to + To_bufferSize / data_inc);
+    }
+    // debug check file
+    // m_PC_DumpTo->putData(0, To_buffer, To_bufferSize);
+    // m_PC_DumpTo->flushBuffer();
+    // return;
+    //
+    m_PC_DumpTo->clear();
+    offset = 0;
+    bufferSize = MAX_BUFFER_SIZE;
+    PbufferSize = bufferSize / buffer_inc;
+    To_count = 0;
+
+    memcpy(&address, To_buffer + To_count * data_inc, data_inc); //()
+
+    while ((offset < PC_Dump_size) && ((To_count + To_File_offset) < ToFilesize))
+    {
+      if (PC_Dump_size - offset < bufferSize)
+      {
+        bufferSize = PC_Dump_size - offset;
+        PbufferSize = bufferSize / buffer_inc;
+      };
+      m_PC_Dump->getData(offset, buffer, bufferSize);                 // BM4
+      // break;
+      m_PC_DumpP->getData((offset / buffer_inc), Pbuffer, PbufferSize); // ptr_distance_t i/buffer_inc
+      for (u64 i = 0; i < bufferSize; i += buffer_inc) // for (size_t i = 0; i < (bufferSize / sizeof(u64)); i++)
+      {
+        if (m_abort)
+          return;
+        memcpy(&(fromto.from), buffer + i, data_inc);
+        memcpy(&(fromto.to), buffer + i + data_inc, data_inc);
+        // printf("fromto.from = %lx ,address = %lx \n", fromto.from, address);
+
+        if (fromto.from >= address && fromto.from <= address + file_range)
+        {
+          // narrow down opportunity, skip forward for address below not possible if used
+          m_PC_DumpTo->addData((u8 *)&(fromto.to), data_inc); // action
+          Pbuffer[i / buffer_inc] = Pbuffer[i / buffer_inc] | mask;
+          // printf("Pbuffer[i / buffer_inc] %x\n",Pbuffer[i / buffer_inc]);
+        }
+        else if (fromto.from > address + file_range)
+        {
+          // inc address
+          if ((To_count + To_File_offset == ToFilesize - 1))
+            break; // break out done here
+          while ((address < fromto.from) && (To_count + To_File_offset < ToFilesize - 1))
+          {
+            To_count++;
+            if (To_count == To_bufferSize)
+            {
+              To_File_offset += To_bufferSize;
+              if (ToFilesize - To_File_offset < To_bufferSize)
+              {
+                To_bufferSize = ToFilesize - To_File_offset;
+              }
+              m_PC_DumpTo->getData(To_File_offset, To_buffer, To_bufferSize);
+              To_count = 0;
+            }
+            memcpy(&address, To_buffer + To_count * data_inc, data_inc);
+            if (fromto.from >= address && fromto.from <= address + file_range) // make sure current fromto is not lost, maybe "i" need to jump back for narrow down
+            {
+              m_PC_DumpTo->addData((u8 *)&(fromto.to), data_inc); //action
+              Pbuffer[i / buffer_inc] = Pbuffer[i / buffer_inc] | mask;
+              break;
+            }
+          } ; // skip forward limited to "same" others not possible if using narrow down
+        }
+      }
+      m_PC_DumpP->putData((offset / buffer_inc), Pbuffer, PbufferSize); // write the data back to file
+      offset += bufferSize;
+    }
+    delete[] To_buffer; // need a new size To_buffer, may need to use similar construct as buffer if this size is too big
+    m_PC_DumpTo->flushBuffer();
+    m_PC_DumpP->flushBuffer();
+    printf("Cumulative Time taken for forward search =%ld\n", time(NULL) - m_Time1);
+  }
+  delete m_PC_DumpTo;
+  m_PC_DumpP->setPointerSearchParams(m_max_depth,0,m_max_P_range,m_buildID); // save m_max_P_range in P file
+  // delete m_PC_DumpP; // this was created by pre_pointer and close here consider letting it be later
+  delete[] buffer;
+  delete[] Pbuffer;
+}
+
+void GuiCheats::prep_forward_stack0()
 {
   printf("prep forward stack\n");
   if (m_PC_DumpP != nullptr)
