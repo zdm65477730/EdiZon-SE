@@ -77,6 +77,7 @@ private:
   u32 m_addresslist_offset = 0;
   u32 m_addresslist_offsetSaveBM = 0;
   u32 m_addresslist_offsetSaveSR = 0;
+  bool m_narrow_down = false;
 
   searchValue_t m_searchValue[2];
 
@@ -390,6 +391,8 @@ private:
   void prep_backjump_stack(u64 address);
 
   void prep_forward_stack();
+
+  void prep_forward_stack0();
 
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,
