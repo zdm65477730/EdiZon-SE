@@ -23,6 +23,8 @@ PS: Please refer to https://github.com/tomvita/EdiZon-SE/wiki for instructions o
 
 To establish common base for support please start from a clean boot with the latest atmosphere and only Sigpatches needed to run the game and latest releases from https://github.com/tomvita. Please state the url you downloaded from. No extra software unless it is related to the topic underdiscussoin.
 
+For support with the usage of EdiZon SE Join my discord server https://discord.gg/bEFfp7MZUD
+
 Original functinality of Edizon on game save is available when launched without a game running. 
 
   <p align="center"><img src="https://user-images.githubusercontent.com/68505331/94226638-aa5aad00-ff2a-11ea-8b39-151c41bbc774.jpg"><br />
@@ -81,7 +83,8 @@ The following is the original readme the first two part is mostly unmodified exc
 
 # Discord
 
-  For support with the usage of EdiZon or the creation of save editor configs and scripts, feel free to join the EdiZon server on Discord: https://discord.gg/qyA38T8
+  For support with the usage of EdiZon SE Join my discord server https://discord.gg/bEFfp7MZUD
+  or for support with the creation of save editor configs and scripts join the original EdiZon server on Discord: https://discord.gg/qyA38T8
 
 # Credits
 
