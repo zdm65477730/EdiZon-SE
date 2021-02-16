@@ -47,12 +47,6 @@ The following is the original readme the first two part is mostly unmodified exc
       - Lua and Python script support.
     - Built-in save editor updater.
 
-# Images
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/main_menu.jpg"></p>
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/save_editor_1.jpg"></p>
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/save_editor_2.jpg"></p>
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/ram_editor.jpg"></p>
-
 # Save editor Config and Script files
 
   To download working Editor Config and Editor Script files, visit [this repository](https://github.com/WerWolv/EdiZon_ConfigsAndScripts/tree/master)
@@ -61,7 +55,7 @@ The following is the original readme the first two part is mostly unmodified exc
 
 # How to install
 
-  1. Download the latest release from the [GitHub release page](https://github.com/WerWolv/EdiZon/releases/latest).
+  1. Download the latest release from https://github.com/tomvita/EdiZon-SE/releases/latest.
   2. Unpack the downloaded zip file, put the files on your Nintendo Switch's SD card and let the folders merge.
   3. Use a free open source CFW like [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) to launch the hbmenu and start EdiZon from there.
      1. If you want to use the cheat manager you absolutely have to use [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) as only their cheats are supported.
@@ -70,7 +64,7 @@ The following is the original readme the first two part is mostly unmodified exc
 
 # How to compile
 
-  1. Clone the EdiZon repo to your computer using `git clone https://github.com/WerWolv/EdiZon`.
+  1. Clone the EdiZon SE repo to your computer using `git clone https://github.com/tomvita/EdiZon-SE`.
   2. Download and install devkitA64. It comes bundled with the [devkitPro](https://devkitpro.org) toolchain.
   3. Use the pacman package manager that comes with devkitPro to download and install libNX, portlibs (`switch-portlibs`) and freetype2 (`switch-freetype`).
   4. The rest of the compilation works using the `make` command.
