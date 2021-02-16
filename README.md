@@ -35,8 +35,8 @@ Original functinality of Edizon on game save is available when launched without 
 
 The following is the original readme the first two part is mostly unmodified except now you only see the save game functionality if you enter when no game is running and only the last game is display if there was a last game. To see all the games enter into "cheat" when no game is running and the next time EdiZon SE is launched all the game save will appear. 
 
-# Overview
-  EdiZon consists of 3 different main functionalities.
+# Original functionaliy present but not being develop upon:
+  
   - **Save file management**
     - Extraction of game saves.
     - Injection of extracted game saves (Your own and your friends save files).
@@ -46,12 +46,6 @@ The following is the original readme the first two part is mostly unmodified exc
     - Easy to use, scriptable and easily expandable on-console save editing.
       - Lua and Python script support.
     - Built-in save editor updater.
-  - **On-the-fly memory editing**
-    - Cheat Engine like RAM editing.
-    - Freezing of values in RAM via Atmosphère's cheat module.
-    - Interface for loading, managing and updating Atmosphère cheats.
-
-  All packed into one easy to use and easy to install Homebrew.
 
 # Images
   <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/main_menu.jpg"></p>
