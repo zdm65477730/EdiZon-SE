@@ -33,7 +33,7 @@ Original functinality of Edizon on game save is available when launched without 
     
   </p>
 
-The following is the original readme the first two part is mostly unmodified except now you only see the save game functionality if you enter when no game is running and only the last game is display if there was a last game. To see all the games enter into "cheat" when no game is running and the next time EdiZon SE is launched all the game save will appear. 
+The save management and editing part of the original is mostly unmodified except now you only see the save game functionality if you enter when no game is running and only the last game is display if there was a last game. To see all the games enter into "cheat" when no game is running and the next time EdiZon SE is launched all the game save will appear. 
 
 # Original functionaliy present but not being develop upon:
   
@@ -46,12 +46,6 @@ The following is the original readme the first two part is mostly unmodified exc
     - Easy to use, scriptable and easily expandable on-console save editing.
       - Lua and Python script support.
     - Built-in save editor updater.
-
-# Save editor Config and Script files
-
-  To download working Editor Config and Editor Script files, visit [this repository](https://github.com/WerWolv/EdiZon_ConfigsAndScripts/tree/master)
-
-  Check out our [Wiki page](https://github.com/WerWolv/EdiZon/wiki) for more information on how to build your own Editor Config and Editor Script files.
 
 # How to install
 
