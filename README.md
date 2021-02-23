@@ -23,6 +23,8 @@ PS: Please refer to https://github.com/tomvita/EdiZon-SE/wiki for instructions o
 
 To establish common base for support please start from a clean boot with the latest atmosphere and only Sigpatches needed to run the game and latest releases from https://github.com/tomvita. Please state the url you downloaded from. No extra software unless it is related to the topic underdiscussoin.
 
+For support with the usage of EdiZon SE Join my discord server https://discord.gg/bEFfp7MZUD
+
 Original functinality of Edizon on game save is available when launched without a game running. 
 
   <p align="center"><img src="https://user-images.githubusercontent.com/68505331/94226638-aa5aad00-ff2a-11ea-8b39-151c41bbc774.jpg"><br />
@@ -31,10 +33,10 @@ Original functinality of Edizon on game save is available when launched without 
     
   </p>
 
-The following is the original readme the first two part is mostly unmodified except now you only see the save game functionality if you enter when no game is running and only the last game is display if there was a last game. To see all the games enter into "cheat" when no game is running and the next time EdiZon SE is launched all the game save will appear. 
+The save management and editing part of the original is mostly unmodified except now you only see the save game functionality if you enter when no game is running and only the last game is display if there was a last game. To see all the games enter into "cheat" when no game is running and the next time EdiZon SE is launched all the game save will appear. 
 
-# Overview
-  EdiZon consists of 3 different main functionalities.
+# Original functionaliy present but not being develop upon:
+  
   - **Save file management**
     - Extraction of game saves.
     - Injection of extracted game saves (Your own and your friends save files).
@@ -44,28 +46,10 @@ The following is the original readme the first two part is mostly unmodified exc
     - Easy to use, scriptable and easily expandable on-console save editing.
       - Lua and Python script support.
     - Built-in save editor updater.
-  - **On-the-fly memory editing**
-    - Cheat Engine like RAM editing.
-    - Freezing of values in RAM via Atmosphère's cheat module.
-    - Interface for loading, managing and updating Atmosphère cheats.
-
-  All packed into one easy to use and easy to install Homebrew.
-
-# Images
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/main_menu.jpg"></p>
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/save_editor_1.jpg"></p>
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/save_editor_2.jpg"></p>
-  <p align="center"><img src="https://raw.githubusercontent.com/WerWolv/EdiZon/master/assets/ram_editor.jpg"></p>
-
-# Save editor Config and Script files
-
-  To download working Editor Config and Editor Script files, visit [this repository](https://github.com/WerWolv/EdiZon_ConfigsAndScripts/tree/master)
-
-  Check out our [Wiki page](https://github.com/WerWolv/EdiZon/wiki) for more information on how to build your own Editor Config and Editor Script files.
 
 # How to install
 
-  1. Download the latest release from the [GitHub release page](https://github.com/WerWolv/EdiZon/releases/latest).
+  1. Download the latest release from https://github.com/tomvita/EdiZon-SE/releases/latest.
   2. Unpack the downloaded zip file, put the files on your Nintendo Switch's SD card and let the folders merge.
   3. Use a free open source CFW like [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) to launch the hbmenu and start EdiZon from there.
      1. If you want to use the cheat manager you absolutely have to use [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) as only their cheats are supported.
@@ -74,14 +58,15 @@ The following is the original readme the first two part is mostly unmodified exc
 
 # How to compile
 
-  1. Clone the EdiZon repo to your computer using `git clone https://github.com/WerWolv/EdiZon`.
+  1. Clone the EdiZon SE repo to your computer using `git clone https://github.com/tomvita/EdiZon-SE`.
   2. Download and install devkitA64. It comes bundled with the [devkitPro](https://devkitpro.org) toolchain.
   3. Use the pacman package manager that comes with devkitPro to download and install libNX, portlibs (`switch-portlibs`) and freetype2 (`switch-freetype`).
   4. The rest of the compilation works using the `make` command.
 
 # Discord
 
-  For support with the usage of EdiZon or the creation of save editor configs and scripts, feel free to join the EdiZon server on Discord: https://discord.gg/qyA38T8
+  For support with the usage of EdiZon SE Join my discord server https://discord.gg/bEFfp7MZUD
+  or for support with the creation of save editor configs and scripts join the original EdiZon server on Discord: https://discord.gg/qyA38T8
 
 # Credits
 
