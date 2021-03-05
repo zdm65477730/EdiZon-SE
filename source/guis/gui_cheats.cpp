@@ -3740,6 +3740,7 @@ void GuiCheats::onInput(u32 kdown)
         u8 FSA = (cheat.opcodes[i] >> 12) & 0xF;
         u8 T = (cheat.opcodes[i] >> 24) & 0xF;
         u8 M = (cheat.opcodes[i] >> 20) & 0xF;
+        u8 A = cheat.opcodes[i] & 0xFF;
 
         printf("code %x opcode %d register %d FSA %d %x \n", cheat.opcodes[i], opcode, Register, FSA, cheat.opcodes[i + 1]);
 
@@ -3753,7 +3754,7 @@ void GuiCheats::onInput(u32 kdown)
         if (opcode == 0)
         { //static case
           i++;
-          bookmark.offset = cheat.opcodes[i];
+          bookmark.offset = cheat.opcodes[i] + A * 0x100000000;
           switch (T)
           {
           case 1:
@@ -3909,6 +3910,12 @@ void GuiCheats::onInput(u32 kdown)
                   }
                   printf("value = %ld\n", value._u64);
                   rebasepointer(value); //bookmark);
+                }
+                else
+                {
+                  // add broken pointer chain for reference
+                  m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                  m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
                 }
                 Gui::g_currMessageBox->hide();
               })
@@ -8821,15 +8828,27 @@ bool GuiCheats::addstaticcodetofile(u64 index)
   FILE *pfile;
   pfile = fopen(filebuildIDStr.str().c_str(), "a");
   std::stringstream ss;
+  DmntCheatEntry cheatentry;
+  u32 i = 0;
   if (pfile != NULL)
   {
     // printf("going to write to file\n");
     ss.str("");
+    strcpy(cheatentry.definition.readable_name, bookmark.label);
+    ss.str("");
     ss << "[" << bookmark.label << "]"
        << "\n";
-    ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? 1 : 0) << "00000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.offset << " "
+    ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? 1 : 0) << "000" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << bookmark.offset / 0x100000000 << " "
+       << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << (bookmark.offset & 0xFFFFFFFF) << " "
        << std::uppercase << std::hex << std::setfill('0') << ((dataTypeSizes[bookmark.type] == 8) ? std::setw(16) : std::setw(8))
        << ((dataTypeSizes[bookmark.type] == 8) ? realvalue._u64 : realvalue._u32) << "\n";
+    cheatentry.definition.opcodes[i] = dataTypeSizes[bookmark.type]*0x01000000 + (bookmark.heap ? 0x00100000 : 0) + bookmark.offset / 0x100000000 ; i++;
+    cheatentry.definition.opcodes[i] = bookmark.offset; i++;
+    if (dataTypeSizes[bookmark.type] == 8) {cheatentry.definition.opcodes[i] = realvalue._u64 / 0x100000000; i++;};
+    cheatentry.definition.opcodes[i] = realvalue._u32; i++;
+    cheatentry.definition.num_opcodes = i;
+    cheatentry.enabled = false;
+    dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));   
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
