@@ -8207,6 +8207,17 @@ bool GuiCheats::addcodetofile(u64 index)
     cheatentry.definition.num_opcodes = i;
     cheatentry.enabled = false;
     dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+    m_cheatCnt = 0;
+    u64 cheatCnt;
+    dmntchtGetCheatCount(&cheatCnt);
+    delete m_cheats;
+    delete m_cheatDelete;
+    m_cheats = new DmntCheatEntry[cheatCnt];
+    m_cheatDelete = new bool[cheatCnt];
+    for (u64 i = 0; i < cheatCnt; i++)
+      m_cheatDelete[i] = false;
+    dmntchtGetCheats(m_cheats, cheatCnt, 0, &cheatCnt);
+    m_cheatCnt = cheatCnt;
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
@@ -8849,6 +8860,17 @@ bool GuiCheats::addstaticcodetofile(u64 index)
     cheatentry.definition.num_opcodes = i;
     cheatentry.enabled = false;
     dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));   
+    m_cheatCnt = 0;
+    u64 cheatCnt;
+    dmntchtGetCheatCount(&cheatCnt);
+    delete m_cheats;
+    delete m_cheatDelete;
+    m_cheats = new DmntCheatEntry[cheatCnt];
+    m_cheatDelete = new bool[cheatCnt];
+    for (u64 i = 0; i < cheatCnt; i++)
+      m_cheatDelete[i] = false;
+    dmntchtGetCheats(m_cheats, cheatCnt, 0, &cheatCnt);
+    m_cheatCnt = cheatCnt;
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
