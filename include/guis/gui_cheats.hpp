@@ -322,6 +322,7 @@ private:
   bool valuematch(searchValue_t value, u64 nextaddress);
   bool getinput(std::string headerText, std::string subHeaderText, std::string initialText, searchValue_t *searchValue);
   bool addcodetofile(u64 index);
+  void addfreezetodmnt();
   bool editcodefile();
   bool dumpcodetofile();
   void reloadcheats();

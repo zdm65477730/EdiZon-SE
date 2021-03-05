@@ -1344,12 +1344,14 @@ void GuiCheats::drawEditRAMMenu()
 // WIP edit ram
 std::string GuiCheats::buttonStr(u32 buttoncode)
 {
+  std::stringstream buttonstring;
   for (u32 i = 0; i < buttonCodes.size(); i++)
   {
-    if (buttoncode == buttonCodes[i])
-      return buttonNames[i].c_str();
+    if ((buttoncode & buttonCodes[i]) == buttonCodes[i])
+      buttonstring << buttonNames[i].c_str();
+      // return buttonNames[i].c_str();
   }
-  return "";
+  return buttonstring.str();
 }
 #define line1 10
 #define line2 80
@@ -10081,6 +10083,31 @@ void GuiCheats::load_multisearch_setup()
   else
     m_multisearch.Entries[0].on = TARGET;
   delete multisearch;
+}
+void GuiCheats::addfreezetodmnt()
+{
+  {
+    const std::string label = "Freeze Game";
+    strcpy(m_cheats[m_cheatCnt].definition.readable_name, label.c_str());
+  }
+  m_cheats[m_cheatCnt].definition.opcodes[0] = 0x80000380;
+  m_cheats[m_cheatCnt].definition.opcodes[1] = 0xFF000000;
+  m_cheats[m_cheatCnt].definition.opcodes[2] = 0x20000000;
+  m_cheats[m_cheatCnt].definition.num_opcodes = 3;
+  m_cheats[m_cheatCnt].enabled = true;
+  dmntchtAddCheat(&(m_cheats[m_cheatCnt].definition), m_cheats[m_cheatCnt].enabled, &(m_cheats[m_cheatCnt].cheat_id));
+  m_cheatCnt += 1;
+  {
+    const std::string label = "Resume Game";
+    strcpy(m_cheats[m_cheatCnt].definition.readable_name, label.c_str());
+  }
+  m_cheats[m_cheatCnt].definition.opcodes[0] = 0x80000340;
+  m_cheats[m_cheatCnt].definition.opcodes[1] = 0xFF100000;
+  m_cheats[m_cheatCnt].definition.opcodes[2] = 0x20000000;
+  m_cheats[m_cheatCnt].definition.num_opcodes = 3;
+  m_cheats[m_cheatCnt].enabled = true;
+  dmntchtAddCheat(&(m_cheats[m_cheatCnt].definition), m_cheats[m_cheatCnt].enabled, &(m_cheats[m_cheatCnt].cheat_id));
+  m_cheatCnt += 1;
 }
 bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
 {
