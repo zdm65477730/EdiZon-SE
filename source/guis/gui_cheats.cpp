@@ -108,7 +108,7 @@ GuiCheats::GuiCheats() : Gui()
   m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
   m_searchMode = SEARCH_MODE_EQ;
   m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
-  freeze();
+  
   m_cheatCnt = 0;
 
   // if (!m_sysmodulePresent)
@@ -170,6 +170,7 @@ GuiCheats::GuiCheats() : Gui()
   Config::getConfig()->lasttitle = m_debugger->getRunningApplicationTID();
   Config::writeConfig();
 
+  freeze();
   dmntchtGetCheatCount(&m_cheatCnt);
 
   if (m_cheatCnt > 0)
@@ -8459,7 +8460,10 @@ bool GuiCheats::freeze()
   Config::readConfig();
   if (Config::getConfig()->freeze)
   {
-    m_debugger->pause();
+    // m_debugger->pause();
+    addfreezetodmnt();
+    Config::getConfig()->freeze = false;     
+    Config::writeConfig();
     return true;
   }
   else
@@ -8467,14 +8471,14 @@ bool GuiCheats::freeze()
 }
 bool GuiCheats::unfreeze()
 {
-  Config::readConfig();
-  if (Config::getConfig()->freeze)
-  {
+  // Config::readConfig();
+  // if (Config::getConfig()->freeze)
+  // {
     m_debugger->resume();
     return true;
-  }
-  else
-    return false;
+  // }
+  // else
+  //   return false;
 }
 bool GuiCheats::autoattachcheck()
 {
@@ -10086,27 +10090,28 @@ void GuiCheats::load_multisearch_setup()
 }
 void GuiCheats::addfreezetodmnt()
 {
+  DmntCheatEntry cheatentry;
   {
     const std::string label = "Freeze Game";
-    strcpy(m_cheats[m_cheatCnt].definition.readable_name, label.c_str());
+    strcpy(cheatentry.definition.readable_name, label.c_str());
   }
-  m_cheats[m_cheatCnt].definition.opcodes[0] = 0x80000380;
-  m_cheats[m_cheatCnt].definition.opcodes[1] = 0xFF000000;
-  m_cheats[m_cheatCnt].definition.opcodes[2] = 0x20000000;
-  m_cheats[m_cheatCnt].definition.num_opcodes = 3;
-  m_cheats[m_cheatCnt].enabled = true;
-  dmntchtAddCheat(&(m_cheats[m_cheatCnt].definition), m_cheats[m_cheatCnt].enabled, &(m_cheats[m_cheatCnt].cheat_id));
+  cheatentry.definition.opcodes[0] = 0x80000380;
+  cheatentry.definition.opcodes[1] = 0xFF000000;
+  cheatentry.definition.opcodes[2] = 0x20000000;
+  cheatentry.definition.num_opcodes = 3;
+  cheatentry.enabled = true;
+  dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
   m_cheatCnt += 1;
   {
     const std::string label = "Resume Game";
-    strcpy(m_cheats[m_cheatCnt].definition.readable_name, label.c_str());
+    strcpy(cheatentry.definition.readable_name, label.c_str());
   }
-  m_cheats[m_cheatCnt].definition.opcodes[0] = 0x80000340;
-  m_cheats[m_cheatCnt].definition.opcodes[1] = 0xFF100000;
-  m_cheats[m_cheatCnt].definition.opcodes[2] = 0x20000000;
-  m_cheats[m_cheatCnt].definition.num_opcodes = 3;
-  m_cheats[m_cheatCnt].enabled = true;
-  dmntchtAddCheat(&(m_cheats[m_cheatCnt].definition), m_cheats[m_cheatCnt].enabled, &(m_cheats[m_cheatCnt].cheat_id));
+  cheatentry.definition.opcodes[0] = 0x80000340;
+  cheatentry.definition.opcodes[1] = 0xFF100000;
+  cheatentry.definition.opcodes[2] = 0x20000000;
+  cheatentry.definition.num_opcodes = 3;
+  cheatentry.enabled = true;
+  dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
   m_cheatCnt += 1;
 }
 bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
