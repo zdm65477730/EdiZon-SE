@@ -8138,34 +8138,68 @@ bool GuiCheats::addcodetofile(u64 index)
   FILE *pfile;
   pfile = fopen(filebuildIDStr.str().c_str(), "a");
   std::stringstream ss;
+  DmntCheatEntry cheatentry;
+  u32 i = 0;
   if (pfile != NULL)
   {
     // printf("going to write to file\n");
     ss.str("");
+    strcpy(cheatentry.definition.readable_name, bookmark.label);
+    ss.str("");
     ss << "[" << bookmark.label << "]"
        << "\n";
     if (bookmark.pointer.offset[bookmark.pointer.depth] > 0 && bookmark.pointer.offset[bookmark.pointer.depth] <= (s64)(m_mainend - m_mainBaseAddr))
+    {
       ss << ((m_32bitmode) ? "540F0000 " : "580F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+      if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x540F0000; else cheatentry.definition.opcodes[i] = 0x580F0000; i++;
+      cheatentry.definition.opcodes[i] = bookmark.pointer.offset[bookmark.pointer.depth]; i++;
+    }
     else
+    {
       ss << ((m_32bitmode) ? "541F0000 " : "581F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+      if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x541F0000; else cheatentry.definition.opcodes[i] = 0x581F0000; i++;
+      cheatentry.definition.opcodes[i] = m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth]; i++;
+    }
 
     for (int z = bookmark.pointer.depth - 1; z > 0; z--)
     {
       if (bookmark.pointer.offset[z] >= 0)
+      {
         ss << ((m_32bitmode) ? "540F1000 " : "580F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z] << "\n";
+        if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x540F1000; else cheatentry.definition.opcodes[i] = 0x580F1000; i++;
+        cheatentry.definition.opcodes[i] = bookmark.pointer.offset[z]; i++;        
+      }
       else
       {
         ss << ((m_32bitmode) ? "740F1000 " : "780F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z]*(-1) << "\n";
+        if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x740F1000; else cheatentry.definition.opcodes[i] = 0x780F1000; i++;
+        cheatentry.definition.opcodes[i] = bookmark.pointer.offset[z]*(-1); i++;  
         ss << ((m_32bitmode) ? "540F1000 00000000" : "580F1000 00000000");
+        if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x540F1000; else cheatentry.definition.opcodes[i] = 0x580F1000; i++;
+        cheatentry.definition.opcodes[i] = 0; i++;
       }
       
     }
     if (bookmark.pointer.offset[0] >= 0)
+    {
       ss << "780F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0] << "\n";
+      cheatentry.definition.opcodes[i] = 0x780F0000; i++;
+      cheatentry.definition.opcodes[i] = bookmark.pointer.offset[0]; i++;
+    }
     else
+    {
       ss << "780F1000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0]*(-1) << "\n";
+      cheatentry.definition.opcodes[i] = 0x780F1000; i++;
+      cheatentry.definition.opcodes[i] = bookmark.pointer.offset[0]*(-1); i++;
+    }
 
-    ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(16) << realvalue._u64 << "\n";
+    ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << realvalue._u64 / 0x100000000 << " " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << realvalue._u32 << "\n";
+    cheatentry.definition.opcodes[i] = 0x600F0000 + dataTypeSizes[bookmark.type]*0x01000000; i++;
+    cheatentry.definition.opcodes[i] = realvalue._u64 / 0x100000000; i++;
+    cheatentry.definition.opcodes[i] = realvalue._u32; i++;
+    cheatentry.definition.num_opcodes = i;
+    cheatentry.enabled = false;
+    dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
