@@ -350,9 +350,9 @@ private:
   // std::string m_titleName;
   // std::string m_versionString;
 
-  DmntCheatEntry *m_cheats;
-  u64 m_cheatCnt;
-  bool *m_cheatDelete;
+  DmntCheatEntry *m_cheats = nullptr;
+  u64 m_cheatCnt = 0;
+  bool *m_cheatDelete = nullptr;
 
   void drawSearchRAMMenu();
 

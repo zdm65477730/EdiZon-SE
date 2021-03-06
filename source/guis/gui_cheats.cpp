@@ -7920,7 +7920,14 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
       printf("force open called\n");
     }
     else
-      (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+    {
+      if (loadcheatsfromfile())
+        (new MessageBox("A new cheat has been added for this title. \n You can use it now.", MessageBox::OKAY))->show();
+      else
+        (new MessageBox("A new cheat has been added for this title. \n But there is parsing error please check file for error.", MessageBox::OKAY))->show();
+      // (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+      reloadcheats();
+    }
     Config::readConfig();  
     Config::getConfig()->enablecheats = false;  
     Config::writeConfig();
@@ -8474,22 +8481,29 @@ bool GuiCheats::reloadcheatsfromfile(u8 *buildID, u64 titleID)
 }
 void GuiCheats::reloadcheats()
 {
-  if (m_cheats != nullptr)
-    delete m_cheats;
-  if (m_cheatDelete != nullptr)
-    delete m_cheatDelete;
-  dmntchtGetCheatCount(&m_cheatCnt);
+  u64 cheatCnt;
   if (m_cheatCnt > 0)
   {
-    m_cheats = new DmntCheatEntry[m_cheatCnt];
-    m_cheatDelete = new bool[m_cheatCnt];
-    for (u64 i = 0; i < m_cheatCnt; i++)
+    if (m_cheats != nullptr)
+      delete m_cheats;
+    if (m_cheatDelete != nullptr)
+      delete m_cheatDelete;
+  };
+  dmntchtGetCheatCount(&cheatCnt);
+  if (cheatCnt > 0)
+  {
+    m_cheats = new DmntCheatEntry[cheatCnt];
+    m_cheatDelete = new bool[cheatCnt];
+    for (u64 i = 0; i < cheatCnt; i++)
       m_cheatDelete[i] = false;
-    dmntchtGetCheats(m_cheats, m_cheatCnt, 0, &m_cheatCnt);
+    dmntchtGetCheats(m_cheats, cheatCnt, 0, &cheatCnt);
   }
+  m_cheatCnt = cheatCnt;
 }
 bool GuiCheats::loadcheatsfromfile()
 {
+  reloadcheats();
+  for (u64 i = 0; i < m_cheatCnt; i++) dmntchtRemoveCheat(m_cheats[i].cheat_id);
   std::stringstream buildIDStr;
   std::stringstream filebuildIDStr;
   {
