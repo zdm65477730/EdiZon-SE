@@ -7922,9 +7922,9 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
     else
     {
       if (loadcheatsfromfile())
-        (new MessageBox("A new cheat has been added for this title. \n You can use it now.", MessageBox::OKAY))->show();
+        (new MessageBox("A new cheat file has been added for this title. \n You can use it now.", MessageBox::OKAY))->show();
       else
-        (new MessageBox("A new cheat has been added for this title. \n But there is parsing error please check file for error.", MessageBox::OKAY))->show();
+        (new MessageBox("A new cheat file has been added for this title. \n But there is parsing error please check file for error.", MessageBox::OKAY))->show();
       // (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
       reloadcheats();
     }
@@ -8013,7 +8013,15 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
             delete content2;
           };
           if (different)
-            (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
+          {
+            if (loadcheatsfromfile())
+              (new MessageBox("A new cheat file has been added for this title. \n You can use it now.", MessageBox::OKAY))->show();
+            else
+              (new MessageBox("A new cheat file has been added for this title. \n But there is parsing error please check file for error.", MessageBox::OKAY))->show();
+            // (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+            reloadcheats();
+          }
+            // (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
         }
       }
       else
