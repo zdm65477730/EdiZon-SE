@@ -8488,6 +8488,139 @@ void GuiCheats::reloadcheats()
     dmntchtGetCheats(m_cheats, m_cheatCnt, 0, &m_cheatCnt);
   }
 }
+bool GuiCheats::loadcheatsfromfile()
+{
+  std::stringstream buildIDStr;
+  std::stringstream filebuildIDStr;
+  {
+    for (u8 i = 0; i < 8; i++)
+      buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
+    filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".txt";
+  }
+  std::stringstream realCheatPath;
+  {
+    realCheatPath << "/atmosphere/contents/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << m_debugger->getRunningApplicationTID();
+    mkdir(realCheatPath.str().c_str(), 0777);
+    realCheatPath << "/cheats/";
+    mkdir(realCheatPath.str().c_str(), 0777);
+    realCheatPath << buildIDStr.str() << ".txt";
+  }
+  FILE *pfile;
+  pfile = fopen(realCheatPath.str().c_str(), "rb");
+  fseek(pfile, 0, SEEK_END);
+  size_t len = ftell(pfile);
+  u8 *s = new u8[len];
+  fseek(pfile, 0, SEEK_SET);
+  fread(s, 1, len, pfile);
+  DmntCheatEntry cheatentry;
+  cheatentry.definition.num_opcodes = 0;
+  cheatentry.enabled = false;
+  u8 label_len = 0;
+  size_t i = 0;
+  while (i < len)
+  {
+    if (std::isspace(static_cast<unsigned char>(s[i])))
+    {
+      /* Just ignore whitespace. */
+      i++;
+    }
+    else if (s[i] == '[')
+    {
+      if (cheatentry.definition.num_opcodes != 0)
+      {
+        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+      }
+      /* Parse a normal cheat set to off */
+      cheatentry.definition.num_opcodes = 0;
+      cheatentry.enabled = false;
+      /* Extract name bounds. */
+      size_t j = i + 1;
+      while (s[j] != ']')
+      {
+        j++;
+        if (j >= len)
+        {
+          return false;
+        }
+      }
+      /* s[i+1:j] is cheat name. */
+      const size_t cheat_name_len = std::min(j - i - 1, sizeof(cheatentry.definition.readable_name));
+      std::memcpy(cheatentry.definition.readable_name, &s[i + 1], cheat_name_len);
+      cheatentry.definition.readable_name[cheat_name_len] = 0;
+      label_len = cheat_name_len;
+
+      /* Skip onwards. */
+      i = j + 1;
+    }
+    else if (s[i] == '{')
+    {
+      if (cheatentry.definition.num_opcodes != 0)
+      {
+        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+      }
+      /* We're parsing a master cheat. Turn it on */
+      cheatentry.definition.num_opcodes = 0;
+      cheatentry.enabled = true;
+      /* Extract name bounds */
+      size_t j = i + 1;
+      while (s[j] != '}')
+      {
+        j++;
+        if (j >= len)
+        {
+          return false;
+        }
+      }
+
+      /* s[i+1:j] is cheat name. */
+      const size_t cheat_name_len = std::min(j - i - 1, sizeof(cheatentry.definition.readable_name));
+      memcpy(cheatentry.definition.readable_name, &s[i + 1], cheat_name_len);
+      cheatentry.definition.readable_name[cheat_name_len] = 0;
+      label_len = cheat_name_len;
+
+      /* Skip onwards. */
+      i = j + 1;
+    }
+    else if (std::isxdigit(static_cast<unsigned char>(s[i])))
+    {
+      if (label_len == 0)
+        return false;
+      /* Bounds check the opcode count. */
+      if (cheatentry.definition.num_opcodes >= sizeof(cheatentry.definition.opcodes)/8)
+      {
+        return false;
+      }
+
+      /* We're parsing an instruction, so validate it's 8 hex digits. */
+      for (size_t j = 1; j < 8; j++)
+      {
+        /* Validate 8 hex chars. */
+        if (i + j >= len || !std::isxdigit(static_cast<unsigned char>(s[i + j])))
+        {
+          return false;
+        }
+      }
+
+      /* Parse the new opcode. */
+      char hex_str[9] = {0};
+      std::memcpy(hex_str, &s[i], 8);
+      cheatentry.definition.opcodes[cheatentry.definition.num_opcodes++] = std::strtoul(hex_str, NULL, 16);
+
+      /* Skip onwards. */
+      i += 8;
+    }
+    else
+    {
+      /* Unexpected character encountered. */
+      return false;
+    }
+  }
+  if (cheatentry.definition.num_opcodes != 0)
+  {
+    dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+  }
+  return true;
+}
 void GuiCheats::iconloadcheck()
 {
   std::stringstream filenoiconStr;

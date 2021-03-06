@@ -326,6 +326,7 @@ private:
   bool editcodefile();
   bool dumpcodetofile();
   void reloadcheats();
+  bool loadcheatsfromfile();
   bool reloadcheatsfromfile(u8 *buildID, u64 titleID);
   bool addstaticcodetofile(u64 index);
   void PSsaveSTATE();
