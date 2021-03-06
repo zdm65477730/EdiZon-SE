@@ -4223,7 +4223,7 @@ void GuiCheats::onInput(u32 kdown)
                 addstaticcodetofile(m_selectedEntry + m_addresslist_offset);
               }
               m_searchMenuLocation = SEARCH_NONE;
-              (new Snackbar("Coded added to cheat file, reload to take effect"))->show();
+              (new Snackbar("Coded added to cheat file"))->show();
             }
             // pointercheck();
             // (new Snackbar("Searching pointer "))->show();
