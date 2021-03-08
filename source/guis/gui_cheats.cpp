@@ -146,8 +146,54 @@ GuiCheats::GuiCheats() : Gui()
   m_heapBaseAddr = metadata.heap_extents.base;
   m_mainBaseAddr = metadata.main_nso_extents.base;
   m_EditorBaseAddr = m_heapBaseAddr;
-
-  m_heapSize = metadata.heap_extents.size;
+  if (m_debugger->queryMemory(metadata.heap_extents.base).type == 0) m_usealias = true;
+  printf("use aliase %d\n",m_usealias);
+    // {
+    //   printf("metadata.alias_extents.base=%lx, metadata.alias_extents.size=%lx\n", metadata.alias_extents.base, metadata.alias_extents.size);
+    //   MemoryInfo meminfo = {0};
+    //   meminfo.addr = metadata.alias_extents.base;
+    //   const u64 lastAddr = metadata.alias_extents.base + metadata.alias_extents.size;
+    //   for (u64 i = 0; i < 1000; i++)
+    //   {
+    //     u64 nextAddr = meminfo.addr + meminfo.size;
+    //     if (nextAddr >= lastAddr)
+    //     {
+    //       printf("%lx\n", nextAddr);
+    //       break;
+    //     };
+    //     meminfo = m_debugger->queryMemory(nextAddr);
+    //     printf("%lx, %lx, %x, %x\n", meminfo.addr, meminfo.size, meminfo.type, meminfo.perm);
+    //   }
+    // };
+    // {
+    //   printf("metadata.heap_extents.base=%lx, metadata.heap_extents.size=%lx\n", metadata.heap_extents.base, metadata.heap_extents.size);
+    //   MemoryInfo meminfo = {0};
+    //   meminfo.addr = metadata.heap_extents.base;
+    //   const u64 lastAddr = metadata.heap_extents.base + metadata.heap_extents.size;
+    //   for (u64 i = 0; i < 1000; i++)
+    //   {
+    //     u64 nextAddr = meminfo.addr + meminfo.size;
+    //     if (nextAddr >= lastAddr)
+    //     {
+    //       printf("%lx\n", nextAddr);
+    //       break;
+    //     };
+    //     meminfo = m_debugger->queryMemory(nextAddr);
+    //     printf("%lx, %lx, %x, %x\n", meminfo.addr, meminfo.size, meminfo.type, meminfo.perm);
+    //   }
+    // }
+    // {
+    //   printf("All meminfo starting from 0\n");
+    //   MemoryInfo meminfo = {0};
+    //   u64 nextAddr;
+    //   do
+    //   {
+    //     nextAddr = meminfo.addr + meminfo.size;
+    //     meminfo = m_debugger->queryMemory(nextAddr);
+    //     printf("%lx, %lx, %x, %x\n", meminfo.addr, meminfo.size, meminfo.type, meminfo.perm);
+    //   } while (nextAddr < meminfo.addr + meminfo.size);
+    // }
+    m_heapSize = metadata.heap_extents.size;
   m_mainSize = metadata.main_nso_extents.size;
 
   if (m_mainBaseAddr < m_heapBaseAddr) // not used but have to move lower for it to be correct
@@ -825,6 +871,8 @@ void GuiCheats::draw()
   ss.str("");
   if (m_64bit_offset)
     ss << "HEAP64:  0x";
+  else if (m_usealias)
+    ss << "Error, please inform Tomvita:  0x";
   else
     ss << "HEAP  :  0x";
   ss << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapBaseAddr;
@@ -8178,8 +8226,8 @@ bool GuiCheats::addcodetofile(u64 index)
     }
     else
     {
-      ss << ((m_32bitmode) ? "541F0000 " : "581F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
-      if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x541F0000; else cheatentry.definition.opcodes[i] = 0x581F0000; i++;
+      ss << ((m_usealias) ? ((m_32bitmode) ? "542F0000 " : "582F0000 "):((m_32bitmode) ? "541F0000 " : "581F0000 ")) << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+      if (m_32bitmode) cheatentry.definition.opcodes[i] = ((m_usealias) ? 0x542F0000:0x541F0000); else cheatentry.definition.opcodes[i] = ((m_usealias) ? 0x582F0000:0x581F0000) ; i++;
       cheatentry.definition.opcodes[i] = m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth]; i++;
     }
 
@@ -9004,11 +9052,11 @@ bool GuiCheats::addstaticcodetofile(u64 index)
     ss.str("");
     ss << "[" << bookmark.label << "]"
        << "\n";
-    ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? 1 : 0) << "000" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << bookmark.offset / 0x100000000 << " "
+    ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? ((m_usealias) ? 2 : 1) : 0) << "000" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << bookmark.offset / 0x100000000 << " "
        << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << (bookmark.offset & 0xFFFFFFFF) << " "
        << std::uppercase << std::hex << std::setfill('0') << ((dataTypeSizes[bookmark.type] == 8) ? std::setw(16) : std::setw(8))
        << ((dataTypeSizes[bookmark.type] == 8) ? realvalue._u64 : realvalue._u32) << "\n";
-    cheatentry.definition.opcodes[i] = dataTypeSizes[bookmark.type]*0x01000000 + (bookmark.heap ? 0x00100000 : 0) + bookmark.offset / 0x100000000 ; i++;
+    cheatentry.definition.opcodes[i] = dataTypeSizes[bookmark.type] * 0x01000000 + (bookmark.heap ? ((m_usealias) ? 0x00200000 : 0x00100000) : 0) + bookmark.offset / 0x100000000; i++;
     cheatentry.definition.opcodes[i] = bookmark.offset; i++;
     if (dataTypeSizes[bookmark.type] == 8) {cheatentry.definition.opcodes[i] = realvalue._u64 / 0x100000000; i++;};
     cheatentry.definition.opcodes[i] = realvalue._u32; i++;

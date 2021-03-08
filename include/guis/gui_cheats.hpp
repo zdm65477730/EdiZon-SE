@@ -186,6 +186,7 @@ private:
   u64 m_BookmarkAddr = 0;
   u8 m_addressmod = 0;
   bool m_64bit_offset = false;
+  bool m_usealias = false;
   time_t m_Time1;
   struct helperinfo_t
   {
