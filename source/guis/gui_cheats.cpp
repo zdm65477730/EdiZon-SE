@@ -869,12 +869,14 @@ void GuiCheats::draw()
     }
   Gui::drawTextAligned(font14, 900, 92, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
   ss.str("");
-  if (m_64bit_offset)
-    ss << "HEAP64:  0x";
-  else if (m_usealias)
-    ss << "Error, please inform Tomvita:  0x";
+  if (m_usealias)
+    ss << "Alias";
   else
-    ss << "HEAP  :  0x";
+    ss << "HEAP";
+  if (m_64bit_offset)
+    ss << "64:  0x";
+  else
+    ss << "  :  0x";
   ss << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapBaseAddr;
   ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapEnd;
   Gui::drawTextAligned(font14, 900, 122, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
