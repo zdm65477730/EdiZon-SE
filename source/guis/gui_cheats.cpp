@@ -3829,7 +3829,7 @@ void GuiCheats::onInput(u32 kdown)
             i++;
             break;
           };
-          if (M == 1)
+          if (M != 0)
           {
             bookmark.heap = true;
             address = m_heapBaseAddr + bookmark.offset;
