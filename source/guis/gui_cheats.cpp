@@ -1846,7 +1846,7 @@ void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t
       continue;
     else if ( (meminfo.perm & Perm_Rw) != Perm_Rw) //searchRegion == SEARCH_REGION_RAM &&
       continue;
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     u64 offset = 0;
     u64 bufferSize = MAX_BUFFER_SIZE; // consider to increase from 10k to 1M (not a big problem)
@@ -5700,7 +5700,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
     // printf("%s%lx", ", meminfo.perm, ", meminfo.perm);
     // printf("%s%lx", ", meminfo.device_refcount, ", meminfo.device_refcount);
     // printf("%s%lx\n", ", meminfo.ipc_refcount, ", meminfo.ipc_refcount);
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
 
     u64 offset = 0;
@@ -6021,7 +6021,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
 
       if (i % 50000 == 0)
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
       }
 
@@ -6316,7 +6316,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
 
       if (i % 50000 == 0)
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
       }
 
@@ -6526,7 +6526,7 @@ void GuiCheats::searchMemoryValuesPrimary(Debugger *debugger, searchType_t searc
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
 
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     // printf("%s%lx\n", "meminfo.size ", meminfo.size);
     // printf("%s%lx\n", "meminfo.addr ", meminfo.addr);
@@ -6603,7 +6603,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
 
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     printf("%s%lx\n", "meminfo.size ", meminfo.size);
     printf("%s%lx\n", "meminfo.addr ", meminfo.addr);
@@ -6620,7 +6620,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
 
     while (offset < meminfo.size)
     {
-      setLedState(ledOn);
+      setLedState(true);
       ledOn = !ledOn;
 
       if (meminfo.size - offset < bufferSize)
@@ -6961,7 +6961,7 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
 
       if (i % 10000 == 0)
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
       }
 
@@ -9115,7 +9115,7 @@ void GuiCheats::PCdump()
   {
     if (meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)
       continue;
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     u64 offset = 0;
     u64 bufferSize = MAX_BUFFER_SIZE; // consider to increase from 10k to 1M (not a big problem)
@@ -9209,7 +9209,7 @@ void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t 
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
 
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     printf("meminfo.addr,%lx,meminfo.size,%lx,meminfo.type,%d,", meminfo.addr, meminfo.size, meminfo.type);
     PCAttr->addData((u8 *)&meminfo, sizeof(MemoryInfo));
@@ -9391,7 +9391,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   {
     if (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr)))
       continue;
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     printf("meminfo.addr,%lx,meminfo.size,%lx,meminfo.type,%d,", meminfo.addr, meminfo.size, meminfo.type);
     PCAttr->addData((u8 *)&meminfo, sizeof(MemoryInfo));
@@ -9614,7 +9614,7 @@ void GuiCheats::refresh_fromto()
     {
       while (Foffset < m_PC_Dump->size())
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
         if (m_PC_Dump->size() - Foffset < FbufferSize)
           FbufferSize = m_PC_Dump->size() - Foffset;
