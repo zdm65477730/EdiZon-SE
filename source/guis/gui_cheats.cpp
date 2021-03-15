@@ -138,6 +138,10 @@ GuiCheats::GuiCheats() : Gui()
       printf("num_modules = %x, proc_module->base_address = %lx , pid = %ld, rc = %x\n ", num_modules, proc_module->base_address, m_debugger->getRunningApplicationPID(), rc);
     metadata.main_nso_extents.base = proc_module->base_address;
     metadata.main_nso_extents.size = proc_module->size;
+    Handle proc_h;
+    pmdmntAtmosphereGetProcessInfo(&proc_h, m_debugger->getRunningApplicationPID());
+    rc = svcGetInfo(&metadata.heap_extents.base, InfoType_HeapRegionAddress, proc_h, 0);
+    // printf("metadata.heap_extents.base = %lx rc = %x\n", metadata.heap_extents.base, rc);
     std::memcpy(metadata.main_nso_build_id, proc_module->build_id, sizeof((metadata.main_nso_build_id)));
   };
 
