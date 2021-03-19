@@ -643,6 +643,7 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF Update Cheats  \uE0F0 Check for update  \uE0E6 Page Up  \uE0E7 Page Down  \uE0E0 Cheat on/off  \uE0E1 Quit", ALIGNED_RIGHT);
   }
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 251, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_RIGHT);
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
   if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
@@ -3164,10 +3165,11 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   {
     Gui::g_requestExit = true;
   }
-  // else if (kdown & KEY_L)
-  // {
+  else if (kdown & KEY_R)
+  {
+    Config::getConfig()->easymode = false;
+  }
   //   Gui::g_nextGui = GUI_MEMORY_EDITOR;
-  // }
   else if (kdown & KEY_MINUS)
   {
     Gui::g_nextGui = GUI_FIRST_RUN;
