@@ -5719,6 +5719,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
       debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
 
       searchValue_t realValue = {0};
+      searchValue_t nextValue = {0};
       u32 inc_i;
       if (searchMode == SEARCH_MODE_POINTER)
         inc_i = 4;
@@ -5757,7 +5758,9 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           }
           break;
         case SEARCH_MODE_NEQ:
-          if (realValue._s64 != searchValue1._s64)
+          memset(&nextValue, 0, 8);
+          memcpy(&nextValue, buffer + i + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+          if ((realValue._s64 xor nextValue._s64) == searchValue1._s64)
           {
             (*displayDump)->addData((u8 *)&address, sizeof(u64));
             helperinfo.count++;
