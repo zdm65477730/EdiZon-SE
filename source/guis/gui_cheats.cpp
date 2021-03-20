@@ -5142,6 +5142,22 @@ void GuiCheats::onInput(u32 kdown)
           m_searchValue[1]._u64 = 0;
           m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
         }
+        else if (kdown & KEY_RSTICK_UP) //search shortcut
+        {
+          m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+          m_searchValueFormat = FORMAT_HEX;
+          m_searchRegion = SEARCH_REGION_MAIN;
+          m_searchValue[0]._u64 = m_heapBaseAddr;
+          m_searchValue[1]._u64 = m_heapEnd;
+        }
+        else if (kdown & KEY_RSTICK_LEFT)
+        {
+          m_searchValue[0]._u64 = 0;
+        }
+        else if (kdown & KEY_RSTICK_RIGHT)
+        {
+          m_searchValue[1]._u64 = 0;
+        }
         else if (kdown & KEY_R)
         {
           if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
@@ -5695,7 +5711,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
     else if (searchRegion == SEARCH_REGION_HEAP_AND_MAIN &&
              (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
       continue;
-    else if ( (meminfo.perm & Perm_Rw) != Perm_Rw) //searchRegion == SEARCH_REGION_RAM &&
+    else if ( searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw) //searchRegion == SEARCH_REGION_RAM &&
       continue;
 
     // printf("%s%p", "meminfo.addr, ", meminfo.addr);
