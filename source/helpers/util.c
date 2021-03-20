@@ -43,18 +43,30 @@ void ledInit() {
   memset(&g_patternOn, 0x00, sizeof(HidsysNotificationLedPattern));
   memset(&g_patternOff, 0x00, sizeof(HidsysNotificationLedPattern));
 
-  g_patternOn.baseMiniCycleDuration = 0x0F;
-  g_patternOn.startIntensity = 0x0F;
-  g_patternOn.miniCycles[0].ledIntensity = 0x0F;
-  g_patternOn.miniCycles[0].transitionSteps = 0x0F;
-  g_patternOn.miniCycles[0].finalStepDuration = 0x0F;
+  // g_patternOn.baseMiniCycleDuration = 0x0F;
+  // g_patternOn.startIntensity = 0x0F;
+  // g_patternOn.miniCycles[0].ledIntensity = 0x0F;
+  // g_patternOn.miniCycles[0].transitionSteps = 0x0F;
+  // g_patternOn.miniCycles[0].finalStepDuration = 0x0F;
+  g_patternOn.baseMiniCycleDuration = 0x8; // 100ms.
+  g_patternOn.totalMiniCycles = 0x2;       // 3 mini cycles. Last one 12.5ms.
+  g_patternOn.totalFullCycles = 0x0;       // Repeat forever.
+  g_patternOn.startIntensity = 0x2;        // 13%.
+  g_patternOn.miniCycles[0].ledIntensity = 0xF;      // 100%.
+  g_patternOn.miniCycles[0].transitionSteps = 0xF;   // 15 steps. Transition time 1.5s.
+  g_patternOn.miniCycles[0].finalStepDuration = 0x0; // Forced 12.5ms.
+  g_patternOn.miniCycles[1].ledIntensity = 0x2;      // 13%.
+  g_patternOn.miniCycles[1].transitionSteps = 0xF;   // 15 steps. Transition time 1.5s.
+  g_patternOn.miniCycles[1].finalStepDuration = 0x0; // Forced 12.5ms.
 }
 
 void setLedState(bool state) {
   for(u8 i = 0; i < g_uniquePadCnt; i++)
-    hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, g_uniquePadIds[i]);
+    // hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, g_uniquePadIds[i]);
+    hidsysSetNotificationLedPatternWithTimeout(state ? &g_patternOn : &g_patternOff, g_uniquePadIds[i], 50000000000ULL);
   for (u8 i = 0; i < total_entries; i++)
-    hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, unique_pad_ids[i]);
+    // hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, unique_pad_ids[i]);
+    hidsysSetNotificationLedPatternWithTimeout(state ? &g_patternOn : &g_patternOff, unique_pad_ids[i], 50000000000ULL);
 }
 
 void overclockSystem(bool enable) {

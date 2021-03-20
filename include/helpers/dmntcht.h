@@ -65,6 +65,7 @@ Service* dmntchtGetServiceSession(void);
 
 Result dmntchtHasCheatProcess(bool *out);
 Result dmntchtGetCheatProcessEvent(Event *event);
+Result pmdmntAtmosphereGetProcessInfo(Handle* handle_out,  u64 pid);
 Result dmntchtGetCheatProcessMetadata(DmntCheatProcessMetadata *out_metadata);
 Result dmntchtForceOpenCheatProcess(void);
 Result dmntchtForceCloseCheatProcess(void);

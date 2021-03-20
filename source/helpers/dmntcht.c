@@ -55,6 +55,37 @@ Result dmntchtGetCheatProcessEvent(Event *event) {
 
     return rc;
 }
+typedef struct {
+    u64 keys_held;
+    u64 flags;
+} CfgOverrideStatus;
+
+Result pmdmntAtmosphereGetProcessInfo(Handle* handle_out,  u64 pid) { //NcmProgramLocation *loc_out, CfgOverrideStatus *status_out,
+    Handle tmp_handle;
+
+    struct {
+        NcmProgramLocation loc;
+        CfgOverrideStatus status;
+    } out;
+
+    Result rc = serviceDispatchInOut(pmdmntGetServiceSession(), 65000, pid, out,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+
+    if (R_SUCCEEDED(rc)) {
+        if (handle_out) {
+            *handle_out = tmp_handle;
+        } else {
+            svcCloseHandle(tmp_handle);
+        }
+
+        // if (loc_out) *loc_out = out.loc;
+        // if (status_out) *status_out = out.status;
+    }
+
+    return rc;
+}
 
 Result dmntchtGetCheatProcessMetadata(DmntCheatProcessMetadata *out_metadata) {
     return serviceDispatchOut(&g_dmntchtSrv, 65002, *out_metadata);

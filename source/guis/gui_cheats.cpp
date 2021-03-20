@@ -109,7 +109,7 @@ GuiCheats::GuiCheats() : Gui()
   m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
   m_searchMode = SEARCH_MODE_EQ;
   m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
-  freeze();
+  
   m_cheatCnt = 0;
 
   // if (!m_sysmodulePresent)
@@ -139,6 +139,10 @@ GuiCheats::GuiCheats() : Gui()
       printf("num_modules = %x, proc_module->base_address = %lx , pid = %ld, rc = %x\n ", num_modules, proc_module->base_address, m_debugger->getRunningApplicationPID(), rc);
     metadata.main_nso_extents.base = proc_module->base_address;
     metadata.main_nso_extents.size = proc_module->size;
+    Handle proc_h;
+    pmdmntAtmosphereGetProcessInfo(&proc_h, m_debugger->getRunningApplicationPID());
+    rc = svcGetInfo(&metadata.heap_extents.base, InfoType_HeapRegionAddress, proc_h, 0);
+    // printf("metadata.heap_extents.base = %lx rc = %x\n", metadata.heap_extents.base, rc);
     std::memcpy(metadata.main_nso_build_id, proc_module->build_id, sizeof((metadata.main_nso_build_id)));
   };
 
@@ -147,8 +151,54 @@ GuiCheats::GuiCheats() : Gui()
   m_heapBaseAddr = metadata.heap_extents.base;
   m_mainBaseAddr = metadata.main_nso_extents.base;
   m_EditorBaseAddr = m_heapBaseAddr;
-
-  m_heapSize = metadata.heap_extents.size;
+  if (m_debugger->queryMemory(metadata.heap_extents.base).type == 0) m_usealias = true;
+  printf("use aliase %d\n",m_usealias);
+    // {
+    //   printf("metadata.alias_extents.base=%lx, metadata.alias_extents.size=%lx\n", metadata.alias_extents.base, metadata.alias_extents.size);
+    //   MemoryInfo meminfo = {0};
+    //   meminfo.addr = metadata.alias_extents.base;
+    //   const u64 lastAddr = metadata.alias_extents.base + metadata.alias_extents.size;
+    //   for (u64 i = 0; i < 1000; i++)
+    //   {
+    //     u64 nextAddr = meminfo.addr + meminfo.size;
+    //     if (nextAddr >= lastAddr)
+    //     {
+    //       printf("%lx\n", nextAddr);
+    //       break;
+    //     };
+    //     meminfo = m_debugger->queryMemory(nextAddr);
+    //     printf("%lx, %lx, %x, %x\n", meminfo.addr, meminfo.size, meminfo.type, meminfo.perm);
+    //   }
+    // };
+    // {
+    //   printf("metadata.heap_extents.base=%lx, metadata.heap_extents.size=%lx\n", metadata.heap_extents.base, metadata.heap_extents.size);
+    //   MemoryInfo meminfo = {0};
+    //   meminfo.addr = metadata.heap_extents.base;
+    //   const u64 lastAddr = metadata.heap_extents.base + metadata.heap_extents.size;
+    //   for (u64 i = 0; i < 1000; i++)
+    //   {
+    //     u64 nextAddr = meminfo.addr + meminfo.size;
+    //     if (nextAddr >= lastAddr)
+    //     {
+    //       printf("%lx\n", nextAddr);
+    //       break;
+    //     };
+    //     meminfo = m_debugger->queryMemory(nextAddr);
+    //     printf("%lx, %lx, %x, %x\n", meminfo.addr, meminfo.size, meminfo.type, meminfo.perm);
+    //   }
+    // }
+    // {
+    //   printf("All meminfo starting from 0\n");
+    //   MemoryInfo meminfo = {0};
+    //   u64 nextAddr;
+    //   do
+    //   {
+    //     nextAddr = meminfo.addr + meminfo.size;
+    //     meminfo = m_debugger->queryMemory(nextAddr);
+    //     printf("%lx, %lx, %x, %x\n", meminfo.addr, meminfo.size, meminfo.type, meminfo.perm);
+    //   } while (nextAddr < meminfo.addr + meminfo.size);
+    // }
+    m_heapSize = metadata.heap_extents.size;
   m_mainSize = metadata.main_nso_extents.size;
 
   if (m_mainBaseAddr < m_heapBaseAddr) // not used but have to move lower for it to be correct
@@ -171,6 +221,7 @@ GuiCheats::GuiCheats() : Gui()
   Config::getConfig()->lasttitle = m_debugger->getRunningApplicationTID();
   Config::writeConfig();
 
+  freeze();
   dmntchtGetCheatCount(&m_cheatCnt);
 
   if (m_cheatCnt > 0)
@@ -594,6 +645,7 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF 更新金手指  \uE0F0 检查更新  \uE0E6 上一页  \uE0E7 下一页  \uE0E0 金手指开|关  \uE0E1 退出", ALIGNED_RIGHT);
   }
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 251, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_RIGHT);
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
   if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
@@ -824,10 +876,14 @@ void GuiCheats::draw()
     }
   Gui::drawTextAligned(font14, 900, 92, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
   ss.str("");
-  if (m_64bit_offset)
-    ss << "64位堆：0x";
+  if (m_usealias)
+    ss << "Alias";
   else
-    ss << "32位堆：0x";
+    ss << "堆";
+  if (m_64bit_offset)
+    ss << "64:  0x";
+  else
+    ss << "  :  0x";
   ss << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapBaseAddr;
   ss << " - 0x" << std::uppercase << std::setfill('0') << std::setw(10) << std::hex << m_heapEnd;
   Gui::drawTextAligned(font14, 900, 122, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -1347,12 +1403,14 @@ void GuiCheats::drawEditRAMMenu()
 // WIP edit ram
 std::string GuiCheats::buttonStr(u32 buttoncode)
 {
+  std::stringstream buttonstring;
   for (u32 i = 0; i < buttonCodes.size(); i++)
   {
-    if (buttoncode == buttonCodes[i])
-      return buttonNames[i].c_str();
+    if ((buttoncode & buttonCodes[i]) == buttonCodes[i])
+      buttonstring << buttonNames[i].c_str();
+      // return buttonNames[i].c_str();
   }
-  return "";
+  return buttonstring.str();
 }
 
 #define line1 10
@@ -1800,7 +1858,7 @@ void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t
       continue;
     else if ( (meminfo.perm & Perm_Rw) != Perm_Rw) //searchRegion == SEARCH_REGION_RAM &&
       continue;
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     u64 offset = 0;
     u64 bufferSize = MAX_BUFFER_SIZE; // consider to increase from 10k to 1M (not a big problem)
@@ -3123,10 +3181,11 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   {
     Gui::g_requestExit = true;
   }
-  // else if (kdown & KEY_L)
-  // {
+  else if (kdown & KEY_R)
+  {
+    Config::getConfig()->easymode = false;
+  }
   //   Gui::g_nextGui = GUI_MEMORY_EDITOR;
-  // }
   else if (kdown & KEY_MINUS)
   {
     Gui::g_nextGui = GUI_FIRST_RUN;
@@ -3754,6 +3813,7 @@ void GuiCheats::onInput(u32 kdown)
         u8 FSA = (cheat.opcodes[i] >> 12) & 0xF;
         u8 T = (cheat.opcodes[i] >> 24) & 0xF;
         u8 M = (cheat.opcodes[i] >> 20) & 0xF;
+        u8 A = cheat.opcodes[i] & 0xFF;
 
         printf("code %x opcode %d register %d FSA %d %x \n", cheat.opcodes[i], opcode, Register, FSA, cheat.opcodes[i + 1]);
 
@@ -3767,7 +3827,7 @@ void GuiCheats::onInput(u32 kdown)
         if (opcode == 0)
         { //static case
           i++;
-          bookmark.offset = cheat.opcodes[i];
+          bookmark.offset = cheat.opcodes[i] + A * 0x100000000;
           switch (T)
           {
           case 1:
@@ -3792,7 +3852,7 @@ void GuiCheats::onInput(u32 kdown)
             i++;
             break;
           };
-          if (M == 1)
+          if (M != 0)
           {
             bookmark.heap = true;
             address = m_heapBaseAddr + bookmark.offset;
@@ -3923,6 +3983,12 @@ void GuiCheats::onInput(u32 kdown)
                   }
                   printf("value = %ld\n", value._u64);
                   rebasepointer(value); //bookmark);
+                }
+                else
+                {
+                  // add broken pointer chain for reference
+                  m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                  m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
                 }
                 Gui::g_currMessageBox->hide();
               })
@@ -5661,7 +5727,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
     // printf("%s%lx", ", meminfo.perm, ", meminfo.perm);
     // printf("%s%lx", ", meminfo.device_refcount, ", meminfo.device_refcount);
     // printf("%s%lx\n", ", meminfo.ipc_refcount, ", meminfo.ipc_refcount);
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
 
     u64 offset = 0;
@@ -5676,6 +5742,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
       debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
 
       searchValue_t realValue = {0};
+      searchValue_t nextValue = {0};
       u32 inc_i;
       if (searchMode == SEARCH_MODE_POINTER)
         inc_i = 4;
@@ -5714,7 +5781,9 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           }
           break;
         case SEARCH_MODE_NEQ:
-          if (realValue._s64 != searchValue1._s64)
+          memset(&nextValue, 0, 8);
+          memcpy(&nextValue, buffer + i + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+          if ((realValue._s64 xor nextValue._s64) == searchValue1._s64)
           {
             (*displayDump)->addData((u8 *)&address, sizeof(u64));
             helperinfo.count++;
@@ -5982,7 +6051,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
 
       if (i % 50000 == 0)
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
       }
 
@@ -6277,7 +6346,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
 
       if (i % 50000 == 0)
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
       }
 
@@ -6487,7 +6556,7 @@ void GuiCheats::searchMemoryValuesPrimary(Debugger *debugger, searchType_t searc
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
 
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     // printf("%s%lx\n", "meminfo.size ", meminfo.size);
     // printf("%s%lx\n", "meminfo.addr ", meminfo.addr);
@@ -6564,7 +6633,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
 
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     printf("%s%lx\n", "meminfo.size ", meminfo.size);
     printf("%s%lx\n", "meminfo.addr ", meminfo.addr);
@@ -6581,7 +6650,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
 
     while (offset < meminfo.size)
     {
-      setLedState(ledOn);
+      setLedState(true);
       ledOn = !ledOn;
 
       if (meminfo.size - offset < bufferSize)
@@ -6922,7 +6991,7 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
 
       if (i % 10000 == 0)
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
       }
 
@@ -7935,7 +8004,14 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
       printf("force open called\n");
     }
     else
-      (new MessageBox("此游戏已添加了新的金手指。 \n 请重新启动游戏以开始使用它。", MessageBox::OKAY))->show();
+    {
+      if (loadcheatsfromfile())
+        (new MessageBox("此游戏已添加了新的金手指。\n 您可以即刻使用。", MessageBox::OKAY))->show();
+      else
+        (new MessageBox("此游戏已添加了新的金手指。\n 但是存在解析错误，请检查文件错误。", MessageBox::OKAY))->show();
+      // (new MessageBox("此游戏已添加了新的金手指。\n 请重新启动游戏以开始使用它。", MessageBox::OKAY))->show();
+      reloadcheats();
+    }
     Config::readConfig();  
     Config::getConfig()->enablecheats = false;  
     Config::writeConfig();
@@ -8021,7 +8097,15 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
             delete content2;
           };
           if (different)
-            (new MessageBox("数据库中为此游戏添加了新的金手指。\n 请重新加载dmnt或重新启动游戏。", MessageBox::OKAY))->show();
+          {
+            if (loadcheatsfromfile())
+              (new MessageBox("此游戏已添加了新的金手指。\n 您可以即刻使用。", MessageBox::OKAY))->show();
+            else
+              (new MessageBox("此游戏已添加了新的金手指。\n 但是存在解析错误，请检查文件错误。", MessageBox::OKAY))->show();
+            // (new MessageBox("此游戏已添加了新的金手指。\n 请重新启动游戏以开始使用它。", MessageBox::OKAY))->show();
+            reloadcheats();
+          }
+            // (new MessageBox("数据库中为此游戏添加了新的金手指。\n 请重新加载dmnt或重新启动游戏。", MessageBox::OKAY))->show();
         }
       }
       else
@@ -8162,34 +8246,79 @@ bool GuiCheats::addcodetofile(u64 index)
   FILE *pfile;
   pfile = fopen(filebuildIDStr.str().c_str(), "a");
   std::stringstream ss;
+  DmntCheatEntry cheatentry;
+  u32 i = 0;
   if (pfile != NULL)
   {
     // printf("going to write to file\n");
     ss.str("");
+    strcpy(cheatentry.definition.readable_name, bookmark.label);
+    ss.str("");
     ss << "[" << bookmark.label << "]"
        << "\n";
     if (bookmark.pointer.offset[bookmark.pointer.depth] > 0 && bookmark.pointer.offset[bookmark.pointer.depth] <= (s64)(m_mainend - m_mainBaseAddr))
+    {
       ss << ((m_32bitmode) ? "540F0000 " : "580F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+      if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x540F0000; else cheatentry.definition.opcodes[i] = 0x580F0000; i++;
+      cheatentry.definition.opcodes[i] = bookmark.pointer.offset[bookmark.pointer.depth]; i++;
+    }
     else
-      ss << ((m_32bitmode) ? "541F0000 " : "581F0000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+    {
+      ss << ((m_usealias) ? ((m_32bitmode) ? "542F0000 " : "582F0000 "):((m_32bitmode) ? "541F0000 " : "581F0000 ")) << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth] << "\n";
+      if (m_32bitmode) cheatentry.definition.opcodes[i] = ((m_usealias) ? 0x542F0000:0x541F0000); else cheatentry.definition.opcodes[i] = ((m_usealias) ? 0x582F0000:0x581F0000) ; i++;
+      cheatentry.definition.opcodes[i] = m_mainBaseAddr - m_heapBaseAddr + bookmark.pointer.offset[bookmark.pointer.depth]; i++;
+    }
 
     for (int z = bookmark.pointer.depth - 1; z > 0; z--)
     {
       if (bookmark.pointer.offset[z] >= 0)
+      {
         ss << ((m_32bitmode) ? "540F1000 " : "580F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z] << "\n";
+        if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x540F1000; else cheatentry.definition.opcodes[i] = 0x580F1000; i++;
+        cheatentry.definition.opcodes[i] = bookmark.pointer.offset[z]; i++;        
+      }
       else
       {
         ss << ((m_32bitmode) ? "740F1000 " : "780F1000 ") << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[z]*(-1) << "\n";
+        if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x740F1000; else cheatentry.definition.opcodes[i] = 0x780F1000; i++;
+        cheatentry.definition.opcodes[i] = bookmark.pointer.offset[z]*(-1); i++;  
         ss << ((m_32bitmode) ? "540F1000 00000000" : "580F1000 00000000");
+        if (m_32bitmode) cheatentry.definition.opcodes[i] = 0x540F1000; else cheatentry.definition.opcodes[i] = 0x580F1000; i++;
+        cheatentry.definition.opcodes[i] = 0; i++;
       }
       
     }
     if (bookmark.pointer.offset[0] >= 0)
+    {
       ss << "780F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0] << "\n";
+      cheatentry.definition.opcodes[i] = 0x780F0000; i++;
+      cheatentry.definition.opcodes[i] = bookmark.pointer.offset[0]; i++;
+    }
     else
+    {
       ss << "780F1000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.pointer.offset[0]*(-1) << "\n";
+      cheatentry.definition.opcodes[i] = 0x780F1000; i++;
+      cheatentry.definition.opcodes[i] = bookmark.pointer.offset[0]*(-1); i++;
+    }
 
-    ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(16) << realvalue._u64 << "\n";
+    ss << "6" << dataTypeSizes[bookmark.type] + 0 << "0F0000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << realvalue._u64 / 0x100000000 << " " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << realvalue._u32 << "\n";
+    cheatentry.definition.opcodes[i] = 0x600F0000 + dataTypeSizes[bookmark.type]*0x01000000; i++;
+    cheatentry.definition.opcodes[i] = realvalue._u64 / 0x100000000; i++;
+    cheatentry.definition.opcodes[i] = realvalue._u32; i++;
+    cheatentry.definition.num_opcodes = i;
+    cheatentry.enabled = false;
+    dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+    m_cheatCnt = 0;
+    u64 cheatCnt;
+    dmntchtGetCheatCount(&cheatCnt);
+    delete m_cheats;
+    delete m_cheatDelete;
+    m_cheats = new DmntCheatEntry[cheatCnt];
+    m_cheatDelete = new bool[cheatCnt];
+    for (u64 i = 0; i < cheatCnt; i++)
+      m_cheatDelete[i] = false;
+    dmntchtGetCheats(m_cheats, cheatCnt, 0, &cheatCnt);
+    m_cheatCnt = cheatCnt;
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
@@ -8448,19 +8577,159 @@ bool GuiCheats::reloadcheatsfromfile(u8 *buildID, u64 titleID)
 
 void GuiCheats::reloadcheats()
 {
-  if (m_cheats != nullptr)
-    delete m_cheats;
-  if (m_cheatDelete != nullptr)
-    delete m_cheatDelete;
-  dmntchtGetCheatCount(&m_cheatCnt);
+  u64 cheatCnt;
   if (m_cheatCnt > 0)
   {
-    m_cheats = new DmntCheatEntry[m_cheatCnt];
-    m_cheatDelete = new bool[m_cheatCnt];
-    for (u64 i = 0; i < m_cheatCnt; i++)
+    if (m_cheats != nullptr)
+      delete m_cheats;
+    if (m_cheatDelete != nullptr)
+      delete m_cheatDelete;
+  };
+  dmntchtGetCheatCount(&cheatCnt);
+  if (cheatCnt > 0)
+  {
+    m_cheats = new DmntCheatEntry[cheatCnt];
+    m_cheatDelete = new bool[cheatCnt];
+    for (u64 i = 0; i < cheatCnt; i++)
       m_cheatDelete[i] = false;
-    dmntchtGetCheats(m_cheats, m_cheatCnt, 0, &m_cheatCnt);
+    dmntchtGetCheats(m_cheats, cheatCnt, 0, &cheatCnt);
   }
+  m_cheatCnt = cheatCnt;
+}
+bool GuiCheats::loadcheatsfromfile()
+{
+  reloadcheats();
+  for (u64 i = 0; i < m_cheatCnt; i++) dmntchtRemoveCheat(m_cheats[i].cheat_id);
+  std::stringstream buildIDStr;
+  std::stringstream filebuildIDStr;
+  {
+    for (u8 i = 0; i < 8; i++)
+      buildIDStr << std::nouppercase << std::hex << std::setfill('0') << std::setw(2) << (u16)m_buildID[i];
+    filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".txt";
+  }
+  std::stringstream realCheatPath;
+  {
+    realCheatPath << "/atmosphere/contents/" << std::uppercase << std::hex << std::setfill('0') << std::setw(sizeof(u64) * 2) << m_debugger->getRunningApplicationTID();
+    mkdir(realCheatPath.str().c_str(), 0777);
+    realCheatPath << "/cheats/";
+    mkdir(realCheatPath.str().c_str(), 0777);
+    realCheatPath << buildIDStr.str() << ".txt";
+  }
+  FILE *pfile;
+  pfile = fopen(realCheatPath.str().c_str(), "rb");
+  fseek(pfile, 0, SEEK_END);
+  size_t len = ftell(pfile);
+  u8 *s = new u8[len];
+  fseek(pfile, 0, SEEK_SET);
+  fread(s, 1, len, pfile);
+  DmntCheatEntry cheatentry;
+  cheatentry.definition.num_opcodes = 0;
+  cheatentry.enabled = false;
+  u8 label_len = 0;
+  size_t i = 0;
+  while (i < len)
+  {
+    if (std::isspace(static_cast<unsigned char>(s[i])))
+    {
+      /* Just ignore whitespace. */
+      i++;
+    }
+    else if (s[i] == '[')
+    {
+      if (cheatentry.definition.num_opcodes != 0)
+      {
+        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+      }
+      /* Parse a normal cheat set to off */
+      cheatentry.definition.num_opcodes = 0;
+      cheatentry.enabled = false;
+      /* Extract name bounds. */
+      size_t j = i + 1;
+      while (s[j] != ']')
+      {
+        j++;
+        if (j >= len)
+        {
+          return false;
+        }
+      }
+      /* s[i+1:j] is cheat name. */
+      const size_t cheat_name_len = std::min(j - i - 1, sizeof(cheatentry.definition.readable_name));
+      std::memcpy(cheatentry.definition.readable_name, &s[i + 1], cheat_name_len);
+      cheatentry.definition.readable_name[cheat_name_len] = 0;
+      label_len = cheat_name_len;
+
+      /* Skip onwards. */
+      i = j + 1;
+    }
+    else if (s[i] == '{')
+    {
+      if (cheatentry.definition.num_opcodes != 0)
+      {
+        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+      }
+      /* We're parsing a master cheat. Turn it on */
+      cheatentry.definition.num_opcodes = 0;
+      cheatentry.enabled = true;
+      /* Extract name bounds */
+      size_t j = i + 1;
+      while (s[j] != '}')
+      {
+        j++;
+        if (j >= len)
+        {
+          return false;
+        }
+      }
+
+      /* s[i+1:j] is cheat name. */
+      const size_t cheat_name_len = std::min(j - i - 1, sizeof(cheatentry.definition.readable_name));
+      memcpy(cheatentry.definition.readable_name, &s[i + 1], cheat_name_len);
+      cheatentry.definition.readable_name[cheat_name_len] = 0;
+      label_len = cheat_name_len;
+
+      /* Skip onwards. */
+      i = j + 1;
+    }
+    else if (std::isxdigit(static_cast<unsigned char>(s[i])))
+    {
+      if (label_len == 0)
+        return false;
+      /* Bounds check the opcode count. */
+      if (cheatentry.definition.num_opcodes >= sizeof(cheatentry.definition.opcodes)/8)
+      {
+        return false;
+      }
+
+      /* We're parsing an instruction, so validate it's 8 hex digits. */
+      for (size_t j = 1; j < 8; j++)
+      {
+        /* Validate 8 hex chars. */
+        if (i + j >= len || !std::isxdigit(static_cast<unsigned char>(s[i + j])))
+        {
+          return false;
+        }
+      }
+
+      /* Parse the new opcode. */
+      char hex_str[9] = {0};
+      std::memcpy(hex_str, &s[i], 8);
+      cheatentry.definition.opcodes[cheatentry.definition.num_opcodes++] = std::strtoul(hex_str, NULL, 16);
+
+      /* Skip onwards. */
+      i += 8;
+    }
+    else
+    {
+      /* Unexpected character encountered. */
+      return false;
+    }
+  }
+  if (cheatentry.definition.num_opcodes != 0)
+  {
+    dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+  }
+  return true;
 }
 
 void GuiCheats::iconloadcheck()
@@ -8490,7 +8759,10 @@ bool GuiCheats::freeze()
   Config::readConfig();
   if (Config::getConfig()->freeze)
   {
-    m_debugger->pause();
+    // m_debugger->pause();
+    addfreezetodmnt();
+    Config::getConfig()->freeze = false;     
+    Config::writeConfig();
     return true;
   }
   else
@@ -8499,14 +8771,14 @@ bool GuiCheats::freeze()
 
 bool GuiCheats::unfreeze()
 {
-  Config::readConfig();
-  if (Config::getConfig()->freeze)
-  {
+  // Config::readConfig();
+  // if (Config::getConfig()->freeze)
+  // {
     m_debugger->resume();
     return true;
-  }
-  else
-    return false;
+  // }
+  // else
+  //   return false;
 }
 
 bool GuiCheats::autoattachcheck()
@@ -8819,15 +9091,38 @@ bool GuiCheats::addstaticcodetofile(u64 index)
   FILE *pfile;
   pfile = fopen(filebuildIDStr.str().c_str(), "a");
   std::stringstream ss;
+  DmntCheatEntry cheatentry;
+  u32 i = 0;
   if (pfile != NULL)
   {
     // printf("going to write to file\n");
     ss.str("");
+    strcpy(cheatentry.definition.readable_name, bookmark.label);
+    ss.str("");
     ss << "[" << bookmark.label << "]"
        << "\n";
-    ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? 1 : 0) << "00000 " << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.offset << " "
+    ss << "0" << dataTypeSizes[bookmark.type] + 0 << (bookmark.heap ? ((m_usealias) ? 2 : 1) : 0) << "000" << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << bookmark.offset / 0x100000000 << " "
+       << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << (bookmark.offset & 0xFFFFFFFF) << " "
        << std::uppercase << std::hex << std::setfill('0') << ((dataTypeSizes[bookmark.type] == 8) ? std::setw(16) : std::setw(8))
        << ((dataTypeSizes[bookmark.type] == 8) ? realvalue._u64 : realvalue._u32) << "\n";
+    cheatentry.definition.opcodes[i] = dataTypeSizes[bookmark.type] * 0x01000000 + (bookmark.heap ? ((m_usealias) ? 0x00200000 : 0x00100000) : 0) + bookmark.offset / 0x100000000; i++;
+    cheatentry.definition.opcodes[i] = bookmark.offset; i++;
+    if (dataTypeSizes[bookmark.type] == 8) {cheatentry.definition.opcodes[i] = realvalue._u64 / 0x100000000; i++;};
+    cheatentry.definition.opcodes[i] = realvalue._u32; i++;
+    cheatentry.definition.num_opcodes = i;
+    cheatentry.enabled = false;
+    dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));   
+    m_cheatCnt = 0;
+    u64 cheatCnt;
+    dmntchtGetCheatCount(&cheatCnt);
+    delete m_cheats;
+    delete m_cheatDelete;
+    m_cheats = new DmntCheatEntry[cheatCnt];
+    m_cheatDelete = new bool[cheatCnt];
+    for (u64 i = 0; i < cheatCnt; i++)
+      m_cheatDelete[i] = false;
+    dmntchtGetCheats(m_cheats, cheatCnt, 0, &cheatCnt);
+    m_cheatCnt = cheatCnt;
     printf("index = %ld depth = %ld offset = %ld offset = %ld offset = %ld offset = %ld\n", index, bookmark.pointer.depth, bookmark.pointer.offset[3], bookmark.pointer.offset[2], bookmark.pointer.offset[1], bookmark.pointer.offset[0]);
     printf("address = %lx value = %lx \n", address, realvalue._u64);
     printf("dataTypeSizes[bookmark.type] %d\n", dataTypeSizes[bookmark.type]);
@@ -8868,7 +9163,7 @@ void GuiCheats::PCdump()
   {
     if (meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)
       continue;
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     u64 offset = 0;
     u64 bufferSize = MAX_BUFFER_SIZE; // consider to increase from 10k to 1M (not a big problem)
@@ -8962,7 +9257,7 @@ void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t 
     else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)
       continue;
 
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     printf("meminfo.addr,%lx,meminfo.size,%lx,meminfo.type,%d,", meminfo.addr, meminfo.size, meminfo.type);
     PCAttr->addData((u8 *)&meminfo, sizeof(MemoryInfo));
@@ -9145,7 +9440,7 @@ void GuiCheats::prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> m
   {
     if (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr)))
       continue;
-    setLedState(ledOn);
+    setLedState(true);
     ledOn = !ledOn;
     printf("meminfo.addr,%lx,meminfo.size,%lx,meminfo.type,%d,", meminfo.addr, meminfo.size, meminfo.type);
     PCAttr->addData((u8 *)&meminfo, sizeof(MemoryInfo));
@@ -9368,7 +9663,7 @@ void GuiCheats::refresh_fromto()
     {
       while (Foffset < m_PC_Dump->size())
       {
-        setLedState(ledOn);
+        setLedState(true);
         ledOn = !ledOn;
         if (m_PC_Dump->size() - Foffset < FbufferSize)
           FbufferSize = m_PC_Dump->size() - Foffset;
@@ -10129,7 +10424,32 @@ void GuiCheats::load_multisearch_setup()
     m_multisearch.Entries[0].on = TARGET;
   delete multisearch;
 }
-
+void GuiCheats::addfreezetodmnt()
+{
+  DmntCheatEntry cheatentry;
+  {
+    const std::string label = "锁定游戏";
+    strcpy(cheatentry.definition.readable_name, label.c_str());
+  }
+  cheatentry.definition.opcodes[0] = 0x80000380;
+  cheatentry.definition.opcodes[1] = 0xFF000000;
+  cheatentry.definition.opcodes[2] = 0x20000000;
+  cheatentry.definition.num_opcodes = 3;
+  cheatentry.enabled = true;
+  dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+  m_cheatCnt += 1;
+  {
+    const std::string label = "恢复游戏";
+    strcpy(cheatentry.definition.readable_name, label.c_str());
+  }
+  cheatentry.definition.opcodes[0] = 0x80000340;
+  cheatentry.definition.opcodes[1] = 0xFF100000;
+  cheatentry.definition.opcodes[2] = 0x20000000;
+  cheatentry.definition.num_opcodes = 3;
+  cheatentry.enabled = true;
+  dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+  m_cheatCnt += 1;
+}
 bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
 {
   searchValue_t realValue;

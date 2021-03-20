@@ -186,6 +186,7 @@ private:
   u64 m_BookmarkAddr = 0;
   u8 m_addressmod = 0;
   bool m_64bit_offset = false;
+  bool m_usealias = false;
   time_t m_Time1;
   struct helperinfo_t
   {
@@ -322,9 +323,11 @@ private:
   bool valuematch(searchValue_t value, u64 nextaddress);
   bool getinput(std::string headerText, std::string subHeaderText, std::string initialText, searchValue_t *searchValue);
   bool addcodetofile(u64 index);
+  void addfreezetodmnt();
   bool editcodefile();
   bool dumpcodetofile();
   void reloadcheats();
+  bool loadcheatsfromfile();
   bool reloadcheatsfromfile(u8 *buildID, u64 titleID);
   bool addstaticcodetofile(u64 index);
   void PSsaveSTATE();
@@ -348,9 +351,9 @@ private:
   // std::string m_titleName;
   // std::string m_versionString;
 
-  DmntCheatEntry *m_cheats;
-  u64 m_cheatCnt;
-  bool *m_cheatDelete;
+  DmntCheatEntry *m_cheats = nullptr;
+  u64 m_cheatCnt = 0;
+  bool *m_cheatDelete = nullptr;
 
   void drawSearchRAMMenu();
 
