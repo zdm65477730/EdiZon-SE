@@ -961,7 +961,33 @@ void GuiCheats::draw()
       Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
     }
   }
-  else 
+  else if (m_menuLocation == CHEATS)
+  {
+    if (m_selectedEntry > m_cheatCnt - 1)
+      m_selectedEntry = m_cheatCnt - 1;
+    u32 cheatcount = 0;
+    u32 opcodeused = 0;
+    for (u32 i = 0; i < m_cheatCnt; i++)
+    {
+      if (m_cheats[i].enabled)
+      {
+        opcodeused += m_cheats[i].definition.num_opcodes;
+        cheatcount++;
+      }
+    }
+    s32 opcodeavailable = 1024 - opcodeused;
+    ss.str("");
+    ss << "Cheat " << std::dec << (m_selectedEntry + 1) << "/" << m_cheatCnt << " ";
+    ss << "   Opcode count [ " << std::dec << m_cheats[m_selectedEntry].definition.num_opcodes << " ]";
+    ss << "   Cheat enabled [ " << std::dec << cheatcount << " ]";
+    ss << "   Opcode used [ " << std::dec << opcodeused << "/1024 ]";
+    ss << "   Opcode available [ " << std::dec << opcodeavailable << " ]";
+    if (opcodeavailable < 0)
+      Gui::drawTextAligned(font14, 768, 205, currTheme.alert, ss.str().c_str(), ALIGNED_CENTER);
+    else
+      Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+  }
+  else
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
       static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "  "};
@@ -4399,7 +4425,7 @@ void GuiCheats::onInput(u32 kdown)
         if (opcodecount > 0x400)
         {
           (new Snackbar("Total opcode count would exceed 1024!"))->show();
-          return;
+          // return;
         }
 
         dmntchtToggleCheat(m_cheats[m_selectedEntry].cheat_id);
