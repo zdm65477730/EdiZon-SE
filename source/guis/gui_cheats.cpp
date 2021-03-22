@@ -3146,9 +3146,9 @@ void GuiCheats::drawSearchRAMMenu()
       //	End Mod
 
       if (m_searchValueFormat == FORMAT_DEC)
-        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0EA \uE0EF \uE0F0 Quick Set Search Mode    \uE0E6 -   \uE0E7 +   \uE0E2 Hexadecimal view  \uE0E1 Back  \uE0E0 OK", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0EA \uE0EF \uE0F0 Quick Set Search Mode    \uE0E6 -   \uE0E7 +   \uE0E2 Hexadecimal view  \uE0E1 Back  \uE0E0 Enter", ALIGNED_RIGHT);
       else if (m_searchValueFormat == FORMAT_HEX)
-        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0EF A..B \uE0F0 == \uE0E6 - \uE0E7 + \uE0E2 Decimal view     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 100, Gui::g_framebuffer_height - 100, currTheme.textColor, "\uE0AD SAME \uE0AC DIFF \uE0AB ++ \uE0AE -- \uE0EF A..B \uE0F0 == \uE0E6 - \uE0E7 + \uE0E2 Decimal view     \uE0E1 Back     \uE0E0 Enter", ALIGNED_RIGHT);
     };
     if (m_selectedEntry == 1)
       Gui::drawRectangled(Gui::g_framebuffer_width / 2 - 155, 345, 310, 90, currTheme.highlightColor);
@@ -3194,6 +3194,7 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   else if (kdown & KEY_R)
   {
     Config::getConfig()->easymode = false;
+    m_menuLocation = CANDIDATES;
   }
   //   Gui::g_nextGui = GUI_MEMORY_EDITOR;
   else if (kdown & KEY_MINUS)
