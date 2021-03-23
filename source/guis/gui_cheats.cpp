@@ -8710,7 +8710,7 @@ bool GuiCheats::loadcheatsfromfile()
       if (label_len == 0)
         return false;
       /* Bounds check the opcode count. */
-      if (cheatentry.definition.num_opcodes >= sizeof(cheatentry.definition.opcodes)/8)
+      if (cheatentry.definition.num_opcodes >= sizeof(cheatentry.definition.opcodes)/4)
       {
         return false;
       }
