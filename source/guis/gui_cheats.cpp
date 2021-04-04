@@ -2544,12 +2544,17 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     m_debugger->readMemory(ram_buffer, M_ENTRY_MAX * sizeof(u64), startaddress);
     for (int i = 0; i < M_ENTRY_MAX; i++)
     {
+      std::stringstream ss;
+      ss.str("");
+      // ss << "M" << std::dec << (u16)i + 1;
+      strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
       if (i == (int)(4 + (address / sizeof(u64)) % 2))
       {
         M_ENTRYi.on = TARGET;
         M_ENTRYi.type = m_searchType;
         M_ENTRYi.mode = SEARCH_MODE_EQ;
         M_ENTRYi.offset = address % 16 + 0x20;
+        value = {0};
         memcpy(&value, ram_buffer + M_ENTRYi.offset, dataTypeSizes[m_searchType]);
         M_ENTRYi.value1._s64 = value._s64;
       }
@@ -4540,7 +4545,7 @@ void GuiCheats::onInput(u32 kdown)
             // m_searchValue[0]._u64 = 1;
             // m_searchValue[1]._u64 = 100;
 
-            m_menuLocation = CHEATS;
+            // m_menuLocation = CHEATS;
           }
         }
       }
@@ -4756,6 +4761,7 @@ void GuiCheats::onInput(u32 kdown)
     // }
     if ((kdown & KEY_Y) && !(kheld & KEY_ZL))
     {
+      m_menuLocation = CANDIDATES;
       if (m_searchMenuLocation == SEARCH_NONE)
       {
         if ((Config::getConfig()->extra_value) && (m_memoryDump->size() == 0))
@@ -8327,8 +8333,10 @@ bool GuiCheats::addcodetofile(u64 index)
     m_cheatCnt = 0;
     u64 cheatCnt;
     dmntchtGetCheatCount(&cheatCnt);
-    delete m_cheats;
-    delete m_cheatDelete;
+    if (m_cheats != nullptr)
+      delete m_cheats;
+    if (m_cheatDelete != nullptr)
+      delete m_cheatDelete;
     m_cheats = new DmntCheatEntry[cheatCnt];
     m_cheatDelete = new bool[cheatCnt];
     for (u64 i = 0; i < cheatCnt; i++)
@@ -9120,8 +9128,10 @@ bool GuiCheats::addstaticcodetofile(u64 index)
     m_cheatCnt = 0;
     u64 cheatCnt;
     dmntchtGetCheatCount(&cheatCnt);
-    delete m_cheats;
-    delete m_cheatDelete;
+    if (m_cheats != nullptr)
+      delete m_cheats;
+    if (m_cheatDelete != nullptr)
+      delete m_cheatDelete;
     m_cheats = new DmntCheatEntry[cheatCnt];
     m_cheatDelete = new bool[cheatCnt];
     for (u64 i = 0; i < cheatCnt; i++)
