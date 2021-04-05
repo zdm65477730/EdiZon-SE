@@ -30,7 +30,8 @@ void GuiChooseMission::draw() {
     // Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 5) , Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->options[0] ? COLOR_WHITE : COLOR_BLACK, optionNames[0], ALIGNED_CENTER);
     // Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 2) , Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->options[1] ? COLOR_WHITE : COLOR_BLACK, optionNames[1], ALIGNED_CENTER);
   Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 5), Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->extra_value ? COLOR_WHITE : COLOR_BLACK, "\uE0A2 use extra search value", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 2), Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->show_previous_values ? COLOR_WHITE : COLOR_BLACK, "\uE0A3 show previous values", ALIGNED_CENTER);
+  // Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 2), Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->show_previous_values ? COLOR_WHITE : COLOR_BLACK, "\uE0A3 show previous values", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 2), Gui::g_framebuffer_height / 2 + 300, COLOR_WHITE, "\uE0A3 manage sysmodules", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, (Gui::g_framebuffer_width / 5) * 4, Gui::g_framebuffer_height / 2 + 300, Config::getConfig()->options[2] ? COLOR_WHITE : COLOR_BLACK, optionNames[2], ALIGNED_CENTER);
   // }
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, Gui::g_framebuffer_height / 2 + 150, COLOR_WHITE, "About \uE0B3", ALIGNED_CENTER);
@@ -67,7 +68,8 @@ void GuiChooseMission::onInput(u32 kdown)
   else if (kdown & KEY_Y)
   {
     // Config::getConfig()->options[1] = !Config::getConfig()->options[1];
-    Config::getConfig()->show_previous_values = !Config::getConfig()->show_previous_values;
+    Gui::g_nextGui = GUI_Sysmodule;
+    // Config::getConfig()->show_previous_values = !Config::getConfig()->show_previous_values;
   }
   else if (kdown & KEY_MINUS)
   {
