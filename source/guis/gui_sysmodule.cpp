@@ -1,5 +1,6 @@
 #include "guis/gui_sysmodule.hpp"
 #include "guis/button2.hpp"
+#include "helpers/config.hpp"
 // #include "ui_elements/button.hpp"
 #include <switch.h>
 #include <stdio.h>
@@ -213,8 +214,13 @@ void GuiSysmodule::onInput(u32 kdown) {
   }
   
   if (kdown & KEY_B)
-    Gui::g_nextGui = GUI_CHOOSE_MISSION;
-
+  {
+    Config::readConfig();
+    if (Config::getConfig()->easymode)
+      Gui::g_nextGui = GUI_CHEATS;
+    else
+      Gui::g_nextGui = GUI_CHOOSE_MISSION;
+  }
   // if (hidMitmInstalled() && kdown & KEY_X)
   //   Gui::g_nextGui = GUI_HID_MITM;
 

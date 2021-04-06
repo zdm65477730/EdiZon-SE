@@ -643,7 +643,9 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF Update Cheats  \uE0F0 Check for update  \uE0E6 Page Up  \uE0E7 Page Down  \uE0E0 Cheat on/off  \uE0E1 Quit", ALIGNED_RIGHT);
   }
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 251, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_RIGHT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 200, currTheme.textColor, "\uE0E4 Manage sysmodules", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 300, currTheme.textColor, "\uE0E6+\uE0E5 Switch to expert mode for good", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 400, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_LEFT);
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
   if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
@@ -3196,10 +3198,20 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   {
     Gui::g_requestExit = true;
   }
-  else if (kdown & KEY_R)
+  else if ((kdown & KEY_R) && !(kheld & KEY_ZL))
   {
     Config::getConfig()->easymode = false;
     m_menuLocation = CANDIDATES;
+  }
+  else if ((kdown & KEY_R) && (kheld & KEY_ZL))
+  {
+    Config::getConfig()->easymode = false;
+    Config::writeConfig();
+    m_menuLocation = CANDIDATES;
+  }
+  else if (kdown & KEY_L)
+  {
+    Gui::g_nextGui = GUI_Sysmodule;
   }
   //   Gui::g_nextGui = GUI_MEMORY_EDITOR;
   else if (kdown & KEY_MINUS)
