@@ -3519,6 +3519,27 @@ void GuiCheats::onInput(u32 kdown)
     }
     else if (m_searchMenuLocation == SEARCH_VALUE)
       m_searchMenuLocation = SEARCH_NONE;
+    if (m_searchMenuLocation == SEARCH_NONE) // going back to main screen so we restore cursor
+    {
+      if (m_memoryDump->size() > 0)
+      {
+        if (m_memoryDump1 == nullptr)
+        {
+          m_selectedEntry = m_selectedEntrySaveSR;
+          m_addresslist_offset = m_addresslist_offsetSaveSR;
+        }
+        else
+        {
+          m_selectedEntry = m_selectedEntrySaveBM;
+          m_addresslist_offset = m_addresslist_offsetSaveBM;
+        }
+      }
+      else if (m_cheatCnt > 0)
+      {
+        m_menuLocation = CHEATS;
+        m_selectedEntry = m_selectedEntrySaveCL;
+      }
+    }
   }
 
   if (m_debugger->getRunningApplicationPID() == 0)
@@ -4029,45 +4050,40 @@ void GuiCheats::onInput(u32 kdown)
     }
     // end mod
 
-    if (m_memoryDump->size() > 0)
+    if ((kdown & KEY_LEFT) && (m_menuLocation == CANDIDATES) && (m_cheatCnt > 0))
     {
-      if (kdown & KEY_LEFT)
-        if (m_cheatCnt > 0)
-        {
-          m_menuLocation = CHEATS;
-          if (m_memoryDump1 == nullptr)
-          {
-            m_selectedEntrySaveSR = m_selectedEntry;
-            m_addresslist_offsetSaveSR = m_addresslist_offset;
-          }
-          else
-          {
-            m_selectedEntrySaveBM = m_selectedEntry;
-            m_addresslist_offsetSaveBM = m_addresslist_offset;
-          }
-
-          m_selectedEntry = m_selectedEntrySaveCL;
-          // cheatListOffset = 0;
-        }
-
-      if (kdown & KEY_RIGHT)
+      m_menuLocation = CHEATS;
+      if (m_memoryDump1 == nullptr)
       {
-        m_selectedEntrySaveCL = m_selectedEntry;
-        m_menuLocation = CANDIDATES;
-        if (m_memoryDump1 == nullptr)
-        {
-          m_selectedEntry = m_selectedEntrySaveSR;
-          m_addresslist_offset = m_addresslist_offsetSaveSR;
-        }
-        else
-        {
-          m_selectedEntry = m_selectedEntrySaveBM;
-          m_addresslist_offset = m_addresslist_offsetSaveBM;
-        }
-
-        // m_selectedEntry = 0;
-        // cheatListOffset = 0;
+        m_selectedEntrySaveSR = m_selectedEntry;
+        m_addresslist_offsetSaveSR = m_addresslist_offset;
       }
+      else
+      {
+        m_selectedEntrySaveBM = m_selectedEntry;
+        m_addresslist_offsetSaveBM = m_addresslist_offset;
+      }
+
+      m_selectedEntry = m_selectedEntrySaveCL;
+      // cheatListOffset = 0;
+    }
+    if ((kdown & KEY_RIGHT) && (m_menuLocation == CHEATS) && (m_memoryDump->size() > 0))
+    {
+      m_selectedEntrySaveCL = m_selectedEntry;
+      m_menuLocation = CANDIDATES;
+      if (m_memoryDump1 == nullptr)
+      {
+        m_selectedEntry = m_selectedEntrySaveSR;
+        m_addresslist_offset = m_addresslist_offsetSaveSR;
+      }
+      else
+      {
+        m_selectedEntry = m_selectedEntrySaveBM;
+        m_addresslist_offset = m_addresslist_offsetSaveBM;
+      }
+
+      // m_selectedEntry = 0;
+      // cheatListOffset = 0;
     }
 
     if (m_menuLocation == CANDIDATES)
@@ -4773,6 +4789,20 @@ void GuiCheats::onInput(u32 kdown)
     // }
     if ((kdown & KEY_Y) && !(kheld & KEY_ZL))
     {
+      if (m_menuLocation == CHEATS) 
+      {
+        m_selectedEntrySaveCL = m_selectedEntry;
+      }
+      else if (m_memoryDump1 == nullptr)
+      {
+        m_selectedEntrySaveSR = m_selectedEntry;
+        m_addresslist_offsetSaveSR = m_addresslist_offset;
+      }
+      else
+      {
+        m_selectedEntrySaveBM = m_selectedEntry;
+        m_addresslist_offsetSaveBM = m_addresslist_offset;
+      }
       m_menuLocation = CANDIDATES;
       if (m_searchMenuLocation == SEARCH_NONE)
       {
