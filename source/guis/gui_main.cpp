@@ -191,7 +191,7 @@ void GuiMain::draw() {
 
     std::string buttonHintStr = "";
 
-    buttonHintStr  = !tmpEditableOnly ? "\uE0E6 Editable titles     " : "\uE0E6 All titles     ";
+    buttonHintStr  = !tmpEditableOnly ? "\uE0E4 Config     \uE0E6 Editable titles     " : "\uE0E6 All titles     ";
     buttonHintStr += m_backupAll ? "(\uE0E7) + \uE0E2 Backup all     " : "(\uE0E7) + \uE0E2 Backup     ";
     buttonHintStr += "\uE0E1 Back     \uE0E0 OK";
 
@@ -209,6 +209,10 @@ void GuiMain::draw() {
 void GuiMain::onInput(u32 kdown) {
   if (kdown & KEY_B)
     Gui::g_requestExit = true;
+  else if (kdown & KEY_L)
+  {
+    Gui::g_nextGui = GUI_CHOOSE_MISSION;
+  }
 
   if (Title::g_titles.size() == 0) return;
 

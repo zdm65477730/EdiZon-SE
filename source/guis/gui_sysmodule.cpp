@@ -217,8 +217,16 @@ void GuiSysmodule::draw() {
   // if (hidMitmInstalled())
   //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 25, currTheme.textColor, "\uE0E2 Key configuration     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
   // else
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
-
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+  {
+    FILE *exefs = fopen(std::string(CONTENTS_PATH "0100000000001013/exefs.nsp").c_str(), "r");
+    if ((exefs == nullptr) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
+      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 500, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 Make profile launch EdiZon SE", ALIGNED_RIGHT);
+    else {
+      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 500, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 Make profile launch profile", ALIGNED_RIGHT);
+      fclose(exefs);
+    }
+  }
   if (anyModulesPresent)
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "Enable as little background services (sysmodules) as possible for maximum compatibility with\ngames. If you encounter problem try disable all of them to see if it helps to improve stability.\nDo not enable tesla if you are on HOS11+ when running Edizon SE.", ALIGNED_CENTER);
   else
@@ -244,6 +252,30 @@ void GuiSysmodule::onInput(u32 kdown) {
       Gui::g_nextGui = GUI_CHEATS;
     else
       Gui::g_nextGui = GUI_CHOOSE_MISSION;
+  }
+  else if ((kdown & KEY_X) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
+  {
+    try
+    {
+      if (access(CONTENTS_PATH "0100000000001013/exefs.nsp", F_OK) == -1)
+        rename(CONTENTS_PATH "0100000000001013/exefs.nsp1", CONTENTS_PATH "0100000000001013/exefs.nsp");
+    }
+    catch (json::parse_error &e)
+    {
+    }
+  }
+  else if ((kdown & KEY_Y) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp", F_OK) == 0))
+  {
+    try
+    {
+      if (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == -1)
+        rename(CONTENTS_PATH "0100000000001013/exefs.nsp", CONTENTS_PATH "0100000000001013/exefs.nsp1");
+      else
+        remove(CONTENTS_PATH "0100000000001013/exefs.nsp");
+    }
+    catch (json::parse_error &e)
+    {
+    }
   }
   // if (hidMitmInstalled() && kdown & KEY_X)
   //   Gui::g_nextGui = GUI_HID_MITM;
