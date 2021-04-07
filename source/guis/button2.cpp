@@ -57,6 +57,8 @@ void Button2::select(s16 buttonIndex) {
 
 void Button2::draw(Gui *gui) {
   // Offset calculation
+  g_targetOffsetX = g_pageOffsetX;
+  // g_targetOffsetY = g_pageOffsetY;
   s32 resultX = m_x - g_targetOffsetX;
   s32 resultY = m_y - g_targetOffsetY;
   if (resultX + m_w < 0 || resultY + m_h < 0 || resultX > SCREEN_WIDTH || resultY > SCREEN_HEIGHT)

@@ -19,7 +19,7 @@
 
 
 //Rows of buttons per column
-#define ROWS 3
+#define ROWS 4
 
 using json = nlohmann::json;
 
@@ -49,6 +49,8 @@ GuiSysmodule::GuiSysmodule() : Gui() {
   DIR *contents_dir = opendir(CONTENTS_PATH);
   if (contents_dir != nullptr) {
     json toolboxJson;
+    std::string toolbox_string;
+    std::ofstream toolbox_file;
     struct dirent *ent;
     while ((ent = readdir(contents_dir)) != nullptr) {
       std::ifstream sysconfig(CONTENTS_PATH + std::string(ent->d_name) + "/toolbox.json");
@@ -57,6 +59,28 @@ GuiSysmodule::GuiSysmodule() : Gui() {
           sysconfig >> toolboxJson;
           configJson["sysmodules"].push_back(toolboxJson);
         } catch(json::parse_error& e) {}
+      }
+      else if ( strcmp(ent->d_name, "0100000000000008") == 0 || strcmp(ent->d_name, "010000000000000D") == 0 || strcmp(ent->d_name, "010000000000002B") == 0 || strcmp(ent->d_name, "0100000000000032") == 0 ||
+                strcmp(ent->d_name, "0100000000000034") == 0 || strcmp(ent->d_name, "0100000000000036") == 0 || strcmp(ent->d_name, "0100000000000037") == 0 || strcmp(ent->d_name, "010000000000003C") == 0 ||
+                strcmp(ent->d_name, "0100000000000042") == 0 || strcmp(ent->d_name, "0100000000001013") == 0 || strcmp(ent->d_name, "0100000000001010") == 0 ) continue;
+      else { 
+        try {
+          std::stringstream path, path2;
+          path << CONTENTS_PATH << std::string(ent->d_name) << "/exefs.nsp";
+          if (access(path.str().c_str(), F_OK) == -1)
+            continue;
+          toolboxJson["name"] = std::string(ent->d_name);
+          toolboxJson["tid"] = std::string(ent->d_name);
+          toolboxJson["requires_reboot"] = true;
+          toolbox_string = toolboxJson.dump(4);
+          path2 << CONTENTS_PATH << std::string(ent->d_name) << "/toolbox.json";
+          toolbox_file.open(path2.str());
+          toolbox_file << toolbox_string << "\n";
+          toolbox_file.close();
+          configJson["sysmodules"].push_back(toolboxJson);
+        } catch (json::parse_error &e) {
+          continue;
+        }
       }
     }
   }
