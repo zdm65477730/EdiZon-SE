@@ -58,7 +58,7 @@ void GuiMain::draw() {
   s64 x = 0, y = 32, currItem = 0;
   s64 selectedX = 0, selectedY = 0;
   bool tmpEditableOnly = m_editableOnly;
-  //static u32 splashCnt = 0;
+  static u32 splashCnt = 0;
 
   Gui::beginDraw();
 
@@ -147,7 +147,7 @@ void GuiMain::draw() {
   Gui::drawRectangled(Gui::g_framebuffer_width - 75, 8, 13, 18, currTheme.separatorColor);
 
   if (tmpEditableOnly && EditorConfigParser::g_editableTitles.size() == 0) {
-    Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "系统里找不到可编译的游戏！", ALIGNED_CENTER);
+    Gui::drawTextAligned(font24, (Gui::g_framebuffer_width / 2), (Gui::g_framebuffer_height / 2), currTheme.textColor, "系统里找不到可编辑的游戏！", ALIGNED_CENTER);
     Gui::endDraw();
     return;
   }
@@ -191,7 +191,7 @@ void GuiMain::draw() {
 
     std::string buttonHintStr = "";
 
-    buttonHintStr  = !tmpEditableOnly ? "\uE0E6 可编辑的所有游戏     " : "\uE0E6 所有游戏     ";
+    buttonHintStr  = !tmpEditableOnly ? "\uE0E4 配置     \uE0E6 可编辑的所有游戏     " : "\uE0E6 所有游戏     ";
     buttonHintStr += m_backupAll ? "（\uE0E7） + \uE0E2 备份所有     " : "（\uE0E7） + \uE0E2 备份     ";
     buttonHintStr += "\uE0E1 返回     \uE0E0 确认";
 
@@ -209,6 +209,10 @@ void GuiMain::draw() {
 void GuiMain::onInput(u32 kdown) {
   if (kdown & KEY_B)
     Gui::g_requestExit = true;
+  else if (kdown & KEY_L)
+  {
+    Gui::g_nextGui = GUI_CHOOSE_MISSION;
+  }
 
   if (Title::g_titles.size() == 0) return;
 

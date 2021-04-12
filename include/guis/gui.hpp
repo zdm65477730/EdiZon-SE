@@ -36,6 +36,7 @@ enum gui_t {
   GUI_CHOOSE_MISSION,
   GUI_MORE,
   GUI_FIRST_RUN,
+  GUI_Sysmodule,
   GUI_MEMORY_EDITOR
 };
 

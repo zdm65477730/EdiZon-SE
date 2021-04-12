@@ -11,6 +11,14 @@ static s32 g_uniquePadCnt;
 static HidsysNotificationLedPattern g_patternOn, g_patternOff;
 
 bool isServiceRunning(const char *serviceName) {
+  // Service hdl;
+  // Result rc = smGetService(&hdl, serviceName);
+  // if (rc == 0)
+  // {
+  //   serviceClose(&hdl);
+  //   return true;
+  // };
+  // return false;
   u8 tmp=0;
   SmServiceName service_name = smEncodeName(serviceName);
   Result rc = serviceDispatchInOut(smGetServiceSession(), 65100, service_name, tmp);

@@ -17,6 +17,7 @@
 #include "guis/gui_choose_mission.hpp"
 #include "guis/gui_more.hpp"
 #include "guis/gui_cheats.hpp"
+#include "guis/gui_sysmodule.hpp"
 #include "guis/gui_about.hpp"
 #include "guis/gui_cheatdb.hpp"
 #include "guis/gui_first_run.hpp"
@@ -249,7 +250,7 @@ void redirectStdio()
 }
 int main(int argc, char **argv)
 {
-  //void *haddr;
+  void *haddr;
 
   serviceInitialize();
 
@@ -381,9 +382,11 @@ int main(int argc, char **argv)
         case GUI_FIRST_RUN:
           currGui = new Guifirstrun();
           break;
-        case GUI_INVALID: //fallthrough
-        default:
+        case GUI_Sysmodule:
+          currGui = new GuiSysmodule();
           break;
+        case GUI_INVALID:
+          [[fallthrough]] default : break;
         }
         if (nextGuiStart == Gui::g_nextGui)
           Gui::g_nextGui = GUI_INVALID;

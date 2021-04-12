@@ -85,13 +85,13 @@ GuiCheats::GuiCheats() : Gui()
     remove(EDIZON_DIR "/memdumpbookmark.dat");
   }
   // Check if dmnt:cht is running and we're not on sxos
-  m_sysmodulePresent = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
-
+  // m_sysmodulePresent = isServiceRunning("dmnt:cht");// && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
   // dmntchtForceOpenCheatProcess();
   // dmntchtPauseCheatProcess();
+  m_sysmodulePresent = true;
   m_debugger = new Debugger();
-  if (m_sysmodulePresent)
-    dmntchtInitialize();
+  // if (m_sysmodulePresent)
+  dmntchtInitialize();
   if (!autoattachcheck())
     m_debugger->attachToProcess();
   if (!m_debugger->m_dmnt) { m_sysmodulePresent = true;  }
@@ -597,7 +597,7 @@ GuiCheats::~GuiCheats()
   if (m_PC_DumpM != nullptr)
     delete m_PC_DumpM;
 
-  if (m_sysmodulePresent)
+  // if (m_sysmodulePresent)
   {
     dmntchtExit();
   }
@@ -645,7 +645,9 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF 更新金手指  \uE0F0 检查更新  \uE0E6 上一页  \uE0E7 下一页  \uE0E0 金手指开|关  \uE0E1 退出", ALIGNED_RIGHT);
   }
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 251, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_RIGHT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 150, currTheme.textColor, "\uE0E4 Manage sysmodules", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 200, currTheme.textColor, "\uE0E6+\uE0E5 Switch to expert mode for good", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 250, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_LEFT);
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
   if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
@@ -721,11 +723,11 @@ void GuiCheats::draw_easymode()
       }
     }
     else if (m_mainBaseAddr == 0)
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt已与游戏进程解除附加，请按 ZL + B 进行附加，\n \n 重新启动EdiZon SE访问此游戏", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt已与游戏进程解除附加，请按 ZL + B 进行附加，\n \n 重新启动EdiZon SE访问此游戏", ALIGNED_RIGHT);
     else if (m_cheatsPresent && m_memoryDump->size() == 0)
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "该游戏存在金手指，但游戏版本或地区不匹配！", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "您可能有该游戏其他版本的金手指！", ALIGNED_RIGHT);
     else
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "此游戏没有金手指", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "此游戏无可用金手指", ALIGNED_RIGHT);
 
     Gui::drawShadow(0, 0, Gui::g_framebuffer_width, 256);
     Gui::drawShadow(256, 50, Gui::g_framebuffer_width, 136);
@@ -963,7 +965,33 @@ void GuiCheats::draw()
       Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
     }
   }
-  else 
+  else if (m_menuLocation == CHEATS)
+  {
+    if (m_selectedEntry > m_cheatCnt - 1)
+      m_selectedEntry = m_cheatCnt - 1;
+    u32 cheatcount = 0;
+    u32 opcodeused = 0;
+    for (u32 i = 0; i < m_cheatCnt; i++)
+    {
+      if (m_cheats[i].enabled)
+      {
+        opcodeused += m_cheats[i].definition.num_opcodes;
+        cheatcount++;
+      }
+    }
+    s32 opcodeavailable = 1024 - opcodeused;
+    ss.str("");
+    ss << "Cheat " << std::dec << (m_selectedEntry + 1) << "/" << m_cheatCnt << " ";
+    ss << "   Opcode count [ " << std::dec << m_cheats[m_selectedEntry].definition.num_opcodes << " ]";
+    ss << "   Cheat enabled [ " << std::dec << cheatcount << " ]";
+    ss << "   Opcode used [ " << std::dec << opcodeused << "/1024 ]";
+    ss << "   Opcode available [ " << std::dec << opcodeavailable << " ]";
+    if (opcodeavailable < 0)
+      Gui::drawTextAligned(font14, 768, 205, currTheme.alert, ss.str().c_str(), ALIGNED_CENTER);
+    else
+      Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+  }
+  else
   {
       static const char *const regionNames[] = {"堆", "主存储", "堆 + 主存储", "内存", "  "};
       static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "  "};
@@ -2530,12 +2558,17 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     m_debugger->readMemory(ram_buffer, M_ENTRY_MAX * sizeof(u64), startaddress);
     for (int i = 0; i < M_ENTRY_MAX; i++)
     {
+      std::stringstream ss;
+      ss.str("");
+      // ss << "M" << std::dec << (u16)i + 1;
+      strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
       if (i == (int)(4 + (address / sizeof(u64)) % 2))
       {
         M_ENTRYi.on = TARGET;
         M_ENTRYi.type = m_searchType;
         M_ENTRYi.mode = SEARCH_MODE_EQ;
         M_ENTRYi.offset = address % 16 + 0x20;
+        value = {0};
         memcpy(&value, ram_buffer + M_ENTRYi.offset, dataTypeSizes[m_searchType]);
         M_ENTRYi.value1._s64 = value._s64;
       }
@@ -3181,9 +3214,25 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   {
     Gui::g_requestExit = true;
   }
-  else if (kdown & KEY_R)
+  else if ((kdown & KEY_R) && !(kheld & KEY_ZL))
   {
     Config::getConfig()->easymode = false;
+    m_debugger->detatch();
+    dmntchtForceOpenCheatProcess();
+    m_menuLocation = CANDIDATES;
+  }
+  else if ((kdown & KEY_R) && (kheld & KEY_ZL))
+  {
+    Config::getConfig()->easymode = false;
+    Config::getConfig()->options[0] = false;
+    Config::writeConfig();
+    m_debugger->detatch();
+    dmntchtForceOpenCheatProcess();
+    m_menuLocation = CANDIDATES;
+  }
+  else if (kdown & KEY_L)
+  {
+    Gui::g_nextGui = GUI_Sysmodule;
   }
   //   Gui::g_nextGui = GUI_MEMORY_EDITOR;
   else if (kdown & KEY_MINUS)
@@ -3492,6 +3541,27 @@ void GuiCheats::onInput(u32 kdown)
     }
     else if (m_searchMenuLocation == SEARCH_VALUE)
       m_searchMenuLocation = SEARCH_NONE;
+    if (m_searchMenuLocation == SEARCH_NONE) // going back to main screen so we restore cursor
+    {
+      if (m_memoryDump->size() > 0)
+      {
+        if (m_memoryDump1 == nullptr)
+        {
+          m_selectedEntry = m_selectedEntrySaveSR;
+          m_addresslist_offset = m_addresslist_offsetSaveSR;
+        }
+        else
+        {
+          m_selectedEntry = m_selectedEntrySaveBM;
+          m_addresslist_offset = m_addresslist_offsetSaveBM;
+        }
+      }
+      else if (m_cheatCnt > 0)
+      {
+        m_menuLocation = CHEATS;
+        m_selectedEntry = m_selectedEntrySaveCL;
+      }
+    }
   }
 
   if (m_debugger->getRunningApplicationPID() == 0)
@@ -4002,45 +4072,40 @@ void GuiCheats::onInput(u32 kdown)
     }
     // end mod
 
-    if (m_memoryDump->size() > 0)
+    if ((kdown & KEY_LEFT) && (m_menuLocation == CANDIDATES) && (m_cheatCnt > 0))
     {
-      if (kdown & KEY_LEFT)
-        if (m_cheatCnt > 0)
-        {
-          m_menuLocation = CHEATS;
-          if (m_memoryDump1 == nullptr)
-          {
-            m_selectedEntrySaveSR = m_selectedEntry;
-            m_addresslist_offsetSaveSR = m_addresslist_offset;
-          }
-          else
-          {
-            m_selectedEntrySaveBM = m_selectedEntry;
-            m_addresslist_offsetSaveBM = m_addresslist_offset;
-          }
-
-          m_selectedEntry = m_selectedEntrySaveCL;
-          // cheatListOffset = 0;
-        }
-
-      if (kdown & KEY_RIGHT)
+      m_menuLocation = CHEATS;
+      if (m_memoryDump1 == nullptr)
       {
-        m_selectedEntrySaveCL = m_selectedEntry;
-        m_menuLocation = CANDIDATES;
-        if (m_memoryDump1 == nullptr)
-        {
-          m_selectedEntry = m_selectedEntrySaveSR;
-          m_addresslist_offset = m_addresslist_offsetSaveSR;
-        }
-        else
-        {
-          m_selectedEntry = m_selectedEntrySaveBM;
-          m_addresslist_offset = m_addresslist_offsetSaveBM;
-        }
-
-        // m_selectedEntry = 0;
-        // cheatListOffset = 0;
+        m_selectedEntrySaveSR = m_selectedEntry;
+        m_addresslist_offsetSaveSR = m_addresslist_offset;
       }
+      else
+      {
+        m_selectedEntrySaveBM = m_selectedEntry;
+        m_addresslist_offsetSaveBM = m_addresslist_offset;
+      }
+
+      m_selectedEntry = m_selectedEntrySaveCL;
+      // cheatListOffset = 0;
+    }
+    if ((kdown & KEY_RIGHT) && (m_menuLocation == CHEATS) && (m_memoryDump->size() > 0))
+    {
+      m_selectedEntrySaveCL = m_selectedEntry;
+      m_menuLocation = CANDIDATES;
+      if (m_memoryDump1 == nullptr)
+      {
+        m_selectedEntry = m_selectedEntrySaveSR;
+        m_addresslist_offset = m_addresslist_offsetSaveSR;
+      }
+      else
+      {
+        m_selectedEntry = m_selectedEntrySaveBM;
+        m_addresslist_offset = m_addresslist_offsetSaveBM;
+      }
+
+      // m_selectedEntry = 0;
+      // cheatListOffset = 0;
     }
 
     if (m_menuLocation == CANDIDATES)
@@ -4416,7 +4481,7 @@ void GuiCheats::onInput(u32 kdown)
         if (opcodecount > 0x400)
         {
           (new Snackbar("操作码总数将超过1024！"))->show();
-          return;
+          // return;
         }
 
         dmntchtToggleCheat(m_cheats[m_selectedEntry].cheat_id);
@@ -4530,7 +4595,7 @@ void GuiCheats::onInput(u32 kdown)
             // m_searchValue[0]._u64 = 1;
             // m_searchValue[1]._u64 = 100;
 
-            m_menuLocation = CHEATS;
+            // m_menuLocation = CHEATS;
           }
         }
       }
@@ -4746,6 +4811,21 @@ void GuiCheats::onInput(u32 kdown)
     // }
     if ((kdown & KEY_Y) && !(kheld & KEY_ZL))
     {
+      if (m_menuLocation == CHEATS) 
+      {
+        m_selectedEntrySaveCL = m_selectedEntry;
+      }
+      else if (m_memoryDump1 == nullptr)
+      {
+        m_selectedEntrySaveSR = m_selectedEntry;
+        m_addresslist_offsetSaveSR = m_addresslist_offset;
+      }
+      else
+      {
+        m_selectedEntrySaveBM = m_selectedEntry;
+        m_addresslist_offsetSaveBM = m_addresslist_offset;
+      }
+      m_menuLocation = CANDIDATES;
       if (m_searchMenuLocation == SEARCH_NONE)
       {
         if ((Config::getConfig()->extra_value) && (m_memoryDump->size() == 0))
@@ -8327,8 +8407,10 @@ bool GuiCheats::addcodetofile(u64 index)
     m_cheatCnt = 0;
     u64 cheatCnt;
     dmntchtGetCheatCount(&cheatCnt);
-    delete m_cheats;
-    delete m_cheatDelete;
+    if (m_cheats != nullptr)
+      delete m_cheats;
+    if (m_cheatDelete != nullptr)
+      delete m_cheatDelete;
     m_cheats = new DmntCheatEntry[cheatCnt];
     m_cheatDelete = new bool[cheatCnt];
     for (u64 i = 0; i < cheatCnt; i++)
@@ -8712,7 +8794,7 @@ bool GuiCheats::loadcheatsfromfile()
       if (label_len == 0)
         return false;
       /* Bounds check the opcode count. */
-      if (cheatentry.definition.num_opcodes >= sizeof(cheatentry.definition.opcodes)/8)
+      if (cheatentry.definition.num_opcodes >= sizeof(cheatentry.definition.opcodes)/4)
       {
         return false;
       }
@@ -9131,8 +9213,10 @@ bool GuiCheats::addstaticcodetofile(u64 index)
     m_cheatCnt = 0;
     u64 cheatCnt;
     dmntchtGetCheatCount(&cheatCnt);
-    delete m_cheats;
-    delete m_cheatDelete;
+    if (m_cheats != nullptr)
+      delete m_cheats;
+    if (m_cheatDelete != nullptr)
+      delete m_cheatDelete;
     m_cheats = new DmntCheatEntry[cheatCnt];
     m_cheatDelete = new bool[cheatCnt];
     for (u64 i = 0; i < cheatCnt; i++)

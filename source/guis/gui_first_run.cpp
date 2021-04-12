@@ -1,6 +1,7 @@
 #include "guis/gui_first_run.hpp"
 #include <thread>
 #include <curl/curl.h>
+#include "version.h"
 #include "update_manager.hpp"
 #include "helpers/util.h"
 #include "helpers/config.hpp"
