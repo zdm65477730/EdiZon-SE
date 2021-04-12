@@ -84,13 +84,13 @@ GuiCheats::GuiCheats() : Gui()
     remove(EDIZON_DIR "/memdumpbookmark.dat");
   }
   // Check if dmnt:cht is running and we're not on sxos
-  m_sysmodulePresent = isServiceRunning("dmnt:cht") && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
-
+  // m_sysmodulePresent = isServiceRunning("dmnt:cht");// && !(isServiceRunning("tx") && !isServiceRunning("rnx"));
   // dmntchtForceOpenCheatProcess();
   // dmntchtPauseCheatProcess();
+  m_sysmodulePresent = true;
   m_debugger = new Debugger();
-  if (m_sysmodulePresent)
-    dmntchtInitialize();
+  // if (m_sysmodulePresent)
+  dmntchtInitialize();
   if (!autoattachcheck())
     m_debugger->attachToProcess();
   if (!m_debugger->m_dmnt) { m_sysmodulePresent = true;  }
@@ -596,7 +596,7 @@ GuiCheats::~GuiCheats()
   if (m_PC_DumpM != nullptr)
     delete m_PC_DumpM;
 
-  if (m_sysmodulePresent)
+  // if (m_sysmodulePresent)
   {
     dmntchtExit();
   }
@@ -643,9 +643,9 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF Update Cheats  \uE0F0 Check for update  \uE0E6 Page Up  \uE0E7 Page Down  \uE0E0 Cheat on/off  \uE0E1 Quit", ALIGNED_RIGHT);
   }
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 200, currTheme.textColor, "\uE0E4 Manage sysmodules", ALIGNED_LEFT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 300, currTheme.textColor, "\uE0E6+\uE0E5 Switch to expert mode for good", ALIGNED_LEFT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 400, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 150, currTheme.textColor, "\uE0E4 Manage sysmodules", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 200, currTheme.textColor, "\uE0E6+\uE0E5 Switch to expert mode for good", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 250, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_LEFT);
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
   if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
@@ -721,11 +721,11 @@ void GuiCheats::draw_easymode()
       }
     }
     else if (m_mainBaseAddr == 0)
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "Dmnt detached from game process, press ZL+B to attach,\n \n relaunch EdiZon SE to access this game", ALIGNED_RIGHT);
     else if (m_cheatsPresent && m_memoryDump->size() == 0)
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "You may have Cheats for a different version of this game !", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "You may have Cheats for a different version of this game !", ALIGNED_RIGHT);
     else
-      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "No cheats available for this game", ALIGNED_CENTER);
+      Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 50, currTheme.textColor, "No cheats available for this game", ALIGNED_RIGHT);
 
     Gui::drawShadow(0, 0, Gui::g_framebuffer_width, 256);
     Gui::drawShadow(256, 50, Gui::g_framebuffer_width, 136);
@@ -3201,12 +3201,17 @@ void GuiCheats::easymode_input(u32 kdown, u32 kheld)
   else if ((kdown & KEY_R) && !(kheld & KEY_ZL))
   {
     Config::getConfig()->easymode = false;
+    m_debugger->detatch();
+    dmntchtForceOpenCheatProcess();
     m_menuLocation = CANDIDATES;
   }
   else if ((kdown & KEY_R) && (kheld & KEY_ZL))
   {
     Config::getConfig()->easymode = false;
+    Config::getConfig()->options[0] = false;
     Config::writeConfig();
+    m_debugger->detatch();
+    dmntchtForceOpenCheatProcess();
     m_menuLocation = CANDIDATES;
   }
   else if (kdown & KEY_L)

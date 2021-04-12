@@ -79,7 +79,8 @@
         "concepts": "cpp",
         "stop_token": "cpp",
         "numbers": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "dmntcht.h": "c"
     },
     "C_Cpp.default.includePath": [
         "include"
