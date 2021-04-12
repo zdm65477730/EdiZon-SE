@@ -221,14 +221,16 @@ void GuiSysmodule::draw() {
   {
     FILE *exefs = fopen(std::string(CONTENTS_PATH "0100000000001013/exefs.nsp").c_str(), "r");
     if ((exefs == nullptr) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 500, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 Make profile launch EdiZon SE", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 Make profile launch EdiZon SE", ALIGNED_RIGHT);
     else {
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 500, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 Make profile launch profile", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 Make profile launch profile", ALIGNED_RIGHT);
       fclose(exefs);
     }
+    if (!(access("/atmosphere/config/system_settings.ini", F_OK) == 0))
+      Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Create system_settings.ini", ALIGNED_LEFT);
   }
   if (anyModulesPresent)
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "Enable as little background services (sysmodules) as possible for maximum compatibility with\ngames. If you encounter problem try disable all of them to see if it helps to improve stability.\nDo not enable tesla if you are on HOS11+ when running Edizon SE.", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "Enable as little background services (sysmodules) as possible for maximum compatibility with \n games. If you encounter problem try disable all of them to see if it helps to improve stability. \n Do not enable tesla if you are on HOS11+ when running Edizon SE.", ALIGNED_CENTER);
   else
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 550, currTheme.textColor, "You currently don't have any supported sysmodules installed. To use this \n feature, please install any supported sysmodule as an NSP.", ALIGNED_CENTER);
     
@@ -277,6 +279,20 @@ void GuiSysmodule::onInput(u32 kdown) {
     {
     }
   }
+  else if ((kdown & KEY_MINUS) && (!(access("/atmosphere/config/system_settings.ini", F_OK) == 0)))
+  {
+    const char inst1[] = "[atmosphere]\n";
+    const char inst2[] = "dmnt_cheats_enabled_by_default = u8!0x0\n";
+    const char inst3[] = "dmnt_always_save_cheat_toggles = u8!0x1\n";
+    FILE *fp1 = fopen("/atmosphere/config/system_settings.ini", "wb");
+    fwrite(inst1, 1, sizeof(inst1) - 1, fp1);
+    fwrite(inst2, 1, sizeof(inst2) - 1, fp1);
+    fwrite(inst3, 1, sizeof(inst3) - 1, fp1);
+    fclose(fp1);
+    (new MessageBox("System_settings.ini created. \n Cheat code will be default to off and cheat enable \n will be saved when you quite the game. \n Requires a reboot to take effect. ", MessageBox::OKAY))->show();
+    // Gui::g_requestExit = true;
+  }
+
   // if (hidMitmInstalled() && kdown & KEY_X)
   //   Gui::g_nextGui = GUI_HID_MITM;
 
