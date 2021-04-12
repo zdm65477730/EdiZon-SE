@@ -121,7 +121,7 @@ GuiSysmodule::GuiSysmodule() : Gui() {
 
    new Button2(100 + xOffset, 250 + yOffset, 500, 80, [&](Gui *gui, u16 x, u16 y, bool *isActivated){
       gui->drawTextAligned(font20, x + 37, y + 23, currTheme.textColor, sysmodule.second.name.c_str(), ALIGNED_LEFT);
-      gui->drawTextAligned(font20, x + 420, y + 23, this->m_runningSysmodules.find(sysmodule.first) != this->m_runningSysmodules.end() ? currTheme.selectedColor : Gui::makeColor(0xB8, 0xBB, 0xC2, 0xFF), this->m_runningSysmodules.find(sysmodule.first) != this->m_runningSysmodules.end() ? "On" : "Off", ALIGNED_LEFT);
+      gui->drawTextAligned(font20, x + 420, y + 23, this->m_runningSysmodules.find(sysmodule.first) != this->m_runningSysmodules.end() ? currTheme.selectedColor : Gui::makeColor(0xB8, 0xBB, 0xC2, 0xFF), this->m_runningSysmodules.find(sysmodule.first) != this->m_runningSysmodules.end() ? "开启" : "关闭", ALIGNED_LEFT);
     }, [&](u32 kdown, bool *isActivated){
       if (kdown & KEY_A) {
         u64 pid;
@@ -136,14 +136,14 @@ GuiSysmodule::GuiSysmodule() : Gui() {
           if (!sysmodule.second.requiresReboot) {
             pmshellTerminateProgram(tid);
           } else {
-            (new MessageBox("This sysmodule requires a reboot to fully work. \n Please restart your console in order use it.", MessageBox::OKAY))->show();
+            (new MessageBox("此系统模块需要重新启动才能完全工作。 \n 请重新启动控制台以使用它。", MessageBox::OKAY))->show();
           }
 
           remove(path.str().c_str());
         }
         else {
           if (sysmodule.second.requiresReboot) {
-            (new MessageBox("This sysmodule requires a reboot to fully work. \n Please restart your console in order use it.", MessageBox::OKAY))->show();
+            (new MessageBox("此系统模块需要重新启动才能完全工作。\n 请重新启动控制台以使用它。", MessageBox::OKAY))->show();
             FILE *fptr = fopen(path.str().c_str(), "wb+");
             if (fptr != nullptr) fclose(fptr);
           } else {
@@ -211,28 +211,28 @@ void GuiSysmodule::draw() {
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor);
   Gui::drawRectangle((u32)((Gui::g_framebuffer_width - 1220) / 2), 87, 1220, 1, currTheme.textColor);
   Gui::drawRectangle((u32)((Gui::g_framebuffer_width - 1220) / 2), Gui::g_framebuffer_height - 73, 1220, 1, currTheme.textColor);
-  Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, 20, currTheme.textColor, "\uE130    Sysmodule manager", ALIGNED_CENTER);
+  Gui::drawTextAligned(font24, Gui::g_framebuffer_width / 2, 20, currTheme.textColor, "\uE130    系统模块管理", ALIGNED_CENTER);
   // Gui::drawTextAligned(font24, 70, 58, currTheme.textColor, "        Hekate Toolbox", ALIGNED_LEFT);
 
   // if (hidMitmInstalled())
   //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 25, currTheme.textColor, "\uE0E2 Key configuration     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
   // else
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 返回     \uE0E0 确认", ALIGNED_RIGHT);
   {
     FILE *exefs = fopen(std::string(CONTENTS_PATH "0100000000001013/exefs.nsp").c_str(), "r");
     if ((exefs == nullptr) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 Make profile launch EdiZon SE", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 用配置文件启动EdiZon SE", ALIGNED_RIGHT);
     else {
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 Make profile launch profile", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 用配置文件启动配置", ALIGNED_RIGHT);
       fclose(exefs);
     }
     if (!(access("/atmosphere/config/system_settings.ini", F_OK) == 0))
-      Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Create system_settings.ini", ALIGNED_LEFT);
+      Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 生成system_settings.ini", ALIGNED_LEFT);
   }
   if (anyModulesPresent)
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "Enable as little background services (sysmodules) as possible for maximum compatibility with \n games. If you encounter problem try disable all of them to see if it helps to improve stability. \n Do not enable tesla if you are on HOS11+ when running Edizon SE.", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "启用尽可能少的后台服务（系统模块），以最大限度地与游戏兼容。如果遇到问题，请尝试禁用所有这些选项，看看是否有助于提高稳定性。\n 运行Edizon SE时，如果您在HOS11+上，请不要启用特斯拉。", ALIGNED_CENTER);
   else
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 550, currTheme.textColor, "You currently don't have any supported sysmodules installed. To use this \n feature, please install any supported sysmodule as an NSP.", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 550, currTheme.textColor, "您当前没有安装任何受支持的系统模块。若要使用此功能，\n 请将任何受支持的系统模块安装为NSP。", ALIGNED_CENTER);
     
 
   for(Button2 *btn : Button2::g_buttons)
@@ -289,7 +289,7 @@ void GuiSysmodule::onInput(u32 kdown) {
     fwrite(inst2, 1, sizeof(inst2) - 1, fp1);
     fwrite(inst3, 1, sizeof(inst3) - 1, fp1);
     fclose(fp1);
-    (new MessageBox("System_settings.ini created. \n Cheat code will be default to off and cheat enable \n will be saved when you quite the game. \n Requires a reboot to take effect. ", MessageBox::OKAY))->show();
+    (new MessageBox("System_settings.ini已创建。\n 金手指代码将默认关闭，当您退出游戏时，激活金手指将被保存。\n 需要重新启动才能生效。", MessageBox::OKAY))->show();
     // Gui::g_requestExit = true;
   }
 
