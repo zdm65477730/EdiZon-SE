@@ -230,7 +230,7 @@ void GuiSysmodule::draw() {
       Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 生成system_settings.ini", ALIGNED_LEFT);
   }
   if (anyModulesPresent)
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "启用尽可能少的后台服务（系统模块），以最大限度地与游戏兼容。如果遇到问题，请尝试禁用所有这些选项，看看是否有助于提高稳定性。\n 运行Edizon SE时，如果您在HOS11+上，请不要启用特斯拉。", ALIGNED_CENTER);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 100, currTheme.textColor, "启用尽可能少的后台服务（系统模块），以最大限度地与游戏兼容。 \n 如果遇到问题，请尝试禁用所有这些选项，看看是否有助于提高稳定性。 \n 运行Edizon SE时，如果您在HOS11+上，请不要启用特斯拉。", ALIGNED_CENTER);
   else
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, 550, currTheme.textColor, "您当前没有安装任何受支持的系统模块。若要使用此功能，\n 请将任何受支持的系统模块安装为NSP。", ALIGNED_CENTER);
     
