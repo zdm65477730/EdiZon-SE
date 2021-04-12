@@ -637,7 +637,7 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, currTheme.textColor, "\uE12C", ALIGNED_CENTER);
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, currTheme.textColor, "使用RAM编辑器前，游戏需要在后台运行。\n 请启动应用程序，然后重试。", ALIGNED_CENTER);
-    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 Back", ALIGNED_RIGHT);
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 返回", ALIGNED_RIGHT);
     Gui::endDraw();
     return;
   }
@@ -645,9 +645,9 @@ void GuiCheats::draw_easymode()
   {
     Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0EF 更新金手指  \uE0F0 检查更新  \uE0E6 上一页  \uE0E7 下一页  \uE0E0 金手指开|关  \uE0E1 退出", ALIGNED_RIGHT);
   }
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 150, currTheme.textColor, "\uE0E4 Manage sysmodules", ALIGNED_LEFT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 200, currTheme.textColor, "\uE0E6+\uE0E5 Switch to expert mode for good", ALIGNED_LEFT);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 250, currTheme.textColor, "\uE0E5 Enable expert mode until quit", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 150, currTheme.textColor, "\uE0E4 管理系统模块", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 200, currTheme.textColor, "\uE0E6+\uE0E5 切换到专家模式", ALIGNED_LEFT);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 510, Gui::g_framebuffer_height - 250, currTheme.textColor, "\uE0E5 开启专家模式直到退出", ALIGNED_LEFT);
   Gui::drawRectangle(256, 50, Gui::g_framebuffer_width - 256, 206, currTheme.separatorColor);
   // Don't draw icon
   if ((m_debugger->getRunningApplicationTID() != 0) && HAVESAVE)
@@ -981,11 +981,11 @@ void GuiCheats::draw()
     }
     s32 opcodeavailable = 1024 - opcodeused;
     ss.str("");
-    ss << "Cheat " << std::dec << (m_selectedEntry + 1) << "/" << m_cheatCnt << " ";
-    ss << "   Opcode count [ " << std::dec << m_cheats[m_selectedEntry].definition.num_opcodes << " ]";
-    ss << "   Cheat enabled [ " << std::dec << cheatcount << " ]";
-    ss << "   Opcode used [ " << std::dec << opcodeused << "/1024 ]";
-    ss << "   Opcode available [ " << std::dec << opcodeavailable << " ]";
+    ss << "金手指 " << std::dec << (m_selectedEntry + 1) << "/" << m_cheatCnt << " ";
+    ss << "   操作码的数量 [ " << std::dec << m_cheats[m_selectedEntry].definition.num_opcodes << " ]";
+    ss << "   开启的金手指 [ " << std::dec << cheatcount << " ]";
+    ss << "   已使用操作码 [ " << std::dec << opcodeused << "/1024 ]";
+    ss << "   可用的操作码 [ " << std::dec << opcodeavailable << " ]";
     if (opcodeavailable < 0)
       Gui::drawTextAligned(font14, 768, 205, currTheme.alert, ss.str().c_str(), ALIGNED_CENTER);
     else
