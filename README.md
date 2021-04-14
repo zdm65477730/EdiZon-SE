@@ -53,8 +53,20 @@ The save management and editing part of the original is mostly unmodified except
   2. Unpack the downloaded zip file, put the files on your Nintendo Switch's SD card and let the folders merge.
   3. Use a free open source CFW like [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) to launch the hbmenu and start EdiZon from there.
      1. If you want to use the cheat manager you absolutely have to use [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) as only their cheats are supported.
-     2. For the best experience, open the `/atmosphere/system_settings.ini` file and change `dmnt_cheats_enabled_by_default = u8!0x1` to `dmnt_cheats_enabled_by_default = u8!0x0`.
+     2. For the best experience, open the `/atmosphere/system_settings.ini` file and change `dmnt_cheats_enabled_by_default = u8!0x1` to `dmnt_cheats_enabled_by_default = u8!0x0`. If the file does not exist you can copy the template from /atmosphere/config_templates/system_settings.ini and change the line, remember to remove the ";" in front.
+    
+# Trouble shooting
 
+There are a few things that affects your switch environment. 
+1. Atmosphere version. All version before 3.8.17 is not compatible with atm 19.
+2. How you boot. I use fusee primary. Try using fusee primary until trouble shooting is done.
+3. Atmosphere and sept directory that has contents from previous installation. If you didn't delete these two directories before you copy over the new one there may be left over from previous installation that has problem.  
+4. SD card corruption. If you have exfat corruption is a matter of time. 
+5. Sysmodules running in the background. Sysmodules can interfere with edizon se. Use sysmodule manager in edizon se (available from 3.8.16) to disable all the sysmodules to see if that solves the problem.
+6. Deleted edizon files. You can delete everything in \switch\edizon but if you delete some and leave others depending on what you leave behind and what you deleted edizon may end up in a infinite loop looking for the some deleted stuff. To know what you can safely delete you can learn by trial and error or just delete everything and start from default.
+7. Missing /atmosphere/config/system_settings.ini. If you don't have this file cheat codes are all turn on by default and most cheat codes were not design to be all turned on at the same time. If you have no clue how to create this file sysmodule manager will offer to create it for you (available from 3.8.17) with code default to off and toggle file creation on.
+8. Bad file in /atmosphere/config/. Make sure you know what you are doing. Anything wrong here can severely affect the operation of atmosphere. 
+9. The cheat code you use. Check the cheat file you are using. Disable all cheats before you start the game. You can quickly call up edizon se while the game is still booting check that the cheats are all off. After the game boots up to where you want to use the cheats check which one may be causing the problem. You should suspect every cheat code until you have tested it throughly.  
 
 # How to compile
 
