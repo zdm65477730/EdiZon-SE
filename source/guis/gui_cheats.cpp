@@ -8653,6 +8653,8 @@ void GuiCheats::reloadcheats()
       delete m_cheats;
     if (m_cheatDelete != nullptr)
       delete m_cheatDelete;
+    m_cheats = nullptr;
+    m_cheatDelete = nullptr;
   };
   dmntchtGetCheatCount(&cheatCnt);
   if (cheatCnt > 0)
