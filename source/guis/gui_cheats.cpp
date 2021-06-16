@@ -138,7 +138,7 @@ GuiCheats::GuiCheats() : Gui()
       printf("num_modules = %x, proc_module->base_address = %lx , pid = %ld, rc = %x\n ", num_modules, proc_module->base_address, m_debugger->getRunningApplicationPID(), rc);
     metadata.main_nso_extents.base = proc_module->base_address;
     metadata.main_nso_extents.size = proc_module->size;
-    Handle proc_h;
+    Handle proc_h; 
     pmdmntAtmosphereGetProcessInfo(&proc_h, m_debugger->getRunningApplicationPID());
     rc = svcGetInfo(&metadata.heap_extents.base, InfoType_HeapRegionAddress, proc_h, 0);
     // printf("metadata.heap_extents.base = %lx rc = %x\n", metadata.heap_extents.base, rc);
@@ -8138,7 +8138,7 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
         }
         // else if (!Config::getConfig()->easymode)
         //   (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
-        else
+        else if (access(realCheatPathold.str().c_str(), F_OK) == 0)
         {
           FILE *fp1 = fopen(realCheatPath.str().c_str(), "rb");
           FILE *fp2 = fopen(realCheatPathold.str().c_str(), "rb");
@@ -8177,6 +8177,14 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
             reloadcheats();
           }
             // (new MessageBox("A new cheat has been added for this title from database. \n Please reload dmnt or restart the game.", MessageBox::OKAY))->show();
+        }
+        else {
+            if (loadcheatsfromfile())
+                (new MessageBox("A new cheat file has been added for this title. \n You can use it now.", MessageBox::OKAY))->show();
+            else
+                (new MessageBox("A new cheat file has been added for this title. \n But there is parsing error please check file for error.", MessageBox::OKAY))->show();
+            // (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+            reloadcheats();
         }
       }
       else
