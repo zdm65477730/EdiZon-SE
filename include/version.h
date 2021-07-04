@@ -1,1 +1,1 @@
-#define VERSION_STRING "3.8.19"
+#define VERSION_STRING "3.8.20"
