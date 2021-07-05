@@ -401,6 +401,7 @@ private:
   void unfreeze_candidate_entries();
   void freeze_candidate_entries();
   void write_candidate_entries();
+  void jump_to_memoryexplorer();
 
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,
