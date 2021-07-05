@@ -1,4 +1,5 @@
 #include "guis/gui_sysmodule.hpp"
+#include "unzip1.hpp"
 #include "guis/button2.hpp"
 #include "helpers/config.hpp"
 // #include "ui_elements/button.hpp"
@@ -217,15 +218,16 @@ void GuiSysmodule::draw() {
   // if (hidMitmInstalled())
   //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 25, currTheme.textColor, "\uE0E2 Key configuration     \uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
   // else
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
+  // Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E1 Back     \uE0E0 OK", ALIGNED_RIGHT);
   {
-    FILE *exefs = fopen(std::string(CONTENTS_PATH "0100000000001013/exefs.nsp").c_str(), "r");
-    if ((exefs == nullptr) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 Make profile launch EdiZon SE", ALIGNED_RIGHT);
-    else {
-      Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 Make profile launch profile", ALIGNED_RIGHT);
-      fclose(exefs);
-    }
+    // FILE *exefs = fopen(std::string(CONTENTS_PATH "0100000000001013/exefs.nsp").c_str(), "r");
+    // if ((exefs == nullptr) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
+    //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E2 Make profile launch EdiZon SE", ALIGNED_RIGHT);
+    // else {
+    //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 400, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0E3 Make profile launch profile", ALIGNED_RIGHT);
+    //   fclose(exefs);
+    // }
+    Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "Make Profile launch  \uE0E2 EdiZon SE  \uE0E3 Profile  \uE0E4 Breeze", ALIGNED_RIGHT);
     if (!(access("/atmosphere/config/system_settings.ini", F_OK) == 0))
       Gui::drawTextAligned(font20, 50, Gui::g_framebuffer_height - 51, currTheme.textColor, "\uE0F0 Create system_settings.ini", ALIGNED_LEFT);
   }
@@ -255,29 +257,34 @@ void GuiSysmodule::onInput(u32 kdown) {
     else
       Gui::g_nextGui = GUI_CHOOSE_MISSION;
   }
-  else if ((kdown & KEY_X) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == 0))
+  else if ((kdown & KEY_X) && (access("sdmc:/switch/edizon/profile.zip", F_OK) == 0))
   {
-    try
-    {
-      if (access(CONTENTS_PATH "0100000000001013/exefs.nsp", F_OK) == -1)
-        rename(CONTENTS_PATH "0100000000001013/exefs.nsp1", CONTENTS_PATH "0100000000001013/exefs.nsp");
-    }
-    catch (json::parse_error &e)
-    {
-    }
+    // try
+    // {
+    //   if (access(CONTENTS_PATH "0100000000001013/exefs.nsp", F_OK) == -1)
+    //     rename(CONTENTS_PATH "0100000000001013/exefs.nsp1", CONTENTS_PATH "0100000000001013/exefs.nsp");
+    // }
+    // catch (json::parse_error &e)
+    // {
+    // }
+    inst::zip::extractFile("sdmc:/switch/edizon/profile.zip", "sdmc:/");
+    (new Snackbar("Profile set to launch EdiZon SE"))->show();
   }
   else if ((kdown & KEY_Y) && (access(CONTENTS_PATH "0100000000001013/exefs.nsp", F_OK) == 0))
   {
     try
     {
-      if (access(CONTENTS_PATH "0100000000001013/exefs.nsp1", F_OK) == -1)
-        rename(CONTENTS_PATH "0100000000001013/exefs.nsp", CONTENTS_PATH "0100000000001013/exefs.nsp1");
-      else
         remove(CONTENTS_PATH "0100000000001013/exefs.nsp");
     }
     catch (json::parse_error &e)
     {
     }
+    (new Snackbar("Profile set to launch Profile"))->show();
+  }
+  else if ((kdown & KEY_L) && (access("sdmc:/switch/breeze/profile.zip", F_OK) == 0))
+  {
+    inst::zip::extractFile("sdmc:/switch/breeze/profile.zip", "sdmc:/");
+    (new Snackbar("Profile set to launch Breeze"))->show();
   }
   else if ((kdown & KEY_MINUS) && (!(access("/atmosphere/config/system_settings.ini", F_OK) == 0)))
   {
