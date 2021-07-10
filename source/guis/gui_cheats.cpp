@@ -8205,10 +8205,10 @@ void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
         }
         else {
             if (loadcheatsfromfile())
-                (new MessageBox("A new cheat file has been added for this title. \n You can use it now.", MessageBox::OKAY))->show();
+                (new MessageBox("此游戏已添加了新的金手指。\n 您可以即刻使用。", MessageBox::OKAY))->show();
             else
-                (new MessageBox("A new cheat file has been added for this title. \n But there is parsing error please check file for error.", MessageBox::OKAY))->show();
-            // (new MessageBox("A new cheat has been added for this title. \n Please restart the game to start using it.", MessageBox::OKAY))->show();
+                (new MessageBox("此游戏已添加了新的金手指。\n 但是存在解析错误，请检查文件错误。", MessageBox::OKAY))->show();
+            // (new MessageBox("此游戏已添加了新的金手指。\n 请重启游戏来使用金手指。", MessageBox::OKAY))->show();
             reloadcheats();
         }
       }
