@@ -74,7 +74,7 @@ static bool _wrongCheatsPresent(u8 *buildID, u64 titleID);
 static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2);
 static bool comparefromto(fromto_t e1, fromto_t e2);
 static bool comparefromtoP(fromtoP_t e1, fromtoP_t e2);
-
+u32 kheld;
 GuiCheats::GuiCheats() : Gui()
 {
   if (Config::getConfig()->deletebookmark)
@@ -814,8 +814,13 @@ void GuiCheats::draw()
     {
       if (m_memoryDump->size() > 0)
       {
+        if (kheld & KEY_R) {
+        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "R摇杆 \uE143 增加1000 \uE145 冻结100 \uE146 解除冻结100 \uE144 跳转到内存管理器", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "L摇杆 \uE090 设置值1000", ALIGNED_RIGHT);
+      } else {
         Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 调试器解附加  \uE0E4 书签切换 \uE0E5 十六进制模式  \uE0EF 书签添加 \uE0F0 重置搜索 \uE0E3 重新搜索 \uE0E2 锁定值  \uE0E0 编辑值   \uE0E1 退出", ALIGNED_RIGHT);
         Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E4 \uE0E6+\uE0E5 类型  \uE0E5+\uE0E1 在下次启动时显示选项 \uE0E6+\uE0E2 准备指针搜索  \uE0E6+\uE0E7 上一页  \uE0E7 下一页  \uE105 内存编辑器", ALIGNED_RIGHT);
+      };
       }
       else
         Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0F0 重置搜索     \uE0E1 退出", ALIGNED_RIGHT);
@@ -994,7 +999,7 @@ void GuiCheats::draw()
   else
   {
       static const char *const regionNames[] = {"堆", "主存储", "堆 + 主存储", "内存", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "A,B", "  "};
       ss.str("");
       ss << "搜索类型 [ " << dataTypes[m_searchType] << " ]";
       ss << "   搜索模式 [ " << modeNames[m_searchMode] << " ]";
@@ -1732,7 +1737,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 2)
     {
-      static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "  ","~指针"};
+      static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "A,B", "  ", "~指针"};
       // if (M_ENTRY.type != SEARCH_TYPE_POINTER)
       Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
     }
@@ -2038,6 +2043,7 @@ void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t
         case SEARCH_MODE_INC:
         case SEARCH_MODE_DEC:
         case SEARCH_MODE_NOT_POINTER:
+        case SEARCH_MODE_TWO_VALUES:
           printf("search mode non !");
           break;
         }
@@ -3010,7 +3016,7 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
   {
       static const char *const regionNames[] = {"堆", "主存储", "堆 + 主存储", "内存", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "A,B", "  "};
       ss.str("");
       if (m_memoryDump1 != nullptr)
         ss << "\uE132   搜索书签";
@@ -3034,8 +3040,8 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawTextAligned(font20, 1010, 160, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "值", ALIGNED_CENTER);
 
   static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "void*"};
-  static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针"};
-  static const char *const modeNames1[] = {"==", "!=", ">", "状态A", "<", "", "A..B", "", "未知", "?+", "?-", "指针"};
+  static const char *const modeNames[] = {"==", "!=", ">", "状态B", "<", "状态A", "A..B", "相同", "不同", "++", "--", "指针", "A,B"};
+  static const char *const modeNames1[] = {"==", "!=", ">", "状态A", "<", "", "A..B", "", "未知", "?+", "?-", "指针", "A,B"};
   static const char *const regionNames[] = {"堆", "主存储", "堆 + 主存储", "内存"};
 
   switch (m_searchMenuLocation) // search menu
@@ -3152,7 +3158,7 @@ void GuiCheats::drawSearchRAMMenu()
       if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 0))
         Gui::drawRectangled(312 + strWidth, 285, 3, 35, currTheme.highlightColor);
 
-      if (m_searchMode == SEARCH_MODE_RANGE || (m_use_range && (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)) )
+      if (m_searchMode == SEARCH_MODE_RANGE || m_searchMode == SEARCH_MODE_TWO_VALUES || (m_use_range && (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)) )
       {
         ss.str("");
         if (m_searchValueFormat == FORMAT_DEC)
@@ -3401,7 +3407,7 @@ void GuiCheats::pickjump_input(u32 kdown, u32 kheld)
 // WIP ***************
 void GuiCheats::onInput(u32 kdown)
 {
-  u32 kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
+  kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
   if (m_searchMenuLocation == SEARCH_editRAM2)
   {
     editor_input(kdown, kheld);
@@ -3762,1807 +3768,1517 @@ void GuiCheats::onInput(u32 kdown)
   }
 
 
-  if (m_searchMenuLocation == SEARCH_NONE)
-  {
-    if (kdown & KEY_UP)
-    {
-      if (m_selectedEntry > 0)
-        m_selectedEntry--;
+  if (m_searchMenuLocation == SEARCH_NONE) {
+      if (kdown & KEY_UP) {
+          if (m_selectedEntry > 0)
+              m_selectedEntry--;
 
-      if (m_menuLocation == CHEATS)
-        if (m_selectedEntry+1 == cheatListOffset && cheatListOffset > 0)
-          cheatListOffset-=8;
-    }
-
-    if (kdown & KEY_DOWN) //
-    {
-      if (m_menuLocation == CANDIDATES)
-      {
-        if (m_selectedEntry < 7 && m_selectedEntry + m_addresslist_offset < ((m_memoryDump->size() / sizeof(u64)) - 1))
-          m_selectedEntry++;
+          if (m_menuLocation == CHEATS)
+              if (m_selectedEntry + 1 == cheatListOffset && cheatListOffset > 0)
+                  cheatListOffset -= 8;
       }
-      else
+
+      if (kdown & KEY_DOWN)  //
       {
-        if (m_selectedEntry < (m_cheatCnt - 1))
-          m_selectedEntry++;
+          if (m_menuLocation == CANDIDATES) {
+              if (m_selectedEntry < 7 && m_selectedEntry + m_addresslist_offset < ((m_memoryDump->size() / sizeof(u64)) - 1))
+                  m_selectedEntry++;
+          } else {
+              if (m_selectedEntry < (m_cheatCnt - 1))
+                  m_selectedEntry++;
 
-        if (m_selectedEntry == (cheatListOffset + 8) && cheatListOffset < (m_cheatCnt - 8))
-          cheatListOffset+=8;
-      }
-    }
-    // start mod
-    if ((kdown & KEY_RSTICK) && m_menuLocation == CHEATS && !(kheld & KEY_ZL))
-    {
-      m_editCheat = true;
-      while ((hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD)) != 0)
-      {
-        hidScanInput();
-      }
-    }
-    if ((kdown & KEY_RSTICK) && m_menuLocation == CHEATS && (kheld & KEY_ZL))
-    { // remove condition key
-      if ((m_cheats[m_selectedEntry].definition.opcodes[0] & 0xF0000000) == 0x80000000 && (m_cheats[m_selectedEntry].definition.opcodes[m_cheats[m_selectedEntry].definition.num_opcodes - 1] & 0xF0000000) == 0x20000000)
-      {
-        for (u32 i = 0; i < m_cheats[m_selectedEntry].definition.num_opcodes - 1; i++)
-        {
-          m_cheats[m_selectedEntry].definition.opcodes[i] = m_cheats[m_selectedEntry].definition.opcodes[i + 1];
-        }
-        m_cheats[m_selectedEntry].definition.num_opcodes -= 2;
-      }
-      // insert cheat
-      for (u32 i = m_selectedEntry; i < m_cheatCnt; i++)
-      {
-        dmntchtRemoveCheat(m_cheats[i].cheat_id);
-      }
-      for (u32 i = m_selectedEntry; i < m_cheatCnt; i++)
-      {
-        u32 outid;
-        dmntchtAddCheat(&(m_cheats[i].definition), m_cheats[i].enabled, &outid);
-      }
-    }
-    if ((kdown & KEY_LSTICK) && m_menuLocation == CHEATS && !(kheld & KEY_ZL))
-    {
-      // Edit cheats
-      // WIP
-      // if (m_cheats[m_selectedEntry].definition.opcodes[0])
-
-      for (u64 i = 0; i < m_cheatCnt; i++)
-        if (m_cheatDelete[i])
-        {
-          m_cheatDelete[i] = false;
-          dmntchtRemoveCheat(m_cheats[i].cheat_id);
-        }
-      reloadcheats();
-
-      // m_menuLocation = CANDIDATES;
-      // m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
-      // m_searchMode = SEARCH_MODE_POINTER;
-      // m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
-      // m_searchMenuLocation = SEARCH_VALUE;
-      // m_selectedEntry = 1;
-      // m_searchValue[0]._u64 = 0x1000000000;
-      // m_searchValue[1]._u64 = 0x8000000000;
-    }
-    if ((kdown & KEY_X) && (kheld & KEY_ZL))
-    {
-      m_menuLocation = CANDIDATES;
-      m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
-      m_searchMode = SEARCH_MODE_POINTER;
-      m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
-      m_searchMenuLocation = SEARCH_VALUE;
-      m_selectedEntry = 1;
-      m_searchValue[0]._u64 = 0x1000000000;
-      m_searchValue[1]._u64 = 0x8000000000;
-      Config::getConfig()->exclude_ptr_candidates = false;
-    }
-    if ((kdown & KEY_LSTICK) && m_menuLocation == CHEATS && (kheld & KEY_ZL))
-    {
-      dumpcodetofile();
-      (new Snackbar("将更改写入文件"))->show();
-    }
-
-    if ((kdown & KEY_PLUS) && m_menuLocation == CHEATS && (m_cheatCnt > 0) && (m_memoryDump1 != nullptr) && !(kheld & KEY_ZL))
-    {
-      // printf("start adding cheat to bookmark\n");
-      // m_cheatCnt
-      DmntCheatDefinition cheat = m_cheats[m_selectedEntry].definition;
-      //bookmark_t bookmark;
-      memcpy(&bookmark.label, &cheat.readable_name, sizeof(bookmark.label));
-      bookmark.pointer.depth = 0;
-      bookmark.deleted = false;
-      bool success = false;
-      u64 offset[MAX_POINTER_DEPTH + 1] = {0};
-      u64 depth = 0;
-      u64 address;
-      bool no7 = true;
-
-      for (u8 i = 0; i < cheat.num_opcodes; i++)
-      {
-        u8 opcode = (cheat.opcodes[i] >> 28) & 0xF;
-        u8 Register = (cheat.opcodes[i] >> 16) & 0xF;
-        u8 FSA = (cheat.opcodes[i] >> 12) & 0xF;
-        u8 T = (cheat.opcodes[i] >> 24) & 0xF;
-        u8 M = (cheat.opcodes[i] >> 20) & 0xF;
-        u8 A = cheat.opcodes[i] & 0xFF;
-
-        printf("code %x opcode %d register %d FSA %d %x \n", cheat.opcodes[i], opcode, Register, FSA, cheat.opcodes[i + 1]);
-
-        if (depth > MAX_POINTER_DEPTH)
-        {
-          (new Snackbar("此代码大于书签上提供的空间！"))->show();
-          printf("!!!!!!!!!!!!!!!!!!!!!!!this code is bigger than space catered on the bookmark !! \n");
-          break;
-        }
-
-        if (opcode == 0)
-        { //static case
-          i++;
-          bookmark.offset = cheat.opcodes[i] + A * 0x100000000;
-          switch (T)
-          {
-          case 1:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_8BIT;
-            i++;
-            break;
-          case 2:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_16BIT;
-            i++;
-            break;
-          case 4:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
-            i++;
-            break;
-          case 8:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_64BIT;
-            i += 2;
-            break;
-          default:
-            printf("cheat code processing error, wrong width value\n");
-            bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
-            i++;
-            break;
-          };
-          if (M != 0)
-          {
-            bookmark.heap = true;
-            address = m_heapBaseAddr + bookmark.offset;
+              if (m_selectedEntry == (cheatListOffset + 8) && cheatListOffset < (m_cheatCnt - 8))
+                  cheatListOffset += 8;
           }
-          else
-          {
-            bookmark.heap = false;
-            address = m_mainBaseAddr + bookmark.offset;
+      }
+      // start mod
+      if ((kdown & KEY_RSTICK) && m_menuLocation == CHEATS && !(kheld & KEY_ZL)) {
+          m_editCheat = true;
+          while ((hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD)) != 0) {
+              hidScanInput();
           }
+      }
+      if ((kdown & KEY_RSTICK) && m_menuLocation == CHEATS && (kheld & KEY_ZL)) {  // remove condition key
+          if ((m_cheats[m_selectedEntry].definition.opcodes[0] & 0xF0000000) == 0x80000000 && (m_cheats[m_selectedEntry].definition.opcodes[m_cheats[m_selectedEntry].definition.num_opcodes - 1] & 0xF0000000) == 0x20000000) {
+              for (u32 i = 0; i < m_cheats[m_selectedEntry].definition.num_opcodes - 1; i++) {
+                  m_cheats[m_selectedEntry].definition.opcodes[i] = m_cheats[m_selectedEntry].definition.opcodes[i + 1];
+              }
+              m_cheats[m_selectedEntry].definition.num_opcodes -= 2;
+          }
+          // insert cheat
+          for (u32 i = m_selectedEntry; i < m_cheatCnt; i++) {
+              dmntchtRemoveCheat(m_cheats[i].cheat_id);
+          }
+          for (u32 i = m_selectedEntry; i < m_cheatCnt; i++) {
+              u32 outid;
+              dmntchtAddCheat(&(m_cheats[i].definition), m_cheats[i].enabled, &outid);
+          }
+      }
+      if ((kdown & KEY_LSTICK) && m_menuLocation == CHEATS && !(kheld & KEY_ZL)) {
+          // Edit cheats
+          // WIP
+          // if (m_cheats[m_selectedEntry].definition.opcodes[0])
 
-          m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
-          m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-          break;
-        }
-        if (depth == 0)
-        {
-          if (opcode == 5 && FSA == 0)
-          {
-            i++;
-            if (M == 0)
-              offset[depth] = cheat.opcodes[i];
-            else
-              offset[depth] = m_heapBaseAddr - m_mainBaseAddr + cheat.opcodes[i];
-            depth++;
-          }
-          continue;
-        }
-        if (opcode == 5 && FSA == 1)
-        {
-          i++;
-          offset[depth] = cheat.opcodes[i];
-          depth++;
-          continue;
-        }
-        if (opcode == 7 && FSA == 0)
-        {
-          i++;
-          offset[depth] = cheat.opcodes[i];
-          // success = true;
-          no7 = false;
-          continue;
-          // break;
-        }
-        if (opcode == 6)
-        {
-          if (no7)
-          {
-            offset[depth] = 0;
-          }
-          switch (T)
-          {
-          case 1:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_8BIT;
-            break;
-          case 2:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_16BIT;
-            break;
-          case 4:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
-            break;
-          case 8:
-            bookmark.type = SEARCH_TYPE_UNSIGNED_64BIT;
-            break;
-          default:
-            printf("cheat code processing error, wrong width value\n");
-            bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
-            break;
-          }
-          success = true;
-          break;
-        }
+          for (u64 i = 0; i < m_cheatCnt; i++)
+              if (m_cheatDelete[i]) {
+                  m_cheatDelete[i] = false;
+                  dmntchtRemoveCheat(m_cheats[i].cheat_id);
+              }
+          reloadcheats();
+
+          // m_menuLocation = CANDIDATES;
+          // m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+          // m_searchMode = SEARCH_MODE_POINTER;
+          // m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+          // m_searchMenuLocation = SEARCH_VALUE;
+          // m_selectedEntry = 1;
+          // m_searchValue[0]._u64 = 0x1000000000;
+          // m_searchValue[1]._u64 = 0x8000000000;
+      }
+      // shortcuts
+      if ((kdown & KEY_RSTICK_UP) && (kheld & KEY_R)) {
+          inc_candidate_entries();
+          return;
+      }
+      if ((kdown & KEY_RSTICK_LEFT) && (kheld & KEY_R)) {
+          freeze_candidate_entries();
+          return;
+      }
+      if ((kdown & KEY_RSTICK_RIGHT) && (kheld & KEY_R)) {
+          unfreeze_candidate_entries();
+          return;
+      }
+      if ((kdown & KEY_LSTICK_RIGHT) && (kheld & KEY_R)) {
+          write_candidate_entries();
+          return;
+      }
+      if ((kdown & KEY_RSTICK_DOWN) && (kheld & KEY_R)) {
+          jump_to_memoryexplorer();
+          return;
+      }
+      if ((kdown & KEY_X) && (kheld & KEY_ZL)) {
+          m_menuLocation = CANDIDATES;
+          m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+          m_searchMode = SEARCH_MODE_POINTER;
+          m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+          m_searchMenuLocation = SEARCH_VALUE;
+          m_selectedEntry = 1;
+          m_searchValue[0]._u64 = 0x1000000000;
+          m_searchValue[1]._u64 = 0x8000000000;
+          Config::getConfig()->exclude_ptr_candidates = false;
+      }
+      if ((kdown & KEY_LSTICK) && m_menuLocation == CHEATS && (kheld & KEY_ZL)) {
+          dumpcodetofile();
+          (new Snackbar("Writing change to file"))->show();
       }
 
-      if (success)
-      {
-        // compute address
-        printf("success ! \n");
-        bookmark.pointer.depth = depth;
-        u64 nextaddress = m_mainBaseAddr;
-        printf("main[%lx]", nextaddress);
-        u8 i = 0;
-        for (int z = depth; z >= 0; z--)
-        {
-          // bookmark_t bm;
-          bookmark.pointer.offset[z] = offset[i];
-          printf("+%lx z=%d ", bookmark.pointer.offset[z], z);
-          nextaddress += bookmark.pointer.offset[z];
-          printf("[%lx]", nextaddress);
-          // m_memoryDumpBookmark->addData((u8 *)&nextaddress, sizeof(u64));
-          // m_AttributeDumpBookmark->addData((u8 *)&bm, sizeof(bookmark_t));
-          MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
-          if (meminfo.perm == Perm_Rw)
-          {
-            address = nextaddress;
-            if (m_32bitmode)
-              m_debugger->readMemory(&nextaddress, sizeof(u32), nextaddress);
-            else
-              m_debugger->readMemory(&nextaddress, sizeof(u64), nextaddress);
-          }
-          else
-          {
-            printf("*access denied*\n");
-            success = false;
-            // break;
-          }
-          printf("(%lx)", nextaddress);
-          i++;
-        }
-        printf("\n");
-      }
-      if (success)
-      {
-        m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
-        m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-        (new Snackbar("将金手指中的指针链添加到书签"))->show();
-      }
-      else
-      {
-        if (bookmark.pointer.depth > 2) // depth of 2 means only one pointer hit high chance of wrong positive
-        {
-          (new MessageBox("提取的指针链在当前内存状态下无效\n \n 如果游戏处于正确状态\n \n 您想尝试重新建立指针链吗？", MessageBox::YES_NO))
-              ->setSelectionAction([&](u8 selection) {
-                if (selection)
-                {
-                  searchValue_t value;
-                  while (!getinput("输入此存储器中的值", "您必须知道值的类型，然后在搜索存储类型设置中正确设置它", "", &value))
-                  {
+      if ((kdown & KEY_PLUS) && m_menuLocation == CHEATS && (m_cheatCnt > 0) && (m_memoryDump1 != nullptr) && !(kheld & KEY_ZL)) {
+          // printf("start adding cheat to bookmark\n");
+          // m_cheatCnt
+          DmntCheatDefinition cheat = m_cheats[m_selectedEntry].definition;
+          //bookmark_t bookmark;
+          memcpy(&bookmark.label, &cheat.readable_name, sizeof(bookmark.label));
+          bookmark.pointer.depth = 0;
+          bookmark.deleted = false;
+          bool success = false;
+          u64 offset[MAX_POINTER_DEPTH + 1] = {0};
+          u64 depth = 0;
+          u64 address;
+          bool no7 = true;
+
+          for (u8 i = 0; i < cheat.num_opcodes; i++) {
+              u8 opcode = (cheat.opcodes[i] >> 28) & 0xF;
+              u8 Register = (cheat.opcodes[i] >> 16) & 0xF;
+              u8 FSA = (cheat.opcodes[i] >> 12) & 0xF;
+              u8 T = (cheat.opcodes[i] >> 24) & 0xF;
+              u8 M = (cheat.opcodes[i] >> 20) & 0xF;
+              u8 A = cheat.opcodes[i] & 0xFF;
+
+              printf("code %x opcode %d register %d FSA %d %x \n", cheat.opcodes[i], opcode, Register, FSA, cheat.opcodes[i + 1]);
+
+              if (depth > MAX_POINTER_DEPTH) {
+                  (new Snackbar("该指令比书签上的空间大！！"))->show();
+                  printf("!!!!!!!!!!!!!!!!!!!!!!!this code is bigger than space catered on the bookmark !! \n");
+                  break;
+              }
+
+              if (opcode == 0) {  //static case
+                  i++;
+                  bookmark.offset = cheat.opcodes[i] + A * 0x100000000;
+                  switch (T) {
+                      case 1:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_8BIT;
+                          i++;
+                          break;
+                      case 2:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_16BIT;
+                          i++;
+                          break;
+                      case 4:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
+                          i++;
+                          break;
+                      case 8:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_64BIT;
+                          i += 2;
+                          break;
+                      default:
+                          printf("cheat code processing error, wrong width value\n");
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
+                          i++;
+                          break;
+                  };
+                  if (M != 0) {
+                      bookmark.heap = true;
+                      address = m_heapBaseAddr + bookmark.offset;
+                  } else {
+                      bookmark.heap = false;
+                      address = m_mainBaseAddr + bookmark.offset;
                   }
-                  printf("value = %ld\n", value._u64);
-                  rebasepointer(value); //bookmark);
-                }
-                else
-                {
-                  // add broken pointer chain for reference
+
                   m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
                   m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-                }
-                Gui::g_currMessageBox->hide();
-              })
-              ->show();
-        }
-        else
-          (new Snackbar("无法从金手指中提取指针链"))->show();
-      }
-
-      // pointercheck(); //disable for now;
-    }
-    // end mod
-
-    if ((kdown & KEY_LEFT) && (m_menuLocation == CANDIDATES) && (m_cheatCnt > 0))
-    {
-      m_menuLocation = CHEATS;
-      if (m_memoryDump1 == nullptr)
-      {
-        m_selectedEntrySaveSR = m_selectedEntry;
-        m_addresslist_offsetSaveSR = m_addresslist_offset;
-      }
-      else
-      {
-        m_selectedEntrySaveBM = m_selectedEntry;
-        m_addresslist_offsetSaveBM = m_addresslist_offset;
-      }
-
-      m_selectedEntry = m_selectedEntrySaveCL;
-      // cheatListOffset = 0;
-    }
-    if ((kdown & KEY_RIGHT) && (m_menuLocation == CHEATS) && (m_memoryDump->size() > 0))
-    {
-      m_selectedEntrySaveCL = m_selectedEntry;
-      m_menuLocation = CANDIDATES;
-      if (m_memoryDump1 == nullptr)
-      {
-        m_selectedEntry = m_selectedEntrySaveSR;
-        m_addresslist_offset = m_addresslist_offsetSaveSR;
-      }
-      else
-      {
-        m_selectedEntry = m_selectedEntrySaveBM;
-        m_addresslist_offset = m_addresslist_offsetSaveBM;
-      }
-
-      // m_selectedEntry = 0;
-      // cheatListOffset = 0;
-    }
-
-    if (m_menuLocation == CANDIDATES)
-    { /* Candidates menu */
-      if (m_memoryDump->size() > 0)
-      {
-        if (kdown & KEY_X && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR && !(kheld & KEY_ZL))
-        {
-          if (!(m_debugger->m_dmnt))
-          {
-            m_debugger->detatch();
-            dmntchtForceOpenCheatProcess();
-            printf("force open called\n");
-          }
-          u64 address = 0;
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
-
-          if (!_isAddressFrozen(address))
-          {
-            u64 outValue;
-            if (m_memoryDump1 == nullptr)
-            {
-              if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[m_searchType], &outValue)))
-              {
-                (new Snackbar("变量锁定！"))->show();
-                m_frozenAddresses.insert({address, outValue});
-              }
-              else
-                (new Snackbar("变量锁定失败！"))->show();
-            }
-            else
-            {
-              bookmark_t bookmark;
-              m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-              if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[bookmark.type], &outValue)))
-              {
-                (new Snackbar("变量锁定！"))->show();
-                m_frozenAddresses.insert({address, outValue});
-              }
-              else
-                (new Snackbar("变量锁定失败！"))->show();
-            }
-          }
-          else
-          {
-            if (R_SUCCEEDED(dmntchtDisableFrozenAddress(address)))
-            {
-              (new Snackbar("变量解除锁定！"))->show();
-              m_frozenAddresses.erase(address);
-            }
-            else
-              (new Snackbar("变量解除锁定失败！"))->show();
-          }
-        }
-        // add bookmark
-        if ((kdown & KEY_PLUS) && (kheld & KEY_ZL))
-        {
-          if (m_memoryDump1 != nullptr)
-          {
-            m_memoryDump = m_memoryDump1;
-            m_memoryDump1 = nullptr;
-
-            updatebookmark(true, true, false);
-
-            m_memoryDump1 = m_memoryDump;
-            m_memoryDump = m_memoryDumpBookmark;
-
-            if (m_memoryDump->size() > 0)
-            {
-              if (m_memoryDump->size() / sizeof(u64) - 1 < m_selectedEntry)
-                m_selectedEntry = m_memoryDump->size() / sizeof(u64) - 1;
-            }
-            else
-            {
-              m_menuLocation = CHEATS;
-              m_selectedEntry = 0;
-            };
-          }
-        }
-
-        if (kdown & KEY_PLUS && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR && !(kheld & KEY_ZL))
-        {
-          if (m_memoryDump1 != nullptr)
-          { //Bookmark case
-            bookmark_t bookmark;
-            m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-            if (Gui::requestKeyboardInput("输入标签名", "输入标签名以添加到书签。", bookmark.label, SwkbdType_QWERTY, bookmark.label, 18))
-              m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-          }
-          else
-          {
-            u64 address = 0;
-            m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
-
-            bookmark_t bookmark;
-            bookmark.type = m_searchType;
-            Gui::requestKeyboardInput("输入标签名", "输入标签名以添加到书签。", "", SwkbdType_QWERTY, bookmark.label, 18);
-
-            if (address >= m_heapBaseAddr && address < m_heapEnd)
-            {
-              bookmark.offset = address - m_heapBaseAddr;
-              bookmark.heap = true;
-            }
-            else if (address >= m_mainBaseAddr && address < m_mainend)
-            {
-              bookmark.offset = address - m_mainBaseAddr;
-              bookmark.heap = false;
-            }
-
-            m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-            m_AttributeDumpBookmark->flushBuffer();
-
-            m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
-            m_memoryDumpBookmark->flushBuffer();
-            MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
-            BMDump->addData((u8 *)&bookmark.label, 18);
-            BMDump->addData((u8 *)&address, sizeof(u64));
-            delete BMDump;
-            (new Snackbar("地址已添加到书签！"))->show(); // prompt for label
-            printf("%s\n", "PLUS key pressed2");
-          }
-        }
-        // add bookmark end
-        // show memory editor
-
-        if (kdown & KEY_RSTICK && (kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
-        {
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
-          m_BookmarkAddr = m_EditorBaseAddr;
-          m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-          m_searchMenuLocation = SEARCH_editRAM;
-          m_selectedEntrySave = m_selectedEntry;
-          m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
-        }
-        if (kdown & KEY_RSTICK && !(kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
-        {
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
-          m_BookmarkAddr = m_EditorBaseAddr;
-          if (m_memoryDump1 != nullptr)
-            m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-          else
-            m_bookmark.pointer.depth = 0;
-          m_searchMenuLocation = SEARCH_editRAM2;
-          m_selectedEntrySave = m_selectedEntry;
-          m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
-          m_addressmod = m_EditorBaseAddr % 4;
-          if (m_addressmod % dataTypeSizes[m_searchType] != 0)
-            m_addressmod = 0;
-          m_z = 0;
-          m_bookmark.heap = false;
-          if (m_memoryDump1 != nullptr)
-          {
-            m_searchType = m_bookmark.type;
-            // populate stack if on pointer
-            if (m_bookmark.pointer.depth > 0)
-            {
-              u64 nextaddress = m_mainBaseAddr;
-              for (int z = m_bookmark.pointer.depth; z > 0; z--)
-              {
-                nextaddress += m_bookmark.pointer.offset[z];
-                m_jump_stack[z].from = nextaddress;
-                MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
-                if (meminfo.perm == Perm_Rw)
-                  m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
-                else
-                {
-                  m_z = z ;
                   break;
-                }
-                m_jump_stack[z].to = nextaddress;
-                m_z = z - 1;
               }
-            }
-            //ME3 data init for memory explorer
-          }
-          printf("bookmarkdepth =%ld m_z=%d\n", m_bookmark.pointer.depth, m_z);
-        }
-
-        if ((kdown & KEY_LSTICK) && (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) && (m_memoryDump1 != nullptr))
-        {
-          printf("\nstart scan range select ....................\n");
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
-          MemoryInfo meminfo = {0};
-          u64 t_start = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
-          u64 t_end = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
-          if (t_end > m_heapEnd && m_heapEnd != 0)
-            t_end = m_heapEnd;
-          meminfo = m_debugger->queryMemory(t_start);
-          u64 seg_endp = meminfo.addr + meminfo.size;
-          meminfo.addr = t_start;
-          if (seg_endp > t_end)
-            meminfo.size = t_end - t_start;
-          else
-            meminfo.size = seg_endp - t_start;
-          m_targetmemInfos.clear();
-          m_targetmemInfos.push_back(meminfo);
-          while (seg_endp < t_end)
-          {
-            meminfo = m_debugger->queryMemory(seg_endp);
-            seg_endp = meminfo.addr + meminfo.size;
-            if (seg_endp > t_end)
-              meminfo.size = t_end - meminfo.addr ;
-            m_targetmemInfos.push_back(meminfo);
-          }
-          save_meminfos();
-          // MemoryDump *scaninfo = new MemoryDump((m_edizon_dir + "/scaninfo.dat").c_str(), DumpType::UNDEFINED, true);
-          // scaninfo->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
-          // for (MemoryInfo meminfo : m_targetmemInfos)
-          // {
-          //   scaninfo->addData((u8 *)&meminfo, sizeof(meminfo));
-          // }
-          // scaninfo->flushBuffer();
-          // delete scaninfo;
-
-          // m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-          // m_abort = false;
-          // m_Time1 = time(NULL);
-          // m_searchValue[0]._u64 = m_EditorBaseAddr - 0x800;
-          // m_searchValue[1]._u64 = m_EditorBaseAddr;
-          // if (m_pointersearch_canresume)
-          //   resumepointersearch2();
-          // else
-          //   startpointersearch2(m_EditorBaseAddr);
-          // printf("done pointer search \n");
-          // printf("Time taken =%ld\n", time(NULL) - m_Time1);
-        }
-        // end
-        if ((kdown & KEY_A) && (kheld & KEY_ZL))
-        {
-          if (m_memoryDump1 != nullptr)
-          { // in bookmark mode
-            m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
-            // m_searchMenuLocation = SEARCH_POINTER;
-            // m_showpointermenu = true;
-            if (m_menuLocation == CANDIDATES && m_memoryDumpBookmark->size() != 0)
-            {
-              if (!(m_debugger->m_dmnt))
-              {
-                m_debugger->detatch();
-                dmntchtForceOpenCheatProcess();
-                printf("force open called\n");
-              }
-              bookmark_t bookmark;
-              m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-              // printf("m_selectedEntry + m_addresslist_offset %ld\n", m_selectedEntry + m_addresslist_offset);
-              // u64 index = m_selectedEntry + m_addresslist_offset;
-              if (bookmark.pointer.depth > 0)
-              {
-                addcodetofile(m_selectedEntry + m_addresslist_offset);
-              }
-              else
-              {
-                addstaticcodetofile(m_selectedEntry + m_addresslist_offset);
-              }
-              m_searchMenuLocation = SEARCH_NONE;
-              (new Snackbar("代码已添加到金手指文件，重新加载才能生效"))->show();
-            }
-            // pointercheck();
-            // (new Snackbar("Searching pointer "))->show();
-          }
-        }
-        else if (kdown & KEY_A && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
-        {
-          searchType_t savetype = m_searchType;
-          if (m_memoryDump1 != nullptr)
-          {
-            bookmark_t bookmark;
-            m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-            m_searchType = bookmark.type;
-          }
-
-          u64 address = 0;
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
-
-          if (m_selectedEntry < 8)
-          {
-            char input[19];
-            char initialString[21];
-            // start mod address content edit Hex option
-
-            //
-            strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
-            if (Gui::requestKeyboardInput("输入值", "输入一个应该在此写入的值。", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18))
-            {
-              if (m_searchValueFormat == FORMAT_HEX)
-              {
-                auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
-                m_debugger->writeMemory(&value, sizeof(value), address);
-              }
-              else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
-              {
-                auto value = static_cast<float>(std::atof(input));
-                m_debugger->writeMemory(&value, sizeof(value), address);
-              }
-              else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT)
-              {
-                auto value = std::atof(input);
-                m_debugger->writeMemory(&value, sizeof(value), address);
-              }
-              else if (m_searchType != SEARCH_TYPE_NONE)
-              {
-                auto value = std::atol(input);
-                m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
-              }
-            }
-          }
-          else if ((m_memoryDump->size() / sizeof(u64)) < 25)
-          {
-            std::vector<std::string> options;
-            options.clear();
-
-            std::stringstream ss;
-            for (u32 i = 7; i < (m_memoryDump->size() / sizeof(u64)); i++)
-            { //TODO: i?
-              m_memoryDump->getData(m_selectedEntry * sizeof(u64), &address, sizeof(u64));
-              ss.str("");
-              ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << address;
-
-              ss << " (" << _getAddressDisplayString(address, m_debugger, m_searchType);
-
-              options.push_back(ss.str());
-              printf("%s\n", ss.str().c_str());
-            }
-
-            (new ListSelector("编辑的值位于 ", "\uE0E0 编辑值     \uE0E1 返回", options))->setInputAction([&](u32 k, u16 selectedItem) {
-                                                                                                if (k & KEY_A)
-                                                                                                {
-                                                                                                  char input[16];
-                                                                                                  char initialString[21];
-                                                                                                  u64 selectedAddress;
-
-                                                                                                  m_memoryDump->getData((selectedItem + 7) * sizeof(u64), &selectedAddress, sizeof(u64));
-
-                                                                                                  strcpy(initialString, _getAddressDisplayString(selectedAddress, m_debugger, m_searchType).c_str());
-
-                                                                                                  if (Gui::requestKeyboardInput("输入值", "输入一个值，该值应用于搜索游戏的内存。", initialString, SwkbdType::SwkbdType_NumPad, input, 15))
-                                                                                                  {
-                                                                                                    u64 value = atol(input);
-                                                                                                    if (value > dataTypeMaxValues[m_searchType] || value < dataTypeMinValues[m_searchType])
-                                                                                                    {
-                                                                                                      (new Snackbar("输入的值不在此数据类型的范围内。请输入其他值。"))->show();
-                                                                                                      return;
-                                                                                                    }
-
-                                                                                                    m_memoryDump->getData((m_selectedEntry) * sizeof(u64), &selectedAddress, sizeof(u64));
-                                                                                                    m_debugger->pokeMemory(dataTypeSizes[m_searchType], selectedAddress, value);
-                                                                                                  }
-                                                                                                }
-                                                                                              })
-                ->show();
-          }
-          else
-            (new Snackbar("地址太多！请在编辑之前缩小选择范围。"))->show();
-
-          m_searchType = savetype; // restore value
-        }
-      }
-    }
-    else
-    { /* Cheats menu */
-      if (kdown & KEY_A)
-      {
-        if (m_cheatCnt == 0)
-          return;
-
-        // count total opcode
-        u32 opcodecount = m_cheats[m_selectedEntry].definition.num_opcodes;
-        for (u32 i = 0; i < m_cheatCnt; i++)
-        {
-          if (m_cheats[i].enabled)
-            opcodecount += m_cheats[i].definition.num_opcodes;
-        }
-        if (opcodecount > 0x400)
-        {
-          (new Snackbar("操作码总数将超过1024！"))->show();
-          // return;
-        }
-
-        dmntchtToggleCheat(m_cheats[m_selectedEntry].cheat_id);
-        u64 cheatCnt = 0;
-
-        dmntchtGetCheatCount(&cheatCnt);
-        if (cheatCnt > 0)
-        {
-          delete[] m_cheats;
-          m_cheats = new DmntCheatEntry[cheatCnt];
-          dmntchtGetCheats(m_cheats, cheatCnt, 0, &m_cheatCnt);
-        }
-      }
-    }
-
-    if ((kdown & KEY_MINUS) && (kheld & KEY_ZL))
-    {
-      if (m_memoryDump1 != nullptr)
-      {
-        m_memoryDump = m_memoryDump1;
-        m_memoryDump1 = nullptr;
-
-        updatebookmark(true, false, false);
-
-        m_memoryDump1 = m_memoryDump;
-        m_memoryDump = m_memoryDumpBookmark;
-
-        if (m_memoryDump->size() > 0)
-        {
-          if (m_memoryDump->size() / sizeof(u64) - 1 < m_selectedEntry)
-            m_selectedEntry = m_memoryDump->size() / sizeof(u64) - 1;
-        }
-        else
-        {
-          // m_selectedEntrySave = 0;
-          m_selectedEntrySaveBM = 0;
-          if (m_menuLocation != CHEATS)
-          {
-            m_menuLocation = CHEATS;
-            m_selectedEntry = m_selectedEntrySaveCL;
-          }
-        };
-      }
-    }
-
-    if ((kdown & KEY_MINUS) && !(kheld & KEY_ZL))
-    {
-      //make sure not using bookmark m_searchType
-      if (m_menuLocation == CANDIDATES)
-      {
-        if (m_memoryDump1 != nullptr)
-        { //Bookmark case
-          bookmark_t bookmark;
-          m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-          bookmark.deleted = !bookmark.deleted;
-          m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
-          // m_memoryDumpBookmark->flushBuffer();
-          // m_memoryDump = m_memoryDump1;
-          // m_memoryDump1 = nullptr;
-        }
-        else
-        {
-
-          // m_addresslist_offset = 0;
-          m_selectedEntrySaveSR = 0;
-          m_addresslist_offsetSaveSR = 0;
-          // end mod
-          if (m_memoryDump->size() == 0)
-          {
-            std::vector<std::string> options;
-
-            if (m_frozenAddresses.size() == 0)
-              return;
-
-            std::stringstream ss;
-            for (auto [addr, value] : m_frozenAddresses)
-            {
-              ss << "[ 基地址 + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (addr - m_addressSpaceBaseAddr) << " ]  ";
-              ss << "( " << std::dec << value << " )";
-              options.push_back(ss.str());
-              ss.str("");
-            }
-
-            (new ListSelector("锁定地址", "\uE0E0 解除锁定     \uE0E1 返回", options))->setInputAction([&](u32 k, u16 selectedItem) {
-                                                                                                if (k & KEY_A)
-                                                                                                {
-                                                                                                  auto itr = m_frozenAddresses.begin();
-                                                                                                  std::advance(itr, selectedItem);
-
-                                                                                                  dmntchtDisableFrozenAddress(itr->first);
-                                                                                                  m_frozenAddresses.erase(itr->first);
-                                                                                                }
-                                                                                              })
-                ->show();
-          }
-          else
-          {
-            m_memoryDump->clear();
-            m_use_range = false;
-            removef(EDIZON_DIR "/memdump1.dat");
-            removef(EDIZON_DIR "/memdump1a.dat");
-            removef(EDIZON_DIR "/datadump2.dat");
-            removef(EDIZON_DIR "/datadump2.datA");
-            removef(EDIZON_DIR "/datadump2.datB");
-            // removef(EDIZON_DIR "/memdump2.dat");
-            // removef(EDIZON_DIR "/memdump3.dat");
-
-            // m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
-            // m_searchMode = SEARCH_MODE_RANGE;
-            // m_searchRegion = SEARCH_REGION_MAIN;
-            // m_searchValue[0]._u64 = 1;
-            // m_searchValue[1]._u64 = 100;
-
-            // m_menuLocation = CHEATS;
-          }
-        }
-      }
-      else
-      { // WIP working on cheat menu
-        // m_cheatCnt
-        m_cheatDelete[m_selectedEntry] = !m_cheatDelete[m_selectedEntry];
-      }
-    }
-    // start mod KEY_PLUS
-    // if (kdown & KEY_PLUS) {
-    // printf("%s\n","PLUS key pressed");
-    // printf("%s\n",titleNameStr.c_str());
-    // printf("%s\n",tidStr.c_str());
-    // printf("%s\n",buildIDStr.c_str());
-    // Gui::g_nextGui = GUI_MAIN;
-    // return;
-    // }
-    if ((kdown & KEY_R) && (kheld & KEY_ZL))
-    {
-      if (m_menuLocation == CANDIDATES && m_memoryDump1 != nullptr)
-      {
-        m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-        if (m_bookmark.type < SEARCH_TYPE_FLOAT_64BIT)
-        {
-          u8 i = static_cast<u8>(m_bookmark.type) + 1;
-          m_bookmark.type = static_cast<searchType_t>(i);
-        }
-        m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-        m_AttributeDumpBookmark->flushBuffer();
-      }
-      else if (m_menuLocation == CANDIDATES && m_memoryDump1 == nullptr) // change type
-      {
-        if (m_searchType < SEARCH_TYPE_FLOAT_64BIT)
-        {
-          u8 i = static_cast<u8>(m_searchType) + 1;
-          m_searchType = static_cast<searchType_t>(i);
-        }
-      }
-    };
-
-    if ((kdown & KEY_L) && (kheld & KEY_ZL))
-    {
-      if (m_menuLocation == CANDIDATES && m_memoryDump1 != nullptr)
-      {
-        m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-        if (m_bookmark.type > SEARCH_TYPE_UNSIGNED_8BIT)
-        {
-          u8 i = static_cast<u8>(m_bookmark.type) - 1;
-          m_bookmark.type = static_cast<searchType_t>(i);
-        }
-        m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-        m_AttributeDumpBookmark->flushBuffer();
-      }
-      else if (m_menuLocation == CANDIDATES && m_memoryDump1 == nullptr) // Chang type
-      {
-        if (m_searchType > SEARCH_TYPE_UNSIGNED_8BIT)
-        {
-          u8 i = static_cast<u8>(m_searchType) - 1;
-          m_searchType = static_cast<searchType_t>(i);
-        }
-      }
-    };
-
-    if ((kdown & KEY_R) && !(kheld & KEY_ZL))
-    {
-      if (m_searchValueFormat == FORMAT_HEX)
-        m_searchValueFormat = FORMAT_DEC;
-      else
-        m_searchValueFormat = FORMAT_HEX;
-      if (m_searchValueFormat == FORMAT_HEX)
-        printf("%s\n", "HEX");
-      printf("%s\n", "R key pressed");
-    }
-    if ((kdown & KEY_L) && !(kheld & KEY_ZL)) //toggle bookmark view bookmark : (m_memoryDump1 != nullptr)
-    {
-      if (m_memoryDump1 == nullptr)
-      {
-        // WIP
-        // switch to bookmark
-        // if (m_memoryDumpBookmark->size() == 0)
-        // {
-        //   updatebookmark(true, false);
-        // }
-
-        // if (m_memoryDumpBookmark->size() == 0)
-        //   m_menuLocation = CHEATS;
-
-        {
-          m_memoryDump1 = m_memoryDump;
-          m_memoryDump = m_memoryDumpBookmark;
-
-          if (m_menuLocation == CANDIDATES)
-          {
-            m_selectedEntrySaveSR = m_selectedEntry;
-            m_addresslist_offsetSaveSR = m_addresslist_offset;
-            m_selectedEntry = m_selectedEntrySaveBM;
-          }
-          m_addresslist_offset = m_addresslist_offsetSaveBM;
-
-          // if (m_memoryDump->size() == 0 && m_cheatCnt > 0)
-          // {
-          //   m_menuLocation = CHEATS;
-          // };
-          //consider to remove later
-          if (m_searchType == SEARCH_TYPE_NONE)
-            m_searchType = SEARCH_TYPE_UNSIGNED_32BIT; // to make sure not blank
-          // end
-          // (new Snackbar("Switch to bookmark List!"))->show();
-          printf("%s\n", "Bookmark");
-        }
-      }
-      else
-      {
-        m_memoryDump = m_memoryDump1;
-        m_memoryDump1 = nullptr;
-
-        if (m_menuLocation == CANDIDATES)
-        {
-          m_selectedEntrySaveBM = m_selectedEntry;
-          m_addresslist_offsetSaveBM = m_addresslist_offset;
-          m_selectedEntry = m_selectedEntrySaveSR;
-        }
-        m_addresslist_offset = m_addresslist_offsetSaveSR;
-
-        // (new Snackbar("Switch to Normal List!"))->show();
-      }
-
-      if (m_memoryDumpBookmark->size() == 0 && m_menuLocation == CANDIDATES && m_cheatCnt > 0)
-      {
-        m_selectedEntry = m_selectedEntrySaveCL;
-        m_menuLocation = CHEATS;
-      }
-      printf("%s\n", "L key pressed");
-      // if (m_menuLocation == CANDIDATES)
-      //   m_selectedEntry = 0;
-    }
-
-    if ((kdown & KEY_ZR) && !(kheld & KEY_ZL))
-    {
-      if (m_menuLocation == CHEATS)
-      {
-        cheatListOffset += 8;
-        m_selectedEntry += 8;
-        if (cheatListOffset >= m_cheatCnt)
-        {
-          cheatListOffset -= 8;
-          m_selectedEntry -= 8;
-        }
-        if (m_selectedEntry + 1 > m_cheatCnt)
-          m_selectedEntry = m_cheatCnt - 1;
-      }
-      else
-      {
-        m_addresslist_offset += 8;
-        if (m_addresslist_offset >= (m_memoryDump->size() / sizeof(u64)))
-          m_addresslist_offset -= 8;
-        if (m_selectedEntry + m_addresslist_offset + 1 > (m_memoryDump->size() / sizeof(u64)))
-          m_selectedEntry = (m_memoryDump->size() / sizeof(u64)) % 8 - 1;
-        // printf("%s\n", "ZR key pressed");
-      }
-    }
-
-    if ((kdown & KEY_ZR) && (kheld & KEY_ZL))
-    {
-      if (m_menuLocation == CHEATS)
-      {
-        if (cheatListOffset >= 8)
-        {
-          cheatListOffset -= 8;
-          m_selectedEntry -= 8;
-        }
-        else
-        {
-          cheatListOffset = 0;
-          m_selectedEntry = 0;
-        }
-      }
-      else
-      {
-        if (m_addresslist_offset >= 8)
-          m_addresslist_offset -= 8;
-      }
-      // printf("%s\n", "ZL key pressed");
-    }
-
-    // End Mod
-    // hidScanInput();
-    if ((kdown & KEY_Y) && (kheld & KEY_ZL))
-    {
-      if (m_searchMenuLocation == SEARCH_NONE)
-      {
-        if (m_memoryDump1 != nullptr)
-        { // in bookmark mode
-          m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
-          m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-          m_selectedEntry = 0;
-          m_searchMenuLocation = SEARCH_POINTER;
-          PSresumeSTATE();
-          // m_showpointermenu = true;
-        }
-        else
-        {
-          m_searchMenuLocation = SEARCH_VALUE;
-            m_selectedEntry = 1;
-        }
-      }
-    }
-    // if ((kdown & KEY_X) && (kheld & KEY_ZL))
-    // {
-    //   printf("resume \n");
-    //   resumepointersearch2();
-    // }
-    if ((kdown & KEY_Y) && !(kheld & KEY_ZL))
-    {
-      if (m_menuLocation == CHEATS) 
-      {
-        m_selectedEntrySaveCL = m_selectedEntry;
-      }
-      else if (m_memoryDump1 == nullptr)
-      {
-        m_selectedEntrySaveSR = m_selectedEntry;
-        m_addresslist_offsetSaveSR = m_addresslist_offset;
-      }
-      else
-      {
-        m_selectedEntrySaveBM = m_selectedEntry;
-        m_addresslist_offsetSaveBM = m_addresslist_offset;
-      }
-      m_menuLocation = CANDIDATES;
-      if (m_searchMenuLocation == SEARCH_NONE)
-      {
-        if ((Config::getConfig()->extra_value) && (m_memoryDump->size() == 0))
-        { // enter multi search
-          m_searchMenuLocation = SEARCH_editExtraSearchValues;
-          m_selectedEntrySave = m_selectedEntry;
-          m_selectedEntry = 0;
-          load_multisearch_setup();
-        }
-        else if (m_searchMode == SEARCH_MODE_NONE) 
-        {
-          m_searchMenuLocation = SEARCH_MODE;
-          if (m_selectedEntry > 11)
-            m_selectedEntry = 0;
-          // m_selectedEntry = m_searchType == SEARCH_TYPE_NONE ? 0 : m_searchType;
-        }
-        else
-          m_searchMenuLocation = SEARCH_VALUE;
-        // auto toggle between stateA and stateB
-        if (m_searchMode == SEARCH_MODE_DIFFA)
-        {
-          m_searchMode = SEARCH_MODE_SAMEA;
-          m_selectedEntry = 1;
-        }
-        else if (m_searchMode == SEARCH_MODE_SAMEA)
-        {
-          m_searchMode = SEARCH_MODE_DIFFA;
-          m_selectedEntry = 1;
-        }
-        // else
-        //   m_selectedEntry = 0;
-
-        // cheatListOffset = 0;
-      }
-      printf("%s\n", "Y key pressed");
-      if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
-        printf("%s\n", Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str());
-      printf("%s\n", tidStr.c_str());
-      printf("%s\n", buildIDStr.c_str());
-      GuiCheats::_writegameid();
-      //make sure not using bookmark
-      // if (m_memoryDump1 != nullptr)
-      // {
-      //   m_memoryDump = m_memoryDump1;
-      //   m_memoryDump1 = nullptr;
-      // }
-      // m_addresslist_offset = 0;
-      // end mod
-    }
-  }
-  else
-  {
-    if ((m_searchMenuLocation == SEARCH_TYPE && m_searchType == SEARCH_TYPE_NONE) ||
-        (m_searchMenuLocation == SEARCH_MODE && m_searchMode == SEARCH_MODE_NONE) ||
-        (m_searchMenuLocation == SEARCH_REGION && m_searchRegion == SEARCH_REGION_NONE) ||
-        (m_searchMenuLocation == SEARCH_VALUE) ||
-        (m_searchMenuLocation == SEARCH_editRAM))
-    {
-      if (kdown & KEY_UP)
-      {
-        switch (m_searchMenuLocation)
-        {
-        case SEARCH_TYPE:
-        // [[fallthrough]]
-        case SEARCH_MODE:
-          if (m_selectedEntry % 2 == 1)
-            m_selectedEntry--;
-          break;
-        case SEARCH_REGION:
-          if (m_selectedEntry > 0)
-            m_selectedEntry--;
-          break;
-        case SEARCH_VALUE:
-          m_selectedEntry = 0;
-          break;
-        case SEARCH_NONE:
-        case SEARCH_POINTER:
-          break;
-        case SEARCH_editRAM2:
-        case SEARCH_editRAM: // need UP
-          if (m_selectedEntry > 4)
-            m_selectedEntry -= 5;
-          else
-          {
-            m_EditorBaseAddr -= 0x10;
-          }
-
-          break;
-        case SEARCH_editExtraSearchValues:
-        case SEARCH_pickjump:
-        default:
-          break;
-        }
-      }
-
-      if (kdown & KEY_DOWN)
-      {
-        switch (m_searchMenuLocation)
-        {
-        case SEARCH_TYPE:
-        // [[fallthrough]]
-        case SEARCH_MODE:
-          if ((m_selectedEntry + 1) < 12 && m_selectedEntry % 2 == 0)
-            m_selectedEntry++;
-          break;
-        case SEARCH_REGION:
-          if (m_selectedEntry < 3)
-            m_selectedEntry++;
-          break;
-        case SEARCH_VALUE:
-          if (m_searchType != SEARCH_TYPE_NONE && m_searchMode != SEARCH_MODE_NONE && m_searchRegion != SEARCH_REGION_NONE)
-            m_selectedEntry = 1;
-          break;
-        case SEARCH_NONE:
-        case SEARCH_POINTER:
-          break;
-        case SEARCH_editRAM2:
-        case SEARCH_editRAM: // need DOWN
-          if (m_selectedEntry < 35)
-            m_selectedEntry += 5;
-          else
-          {
-            m_EditorBaseAddr += 0x10;
-          }
-
-          break;
-        case SEARCH_editExtraSearchValues:
-        case SEARCH_pickjump:
-        default:
-          break;
-        }
-      }
-
-      if (kdown & KEY_LEFT)
-      {
-        switch (m_searchMenuLocation)
-        {
-        case SEARCH_TYPE:
-        // [[fallthrough]]
-        case SEARCH_MODE:
-          if (m_selectedEntry >= 2)
-            m_selectedEntry -= 2;
-          break;
-        case SEARCH_REGION:
-          break;
-        case SEARCH_VALUE:
-          if (m_searchValueIndex == 1)
-            m_searchValueIndex--;
-          break;
-        case SEARCH_NONE:
-        case SEARCH_POINTER:
-          break;
-        case SEARCH_editRAM2:
-        case SEARCH_editRAM: // need LEFT
-          if (m_selectedEntry % 5 > 1)
-            m_selectedEntry--;
-          break;
-        case SEARCH_editExtraSearchValues:
-        case SEARCH_pickjump:
-        default:
-          break;
-        }
-      }
-
-      if (kdown & KEY_RIGHT)
-      {
-        switch (m_searchMenuLocation)
-        {
-        case SEARCH_TYPE:
-        // [[fallthrough]]
-        case SEARCH_MODE:
-          if (m_selectedEntry <= 9)
-            m_selectedEntry += 2;
-          break;
-        case SEARCH_REGION:
-          break;
-        case SEARCH_VALUE:
-          if (m_searchValueIndex == 0 && (m_searchMode == SEARCH_MODE_RANGE || m_use_range))
-            m_searchValueIndex++;
-          break;
-        case SEARCH_NONE:
-        case SEARCH_POINTER:
-          break;
-        case SEARCH_editRAM2:
-        case SEARCH_editRAM: // need RIGHT
-          if (m_selectedEntry % 5 < 4)
-            m_selectedEntry++;
-          break;
-        case SEARCH_editExtraSearchValues:
-        case SEARCH_pickjump:
-        default:
-          break;
-        }
-      }
-
-      if (m_searchMenuLocation == SEARCH_editRAM)
-      {
-        if (kdown & KEY_PLUS)
-        {
-          u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-
-          bookmark_t bookmark;
-          if (address >= m_heapBaseAddr && address < m_heapEnd)
-          {
-            bookmark.offset = address - m_heapBaseAddr;
-            bookmark.heap = true;
-          }
-          else if (address >= m_mainBaseAddr && address < m_mainend)
-          {
-            bookmark.offset = address - m_mainBaseAddr;
-            bookmark.heap = false;
-          }
-
-          bookmark.type = m_searchType;
-          Gui::requestKeyboardInput("输入标签名", "输入标签名以添加到书签。", "", SwkbdType_QWERTY, bookmark.label, 18);
-          m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-          m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
-          if (m_bookmark.pointer.depth > 0)
-          {
-            s64 offset = address - m_BookmarkAddr + m_bookmark.pointer.offset[0];
-            // printf("address = %lx m_EditorBaseAddr = %lx m_bookmark.pointer.offset[0] = %lx m_addressmod = %lx\n", address, m_EditorBaseAddr, m_bookmark.pointer.offset[0],m_addressmod);
-            if (offset >= 0 && offset < (s64)m_max_range)
-            {
-              memcpy(&(bookmark.pointer), &(m_bookmark.pointer), (m_bookmark.pointer.depth + 2) * 8);
-              bookmark.pointer.offset[0] = (u64)offset;
-              m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-              m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
-            }
-          }
-          m_AttributeDumpBookmark->flushBuffer();
-          m_memoryDumpBookmark->flushBuffer();
-          MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
-          BMDump->addData((u8 *)&bookmark.label, 18);
-          BMDump->addData((u8 *)&address, sizeof(u64));
-          delete BMDump;
-          (new Snackbar("地址已添加到书签！"))->show();
-          printf("%s\n", "PLUS key pressed3");
-        }
-        if (kdown & KEY_ZR)
-        {
-          m_EditorBaseAddr += 0x80;
-        }
-        if (kdown & KEY_ZL)
-        {
-          m_EditorBaseAddr -= 0x80;
-        }
-        if (kdown & KEY_R)
-        {
-          m_addressmod++;
-          m_addressmod = m_addressmod % 4;
-        }
-        if (kdown & KEY_L)
-        {
-          m_addressmod--;
-          m_addressmod = m_addressmod % 4;
-        }
-        if (kdown & KEY_X)
-        {
-          if (m_searchValueFormat == FORMAT_DEC)
-            m_searchValueFormat = FORMAT_HEX;
-          else
-            m_searchValueFormat = FORMAT_DEC;
-        }
-        if (kdown & KEY_Y) // BM9
-        {
-          u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-          std::stringstream ss;
-          ss << "0x" << std::uppercase << std::hex << address;
-          char input[19];
-          if (Gui::requestKeyboardInput("输入地址值", "输入地址值以添加到书签。", ss.str(), SwkbdType_QWERTY, input, 18))
-          {
-            address = static_cast<u64>(std::stoul(input, nullptr, 16));
-
-            bookmark_t bookmark;
-            bookmark.type = m_searchType;
-            Gui::requestKeyboardInput("输入标签名", "输入标签名以添加到书签。", "", SwkbdType_QWERTY, bookmark.label, 18);
-            m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
-            m_AttributeDumpBookmark->flushBuffer();
-
-            (new Snackbar("地址已添加到书签！"))->show();
-            m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
-            m_memoryDumpBookmark->flushBuffer();
-          }
-        }
-      }
-
-      // inc and dec search value
-      if ((kdown & KEY_ZR) && (m_searchMenuLocation == SEARCH_VALUE))
-      {
-        switch (m_searchType)
-        {
-        case SEARCH_TYPE_FLOAT_32BIT:
-          m_searchValue[m_searchValueIndex]._f32++;
-          break;
-        case SEARCH_TYPE_FLOAT_64BIT:
-          m_searchValue[m_searchValueIndex]._f64++;
-          break;
-        default:
-          m_searchValue[m_searchValueIndex]._u64++;
-        }
-        m_selectedEntry = 1;
-      };
-      if ((kdown & KEY_ZL) && (m_searchMenuLocation == SEARCH_VALUE))
-      {
-        switch (m_searchType)
-        {
-        case SEARCH_TYPE_FLOAT_32BIT:
-          m_searchValue[m_searchValueIndex]._f32--;
-          break;
-        case SEARCH_TYPE_FLOAT_64BIT:
-          m_searchValue[m_searchValueIndex]._f64--;
-          break;
-        default:
-          m_searchValue[m_searchValueIndex]._u64--;
-        }
-        m_selectedEntry = 1;
-      };
-      if (m_searchMenuLocation == SEARCH_VALUE)
-      {
-        if (kdown & KEY_DUP)
-        {
-          m_searchMode = SEARCH_MODE_SAME;
-          {
-            std::string s = m_edizon_dir + "/datadump2.datB";
-            if (access(s.c_str(), F_OK) == 0)
-            {
-              if (m_store_extension == "B")
-                m_store_extension = "A";
-              else
-                m_store_extension = "B";
-              memcpy(Config::getConfig()->store_extension, m_store_extension.c_str(), m_store_extension.size());
-              Config::getConfig()->store_extension[m_store_extension.size()] = 0;
-              Config::writeConfig();
-            }
-          };
-        }
-        else if (kdown & KEY_DDOWN)
-        {
-          m_searchMode = SEARCH_MODE_DIFF;
-        }
-        else if (kdown & KEY_DLEFT)
-        {
-          m_searchMode = SEARCH_MODE_DEC;
-        }
-        else if (kdown & KEY_DRIGHT)
-        {
-          m_searchMode = SEARCH_MODE_INC;
-        }
-        else if (kdown & KEY_PLUS)
-        {
-          m_searchMode = SEARCH_MODE_RANGE;
-        }   
-        else if (kdown & KEY_MINUS)
-        {
-          if (m_searchMode == SEARCH_MODE_RANGE)
-          {
-            m_searchMode = SEARCH_MODE_EQ;
-            m_searchValue[0]._u64 = 0;
-            m_selectedEntry = 1;
-          }
-          else if (m_searchMode == SEARCH_MODE_EQ)
-          {
-            m_searchMode = SEARCH_MODE_NEQ;
-            m_selectedEntry = 1;
-          }
-          else
-          {
-            m_searchMode = SEARCH_MODE_EQ;
-          }
-          m_searchValueIndex = 0;  
-        }
-        else if (kdown & KEY_RSTICK)
-        {
-          m_searchMode = SEARCH_MODE_RANGE;
-          m_searchType = SEARCH_TYPE_FLOAT_32BIT;
-          m_searchValue[0]._f32 = 0.1;
-          m_searchValue[1]._f32 = 2000; 
-          m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
-          m_selectedEntry = 1;
-        }
-        else if (kdown & KEY_LSTICK)
-        {
-          if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
-          {
-            m_searchType = SEARCH_TYPE_FLOAT_64BIT;
-          }
-          else
-            m_searchType = SEARCH_TYPE_FLOAT_32BIT;
-          m_searchValueIndex = 0;
-          m_selectedEntry = 0;
-          m_searchValue[0]._u64 = 0;
-          m_searchValue[1]._u64 = 0;
-        }
-        else if (kdown & KEY_Y)
-        {
-          if (m_searchType == SEARCH_TYPE_UNSIGNED_32BIT)
-          {
-            m_searchType = SEARCH_TYPE_UNSIGNED_8BIT;
-          }
-          else if (m_searchType == SEARCH_TYPE_UNSIGNED_8BIT)
-          {
-            m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
-          }
-          else
-            m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
-
-          m_searchMode = SEARCH_MODE_EQ;
-          m_searchValueIndex = 0;
-          m_selectedEntry = 0;
-          m_searchValue[0]._u64 = 0;
-          m_searchValue[1]._u64 = 0;
-          m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
-        }
-        else if (kdown & KEY_RSTICK_UP) //search shortcut
-        {
-          m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
-          m_searchValueFormat = FORMAT_HEX;
-          m_searchRegion = SEARCH_REGION_MAIN;
-          m_searchValue[0]._u64 = m_heapBaseAddr;
-          m_searchValue[1]._u64 = m_heapEnd;
-        }
-        else if (kdown & KEY_RSTICK_LEFT)
-        {
-          m_searchValue[0]._u64 = 0;
-        }
-        else if (kdown & KEY_RSTICK_RIGHT)
-        {
-          m_searchValue[1]._u64 = 0;
-        }
-        else if (kdown & KEY_R)
-        {
-          if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
-          {
-            m_searchValue[0]._f32 = 0 - m_searchValue[0]._f32;
-            m_searchValue[1]._f32 = 0 - m_searchValue[1]._f32;
-          }
-          else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT)
-          {
-            m_searchValue[0]._f64 = 0 - m_searchValue[0]._f64;
-            m_searchValue[1]._f64 = 0 - m_searchValue[1]._f64;
-          }
-        };
-      }
-      if (kdown & KEY_A)
-      {
-        if (m_searchMenuLocation == SEARCH_editRAM)
-        { // BM3
-          // EditRAM routine
-          // to update to use L and R to select type and display it on the top line
-          u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-          char input[19];
-          char initialString[21];
-          strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
-          if (Gui::requestKeyboardInput("输入值", "输入一个应该在此写入的值。", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18))
-          {
-            if (m_searchValueFormat == FORMAT_HEX)
-            {
-              auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
-              m_debugger->writeMemory(&value, dataTypeSizes[m_searchType], address);
-            }
-            else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT)
-            {
-              auto value = static_cast<float>(std::atof(input));
-              m_debugger->writeMemory(&value, sizeof(value), address);
-            }
-            else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT)
-            {
-              auto value = std::atof(input);
-              m_debugger->writeMemory(&value, sizeof(value), address);
-            }
-            else if (m_searchType != SEARCH_TYPE_NONE)
-            {
-              auto value = std::atol(input);
-              m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
-            }
-          }
-        }
-        else if (m_searchMenuLocation == SEARCH_TYPE)
-          m_searchType = static_cast<searchType_t>(m_selectedEntry);
-        else if (m_searchMenuLocation == SEARCH_REGION)
-          m_searchRegion = static_cast<searchRegion_t>(m_selectedEntry);
-        else if (m_searchMenuLocation == SEARCH_MODE)
-          m_searchMode = static_cast<searchMode_t>(m_selectedEntry);
-        else if (m_searchMenuLocation == SEARCH_VALUE)
-        {
-          if (m_selectedEntry == 0)
-          {
-            m_selectedEntry = 1;
-            char str[0x21];
-            // Start Mod keep previous value
-            // End Mod
-            if ((m_searchValue[m_searchValueIndex]._u32 > 10) || (m_searchValueFormat == FORMAT_HEX))
-            {
-              Gui::requestKeyboardInput("输入您要搜索的值", "根据您先前选择的选项，EdiZon将在此处期望不同的输入。", _getValueDisplayString(m_searchValue[m_searchValueIndex], m_searchType), m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
-            }
-            else
-            {
-              Gui::requestKeyboardInput("输入您要搜索的值", "根据您先前选择的选项，EdiZon将在此处期望不同的输入。", "", m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
-            }
-            if (std::string(str) == "")
-              return;
-            m_searchValue[m_searchValueIndex]._u64 = 0; //hack to fix bug elsewhere
-            if (m_searchValueFormat == FORMAT_HEX)
-            {
-              m_searchValue[m_searchValueIndex]._u64 = static_cast<u64>(std::stoul(str, nullptr, 16));
-            }
-            else
-            {
-              switch (m_searchType)
-              {
-              case SEARCH_TYPE_UNSIGNED_8BIT:
-                m_searchValue[m_searchValueIndex]._u8 = static_cast<u8>(std::stoul(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_UNSIGNED_16BIT:
-                m_searchValue[m_searchValueIndex]._u16 = static_cast<u16>(std::stoul(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_UNSIGNED_32BIT:
-                m_searchValue[m_searchValueIndex]._u32 = static_cast<u32>(std::stoul(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_UNSIGNED_64BIT:
-                m_searchValue[m_searchValueIndex]._u64 = static_cast<u64>(std::stoul(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_SIGNED_8BIT:
-                m_searchValue[m_searchValueIndex]._s8 = static_cast<s8>(std::stol(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_SIGNED_16BIT:
-                m_searchValue[m_searchValueIndex]._s16 = static_cast<s16>(std::stol(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_SIGNED_32BIT:
-                m_searchValue[m_searchValueIndex]._s32 = static_cast<s32>(std::stol(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_SIGNED_64BIT:
-                m_searchValue[m_searchValueIndex]._s64 = static_cast<s64>(std::stol(str, nullptr, 0));
-                break;
-              case SEARCH_TYPE_FLOAT_32BIT:
-                m_searchValue[m_searchValueIndex]._f32 = static_cast<float>(std::stof(str));
-                break;
-              case SEARCH_TYPE_FLOAT_64BIT:
-                m_searchValue[m_searchValueIndex]._f64 = static_cast<double>(std::stod(str));
-                break;
-              case SEARCH_TYPE_POINTER:
-                m_searchValue[m_searchValueIndex]._u64 = static_cast<u64>(std::stol(str));
-                break;
-              case SEARCH_TYPE_NONE:
-                break;
-              }
-            }
-          }
-          else if (m_selectedEntry == 1) // search
-          {if (m_searched) 
-          {
-            if (m_memoryDump1 == nullptr)
-              m_memoryDump->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
-            else
-              m_memoryDump1->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
-            (new Snackbar("已经为该会话进行了一次搜索，然后重新启动以进行另一次搜索"))->show();
-          }
-          else
-          {
-            m_searched = true;
-            (new MessageBox("正在遍历游戏内存。\n \n这需要花费一点时间...", MessageBox::NONE))->show();
-            requestDraw();
-
-            overclockSystem(true);
-
-            if (m_searchMode == SEARCH_MODE_POINTER)
-              m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
-            if (m_memoryDump1 != nullptr)
-            {
-              updatebookmark(true,false,true);
-              m_memoryDump = m_memoryDumpBookmark;
-            }
-            else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
-            {
-              if (m_memoryDump->size() == 0)
-              {
-                delete m_memoryDump;
-                m_use_range = false;
-                if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
-                  GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
-                else
-                  GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
-                printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
-              }
-              else if (m_memoryDump->getDumpInfo().dumpType == DumpType::DATA)
-              {
-                printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
-                if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
-                  GuiCheats::searchMemoryValuesSecondary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
-                else
-                  GuiCheats::searchMemoryValuesSecondary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
-                delete m_memoryDump;
-                // remove(EDIZON_DIR "/memdump1.dat");
-                // rename(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
-                // printf("%s\n", "renaming");
-                std::string s = m_edizon_dir + "/memdump1.dat";
-                REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
-                m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
-              }
-              else if (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR)
-              {
-                if (m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
-                {
-                  if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
-                    GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_targetmemInfos);
-                  else
-                    GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_memoryInfo);
-                  delete m_memoryDump;
-                  // remove(EDIZON_DIR "/memdump1.dat");
-                  // remove(EDIZON_DIR "/memdump1a.dat");
-                  // rename(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
-                  // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat");
-                  std::string s = m_edizon_dir + "/memdump1.dat";
-                  REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
-                  s = m_edizon_dir + "/memdump1a.dat";
-                  REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
-                  m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
-                  // remove(EDIZON_DIR "/datadump2.dat");
-                  // rename(EDIZON_DIR "/datadump4.dat", EDIZON_DIR "/datadump2.dat");
-                  s = m_edizon_dir + "/datadump2.dat";
-                  REPLACEFILE(EDIZON_DIR "/datadump4.dat",s.c_str() );
-                  // // rename B to A
-                  // remove(EDIZON_DIR "/datadumpA.dat");
-                  // rename(EDIZON_DIR "/datadumpAa.dat", EDIZON_DIR "/datadumpA.dat");
-                  REPLACEFILE(EDIZON_DIR "/datadumpAa.dat", EDIZON_DIR "/datadumpA.dat")
-                  // remove(EDIZON_DIR "/datadumpB.dat");
-                  // rename(EDIZON_DIR "/datadumpBa.dat", EDIZON_DIR "/datadumpB.dat");
-                  REPLACEFILE(EDIZON_DIR "/datadumpBa.dat", EDIZON_DIR "/datadumpB.dat");
-                }
-                else
-                {
-                  m_nothingchanged = false;
-                  GuiCheats::searchMemoryAddressesSecondary2(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
-                  if (m_nothingchanged == false)
-                  {
-                    // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
-                    // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
-                    std::string s = m_edizon_dir + "/memdump1a.dat";
-                    REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+              if (depth == 0) {
+                  if (opcode == 5 && FSA == 0) {
+                      i++;
+                      if (M == 0)
+                          offset[depth] = cheat.opcodes[i];
+                      else
+                          offset[depth] = m_heapBaseAddr - m_mainBaseAddr + cheat.opcodes[i];
+                      depth++;
                   }
-                  // else
-                  // {
-                  //   std::string s = m_edizon_dir + "/datadump2.dat";
-                  //   REPLACEFILE(EDIZON_DIR "/predatadump2.dat", s.c_str());
-                  // }
-                }
+                  continue;
               }
-            }
-            else
-            {
-              if (m_memoryDump->size() == 0)
-              {
-                delete m_memoryDump;
-                if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0 )
-                  GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
-                else
-                  GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+              if (opcode == 5 && FSA == 1) {
+                  i++;
+                  offset[depth] = cheat.opcodes[i];
+                  depth++;
+                  continue;
               }
-              else
-              {
-                m_nothingchanged = false;
-                GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
-                if (m_nothingchanged == false)
-                {
-                  // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
-                  // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
-                  std::string s = m_edizon_dir + "/memdump1a.dat";
-                  REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
-                }
+              if (opcode == 7 && FSA == 0) {
+                  i++;
+                  offset[depth] = cheat.opcodes[i];
+                  // success = true;
+                  no7 = false;
+                  continue;
+                  // break;
               }
-            }
-
-            overclockSystem(false);
-
-            Gui::g_currMessageBox->hide();
-
-            m_searchMenuLocation = SEARCH_NONE;
-            // m_searchMode = SEARCH_MODE_NONE;
+              if (opcode == 6) {
+                  if (no7) {
+                      offset[depth] = 0;
+                  }
+                  switch (T) {
+                      case 1:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_8BIT;
+                          break;
+                      case 2:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_16BIT;
+                          break;
+                      case 4:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
+                          break;
+                      case 8:
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_64BIT;
+                          break;
+                      default:
+                          printf("cheat code processing error, wrong width value\n");
+                          bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
+                          break;
+                  }
+                  success = true;
+                  break;
+              }
           }
+
+          if (success) {
+              // compute address
+              printf("success ! \n");
+              bookmark.pointer.depth = depth;
+              u64 nextaddress = m_mainBaseAddr;
+              printf("main[%lx]", nextaddress);
+              u8 i = 0;
+              for (int z = depth; z >= 0; z--) {
+                  // bookmark_t bm;
+                  bookmark.pointer.offset[z] = offset[i];
+                  printf("+%lx z=%d ", bookmark.pointer.offset[z], z);
+                  nextaddress += bookmark.pointer.offset[z];
+                  printf("[%lx]", nextaddress);
+                  // m_memoryDumpBookmark->addData((u8 *)&nextaddress, sizeof(u64));
+                  // m_AttributeDumpBookmark->addData((u8 *)&bm, sizeof(bookmark_t));
+                  MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
+                  if (meminfo.perm == Perm_Rw) {
+                      address = nextaddress;
+                      if (m_32bitmode)
+                          m_debugger->readMemory(&nextaddress, sizeof(u32), nextaddress);
+                      else
+                          m_debugger->readMemory(&nextaddress, sizeof(u64), nextaddress);
+                  } else {
+                      printf("*access denied*\n");
+                      success = false;
+                      // break;
+                  }
+                  printf("(%lx)", nextaddress);
+                  i++;
+              }
+              printf("\n");
+          }
+          if (success) {
+              m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+              m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+              (new Snackbar("从金手指添加指针链到书签"))->show();
+          } else {
+              if (bookmark.pointer.depth > 2)  // depth of 2 means only one pointer hit high chance of wrong positive
+              {
+                  (new MessageBox("提取的指针链在当前内存状态下损坏\n \n 如果游戏处于正确状态\n \n 是否尝试重新设置指针链基准？", MessageBox::YES_NO))
+                      ->setSelectionAction([&](u8 selection) {
+                          if (selection) {
+                              searchValue_t value;
+                              while (!getinput("输入值到此内存中", "你必须知道值的类型，并正确设置到所设置的搜索内存类型", "", &value)) {
+                              }
+                              printf("value = %ld\n", value._u64);
+                              rebasepointer(value);  //bookmark);
+                          } else {
+                              // add broken pointer chain for reference
+                              m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                              m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+                          }
+                          Gui::g_currMessageBox->hide();
+                      })
+                      ->show();
+              } else
+                  (new Snackbar("无法从金手指中提取指针链"))->show();
+          }
+
+          // pointercheck(); //disable for now;
+      }
+      // end mod
+
+      if ((kdown & KEY_LEFT) && (m_menuLocation == CANDIDATES) && (m_cheatCnt > 0)) {
+          m_menuLocation = CHEATS;
+          if (m_memoryDump1 == nullptr) {
+              m_selectedEntrySaveSR = m_selectedEntry;
+              m_addresslist_offsetSaveSR = m_addresslist_offset;
+          } else {
+              m_selectedEntrySaveBM = m_selectedEntry;
+              m_addresslist_offsetSaveBM = m_addresslist_offset;
+          }
+
+          m_selectedEntry = m_selectedEntrySaveCL;
+          // cheatListOffset = 0;
+      }
+      if ((kdown & KEY_RIGHT) && (m_menuLocation == CHEATS) && (m_memoryDump->size() > 0)) {
+          m_selectedEntrySaveCL = m_selectedEntry;
+          m_menuLocation = CANDIDATES;
+          if (m_memoryDump1 == nullptr) {
+              m_selectedEntry = m_selectedEntrySaveSR;
+              m_addresslist_offset = m_addresslist_offsetSaveSR;
+          } else {
+              m_selectedEntry = m_selectedEntrySaveBM;
+              m_addresslist_offset = m_addresslist_offsetSaveBM;
+          }
+
+          // m_selectedEntry = 0;
+          // cheatListOffset = 0;
+      }
+
+      if (m_menuLocation == CANDIDATES) { /* Candidates menu */
+          if (m_memoryDump->size() > 0) {
+              if (kdown & KEY_X && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR && !(kheld & KEY_ZL)) {
+                  if (!(m_debugger->m_dmnt)) {
+                      m_debugger->detatch();
+                      dmntchtForceOpenCheatProcess();
+                      printf("force open called\n");
+                  }
+                  u64 address = 0;
+                  m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+
+                  if (!_isAddressFrozen(address)) {
+                      u64 outValue;
+                      if (m_memoryDump1 == nullptr) {
+                          if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[m_searchType], &outValue))) {
+                              (new Snackbar("冻结变量！"))->show();
+                              m_frozenAddresses.insert({address, outValue});
+                          } else
+                              (new Snackbar("冻结变量失败！"))->show();
+                      } else {
+                          bookmark_t bookmark;
+                          m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                          if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[bookmark.type], &outValue))) {
+                              (new Snackbar("冻结变量！"))->show();
+                              m_frozenAddresses.insert({address, outValue});
+                          } else
+                              (new Snackbar("冻结变量失败！"))->show();
+                      }
+                  } else {
+                      if (R_SUCCEEDED(dmntchtDisableFrozenAddress(address))) {
+                          (new Snackbar("解除冻结变量！"))->show();
+                          m_frozenAddresses.erase(address);
+                      } else
+                          (new Snackbar("解除冻结变量失败！"))->show();
+                  }
+              }
+              // add bookmark
+              if ((kdown & KEY_PLUS) && (kheld & KEY_ZL)) {
+                  if (m_memoryDump1 != nullptr) {
+                      m_memoryDump = m_memoryDump1;
+                      m_memoryDump1 = nullptr;
+
+                      updatebookmark(true, true, false);
+
+                      m_memoryDump1 = m_memoryDump;
+                      m_memoryDump = m_memoryDumpBookmark;
+
+                      if (m_memoryDump->size() > 0) {
+                          if (m_memoryDump->size() / sizeof(u64) - 1 < m_selectedEntry)
+                              m_selectedEntry = m_memoryDump->size() / sizeof(u64) - 1;
+                      } else {
+                          m_menuLocation = CHEATS;
+                          m_selectedEntry = 0;
+                      };
+                  }
+              }
+
+              if (kdown & KEY_PLUS && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR && !(kheld & KEY_ZL)) {
+                  if (m_memoryDump1 != nullptr) {  //Bookmark case
+                      bookmark_t bookmark;
+                      m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                      if (Gui::requestKeyboardInput("输入标签", "输入标签名以添加到书签。", bookmark.label, SwkbdType_QWERTY, bookmark.label, 18))
+                          m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                  } else {
+                      u64 address = 0;
+                      m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+
+                      bookmark_t bookmark;
+                      bookmark.type = m_searchType;
+                      Gui::requestKeyboardInput("输入标签", "输入标签名以添加到书签。", "", SwkbdType_QWERTY, bookmark.label, 18);
+
+                      if (address >= m_heapBaseAddr && address < m_heapEnd) {
+                          bookmark.offset = address - m_heapBaseAddr;
+                          bookmark.heap = true;
+                      } else if (address >= m_mainBaseAddr && address < m_mainend) {
+                          bookmark.offset = address - m_mainBaseAddr;
+                          bookmark.heap = false;
+                      }
+
+                      m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+                      m_AttributeDumpBookmark->flushBuffer();
+
+                      m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                      m_memoryDumpBookmark->flushBuffer();
+                      MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
+                      BMDump->addData((u8 *)&bookmark.label, 18);
+                      BMDump->addData((u8 *)&address, sizeof(u64));
+                      delete BMDump;
+                      (new Snackbar("地址已添加到书签！"))->show();  // prompt for label
+                      printf("%s\n", "PLUS key pressed2");
+                  }
+              }
+              // add bookmark end
+              // show memory editor
+
+              if (kdown & KEY_RSTICK && (kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) {
+                  m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+                  m_BookmarkAddr = m_EditorBaseAddr;
+                  m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+                  m_searchMenuLocation = SEARCH_editRAM;
+                  m_selectedEntrySave = m_selectedEntry;
+                  m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+              }
+              if (kdown & KEY_RSTICK && !(kheld & KEY_ZL) && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) {
+                  m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+                  m_BookmarkAddr = m_EditorBaseAddr;
+                  if (m_memoryDump1 != nullptr)
+                      m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+                  else
+                      m_bookmark.pointer.depth = 0;
+                  m_searchMenuLocation = SEARCH_editRAM2;
+                  m_selectedEntrySave = m_selectedEntry;
+                  m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+                  m_addressmod = m_EditorBaseAddr % 4;
+                  if (m_addressmod % dataTypeSizes[m_searchType] != 0)
+                      m_addressmod = 0;
+                  m_z = 0;
+                  m_bookmark.heap = false;
+                  if (m_memoryDump1 != nullptr) {
+                      m_searchType = m_bookmark.type;
+                      // populate stack if on pointer
+                      if (m_bookmark.pointer.depth > 0) {
+                          u64 nextaddress = m_mainBaseAddr;
+                          for (int z = m_bookmark.pointer.depth; z > 0; z--) {
+                              nextaddress += m_bookmark.pointer.offset[z];
+                              m_jump_stack[z].from = nextaddress;
+                              MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
+                              if (meminfo.perm == Perm_Rw)
+                                  m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
+                              else {
+                                  m_z = z;
+                                  break;
+                              }
+                              m_jump_stack[z].to = nextaddress;
+                              m_z = z - 1;
+                          }
+                      }
+                      //ME3 data init for memory explorer
+                  }
+                  printf("bookmarkdepth =%ld m_z=%d\n", m_bookmark.pointer.depth, m_z);
+              }
+
+              if ((kdown & KEY_LSTICK) && (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) && (m_memoryDump1 != nullptr)) {
+                  printf("\nstart scan range select ....................\n");
+                  m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+                  MemoryInfo meminfo = {0};
+                  u64 t_start = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+                  u64 t_end = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+                  if (t_end > m_heapEnd && m_heapEnd != 0)
+                      t_end = m_heapEnd;
+                  meminfo = m_debugger->queryMemory(t_start);
+                  u64 seg_endp = meminfo.addr + meminfo.size;
+                  meminfo.addr = t_start;
+                  if (seg_endp > t_end)
+                      meminfo.size = t_end - t_start;
+                  else
+                      meminfo.size = seg_endp - t_start;
+                  m_targetmemInfos.clear();
+                  m_targetmemInfos.push_back(meminfo);
+                  while (seg_endp < t_end) {
+                      meminfo = m_debugger->queryMemory(seg_endp);
+                      seg_endp = meminfo.addr + meminfo.size;
+                      if (seg_endp > t_end)
+                          meminfo.size = t_end - meminfo.addr;
+                      m_targetmemInfos.push_back(meminfo);
+                  }
+                  save_meminfos();
+                  // MemoryDump *scaninfo = new MemoryDump((m_edizon_dir + "/scaninfo.dat").c_str(), DumpType::UNDEFINED, true);
+                  // scaninfo->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
+                  // for (MemoryInfo meminfo : m_targetmemInfos)
+                  // {
+                  //   scaninfo->addData((u8 *)&meminfo, sizeof(meminfo));
+                  // }
+                  // scaninfo->flushBuffer();
+                  // delete scaninfo;
+
+                  // m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+                  // m_abort = false;
+                  // m_Time1 = time(NULL);
+                  // m_searchValue[0]._u64 = m_EditorBaseAddr - 0x800;
+                  // m_searchValue[1]._u64 = m_EditorBaseAddr;
+                  // if (m_pointersearch_canresume)
+                  //   resumepointersearch2();
+                  // else
+                  //   startpointersearch2(m_EditorBaseAddr);
+                  // printf("done pointer search \n");
+                  // printf("Time taken =%ld\n", time(NULL) - m_Time1);
+              }
+              // end
+              if ((kdown & KEY_A) && (kheld & KEY_ZL)) {
+                  if (m_memoryDump1 != nullptr) {  // in bookmark mode
+                      m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+                      // m_searchMenuLocation = SEARCH_POINTER;
+                      // m_showpointermenu = true;
+                      if (m_menuLocation == CANDIDATES && m_memoryDumpBookmark->size() != 0) {
+                          if (!(m_debugger->m_dmnt)) {
+                              m_debugger->detatch();
+                              dmntchtForceOpenCheatProcess();
+                              printf("force open called\n");
+                          }
+                          bookmark_t bookmark;
+                          m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                          // printf("m_selectedEntry + m_addresslist_offset %ld\n", m_selectedEntry + m_addresslist_offset);
+                          // u64 index = m_selectedEntry + m_addresslist_offset;
+                          if (bookmark.pointer.depth > 0) {
+                              addcodetofile(m_selectedEntry + m_addresslist_offset);
+                          } else {
+                              addstaticcodetofile(m_selectedEntry + m_addresslist_offset);
+                          }
+                          m_searchMenuLocation = SEARCH_NONE;
+                          (new Snackbar("代码已添加到金手指文件"))->show();
+                      }
+                      // pointercheck();
+                      // (new Snackbar("Searching pointer "))->show();
+                  }
+              } else if (kdown & KEY_A && m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) {
+                  searchType_t savetype = m_searchType;
+                  if (m_memoryDump1 != nullptr) {
+                      bookmark_t bookmark;
+                      m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                      m_searchType = bookmark.type;
+                  }
+
+                  u64 address = 0;
+                  m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+
+                  if (m_selectedEntry < 8) {
+                      char input[19];
+                      char initialString[21];
+                      // start mod address content edit Hex option
+
+                      //
+                      strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
+                      if (Gui::requestKeyboardInput("输入值", "输入应该写入到此处的值。", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
+                          if (m_searchValueFormat == FORMAT_HEX) {
+                              auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
+                              m_debugger->writeMemory(&value, sizeof(value), address);
+                          } else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                              auto value = static_cast<float>(std::atof(input));
+                              m_debugger->writeMemory(&value, sizeof(value), address);
+                          } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
+                              auto value = std::atof(input);
+                              m_debugger->writeMemory(&value, sizeof(value), address);
+                          } else if (m_searchType != SEARCH_TYPE_NONE) {
+                              auto value = std::atol(input);
+                              m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
+                          }
+                      }
+                  } else if ((m_memoryDump->size() / sizeof(u64)) < 25) {
+                      std::vector<std::string> options;
+                      options.clear();
+
+                      std::stringstream ss;
+                      for (u32 i = 7; i < (m_memoryDump->size() / sizeof(u64)); i++) {  //TODO: i?
+                          m_memoryDump->getData(m_selectedEntry * sizeof(u64), &address, sizeof(u64));
+                          ss.str("");
+                          ss << "0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << address;
+
+                          ss << " (" << _getAddressDisplayString(address, m_debugger, m_searchType);
+
+                          options.push_back(ss.str());
+                          printf("%s\n", ss.str().c_str());
+                      }
+
+                      (new ListSelector("编辑值位于 ", "\uE0E0 编辑值     \uE0E1 返回", options))->setInputAction([&](u32 k, u16 selectedItem) {
+                                                                                                            if (k & KEY_A) {
+                                                                                                                char input[16];
+                                                                                                                char initialString[21];
+                                                                                                                u64 selectedAddress;
+
+                                                                                                                m_memoryDump->getData((selectedItem + 7) * sizeof(u64), &selectedAddress, sizeof(u64));
+
+                                                                                                                strcpy(initialString, _getAddressDisplayString(selectedAddress, m_debugger, m_searchType).c_str());
+
+                                                                                                                if (Gui::requestKeyboardInput("输入值", "输入一个应该搜索的游戏内存的值。", initialString, SwkbdType::SwkbdType_NumPad, input, 15)) {
+                                                                                                                    u64 value = atol(input);
+                                                                                                                    if (value > dataTypeMaxValues[m_searchType] || value < dataTypeMinValues[m_searchType]) {
+                                                                                                                        (new Snackbar("输入的值不在此数据类型的范围内。请输入其他值。"))->show();
+                                                                                                                        return;
+                                                                                                                    }
+
+                                                                                                                    m_memoryDump->getData((m_selectedEntry) * sizeof(u64), &selectedAddress, sizeof(u64));
+                                                                                                                    m_debugger->pokeMemory(dataTypeSizes[m_searchType], selectedAddress, value);
+                                                                                                                }
+                                                                                                            }
+                                                                                                        })
+                          ->show();
+                  } else
+                      (new Snackbar("搜索到的地址太多了！编辑前缩小选择范围。"))->show();
+
+                  m_searchType = savetype;  // restore value
+              }
+          }
+      } else { /* Cheats menu */
+          if (kdown & KEY_A) {
+              if (m_cheatCnt == 0)
+                  return;
+
+              // count total opcode
+              u32 opcodecount = m_cheats[m_selectedEntry].definition.num_opcodes;
+              for (u32 i = 0; i < m_cheatCnt; i++) {
+                  if (m_cheats[i].enabled)
+                      opcodecount += m_cheats[i].definition.num_opcodes;
+              }
+              if (opcodecount > 0x400) {
+                  (new Snackbar("操作码总数将超过1024！"))->show();
+                  // return;
+              }
+
+              dmntchtToggleCheat(m_cheats[m_selectedEntry].cheat_id);
+              u64 cheatCnt = 0;
+
+              dmntchtGetCheatCount(&cheatCnt);
+              if (cheatCnt > 0) {
+                  delete[] m_cheats;
+                  m_cheats = new DmntCheatEntry[cheatCnt];
+                  dmntchtGetCheats(m_cheats, cheatCnt, 0, &m_cheatCnt);
+              }
+          }
+      }
+
+      if ((kdown & KEY_MINUS) && (kheld & KEY_ZL)) {
+          if (m_memoryDump1 != nullptr) {
+              m_memoryDump = m_memoryDump1;
+              m_memoryDump1 = nullptr;
+
+              updatebookmark(true, false, false);
+
+              m_memoryDump1 = m_memoryDump;
+              m_memoryDump = m_memoryDumpBookmark;
+
+              if (m_memoryDump->size() > 0) {
+                  if (m_memoryDump->size() / sizeof(u64) - 1 < m_selectedEntry)
+                      m_selectedEntry = m_memoryDump->size() / sizeof(u64) - 1;
+              } else {
+                  // m_selectedEntrySave = 0;
+                  m_selectedEntrySaveBM = 0;
+                  if (m_menuLocation != CHEATS) {
+                      m_menuLocation = CHEATS;
+                      m_selectedEntry = m_selectedEntrySaveCL;
+                  }
+              };
+          }
+      }
+
+      if ((kdown & KEY_MINUS) && !(kheld & KEY_ZL)) {
+          //make sure not using bookmark m_searchType
+          if (m_menuLocation == CANDIDATES) {
+              if (m_memoryDump1 != nullptr) {  //Bookmark case
+                  bookmark_t bookmark;
+                  m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                  bookmark.deleted = !bookmark.deleted;
+                  m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+                  // m_memoryDumpBookmark->flushBuffer();
+                  // m_memoryDump = m_memoryDump1;
+                  // m_memoryDump1 = nullptr;
+              } else {
+                  // m_addresslist_offset = 0;
+                  m_selectedEntrySaveSR = 0;
+                  m_addresslist_offsetSaveSR = 0;
+                  // end mod
+                  if (m_memoryDump->size() == 0) {
+                      std::vector<std::string> options;
+
+                      if (m_frozenAddresses.size() == 0)
+                          return;
+
+                      std::stringstream ss;
+                      for (auto [addr, value] : m_frozenAddresses) {
+                          ss << "[ 基地址 + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (addr - m_addressSpaceBaseAddr) << " ]  ";
+                          ss << "( " << std::dec << value << " )";
+                          options.push_back(ss.str());
+                          ss.str("");
+                      }
+
+                      (new ListSelector("冻结地址", "\uE0E0 解除冻结     \uE0E1 返回", options))->setInputAction([&](u32 k, u16 selectedItem) {
+                                                                                                            if (k & KEY_A) {
+                                                                                                                auto itr = m_frozenAddresses.begin();
+                                                                                                                std::advance(itr, selectedItem);
+
+                                                                                                                dmntchtDisableFrozenAddress(itr->first);
+                                                                                                                m_frozenAddresses.erase(itr->first);
+                                                                                                            }
+                                                                                                        })
+                          ->show();
+                  } else {
+                      m_memoryDump->clear();
+                      m_use_range = false;
+                      removef(EDIZON_DIR "/memdump1.dat");
+                      removef(EDIZON_DIR "/memdump1a.dat");
+                      removef(EDIZON_DIR "/datadump2.dat");
+                      removef(EDIZON_DIR "/datadump2.datA");
+                      removef(EDIZON_DIR "/datadump2.datB");
+                      // removef(EDIZON_DIR "/memdump2.dat");
+                      // removef(EDIZON_DIR "/memdump3.dat");
+
+                      // m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+                      // m_searchMode = SEARCH_MODE_RANGE;
+                      // m_searchRegion = SEARCH_REGION_MAIN;
+                      // m_searchValue[0]._u64 = 1;
+                      // m_searchValue[1]._u64 = 100;
+
+                      // m_menuLocation = CHEATS;
+                  }
+              }
+          } else {  // WIP working on cheat menu
+              // m_cheatCnt
+              m_cheatDelete[m_selectedEntry] = !m_cheatDelete[m_selectedEntry];
+          }
+      }
+      // start mod KEY_PLUS
+      // if (kdown & KEY_PLUS) {
+      // printf("%s\n","PLUS key pressed");
+      // printf("%s\n",titleNameStr.c_str());
+      // printf("%s\n",tidStr.c_str());
+      // printf("%s\n",buildIDStr.c_str());
+      // Gui::g_nextGui = GUI_MAIN;
+      // return;
+      // }
+      if ((kdown & KEY_R) && (kheld & KEY_ZL)) {
+          if (m_menuLocation == CANDIDATES && m_memoryDump1 != nullptr) {
+              m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+              if (m_bookmark.type < SEARCH_TYPE_FLOAT_64BIT) {
+                  u8 i = static_cast<u8>(m_bookmark.type) + 1;
+                  m_bookmark.type = static_cast<searchType_t>(i);
+              }
+              m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+              m_AttributeDumpBookmark->flushBuffer();
+          } else if (m_menuLocation == CANDIDATES && m_memoryDump1 == nullptr)  // change type
+          {
+              if (m_searchType < SEARCH_TYPE_FLOAT_64BIT) {
+                  u8 i = static_cast<u8>(m_searchType) + 1;
+                  m_searchType = static_cast<searchType_t>(i);
+              }
+          }
+      };
+
+      if ((kdown & KEY_L) && (kheld & KEY_ZL)) {
+          if (m_menuLocation == CANDIDATES && m_memoryDump1 != nullptr) {
+              m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+              if (m_bookmark.type > SEARCH_TYPE_UNSIGNED_8BIT) {
+                  u8 i = static_cast<u8>(m_bookmark.type) - 1;
+                  m_bookmark.type = static_cast<searchType_t>(i);
+              }
+              m_AttributeDumpBookmark->putData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+              m_AttributeDumpBookmark->flushBuffer();
+          } else if (m_menuLocation == CANDIDATES && m_memoryDump1 == nullptr)  // Chang type
+          {
+              if (m_searchType > SEARCH_TYPE_UNSIGNED_8BIT) {
+                  u8 i = static_cast<u8>(m_searchType) - 1;
+                  m_searchType = static_cast<searchType_t>(i);
+              }
+          }
+      };
+
+      if ((kdown & KEY_R) && !(kheld & KEY_ZL)) {
+          if (m_searchValueFormat == FORMAT_HEX)
+              m_searchValueFormat = FORMAT_DEC;
+          else
+              m_searchValueFormat = FORMAT_HEX;
+          if (m_searchValueFormat == FORMAT_HEX)
+              printf("%s\n", "HEX");
+          printf("%s\n", "R key pressed");
+      }
+      if ((kdown & KEY_L) && !(kheld & KEY_ZL))  //toggle bookmark view bookmark : (m_memoryDump1 != nullptr)
+      {
+          if (m_memoryDump1 == nullptr) {
+              // WIP
+              // switch to bookmark
+              // if (m_memoryDumpBookmark->size() == 0)
+              // {
+              //   updatebookmark(true, false);
+              // }
+
+              // if (m_memoryDumpBookmark->size() == 0)
+              //   m_menuLocation = CHEATS;
+
+              {
+                  m_memoryDump1 = m_memoryDump;
+                  m_memoryDump = m_memoryDumpBookmark;
+
+                  if (m_menuLocation == CANDIDATES) {
+                      m_selectedEntrySaveSR = m_selectedEntry;
+                      m_addresslist_offsetSaveSR = m_addresslist_offset;
+                      m_selectedEntry = m_selectedEntrySaveBM;
+                  }
+                  m_addresslist_offset = m_addresslist_offsetSaveBM;
+
+                  // if (m_memoryDump->size() == 0 && m_cheatCnt > 0)
+                  // {
+                  //   m_menuLocation = CHEATS;
+                  // };
+                  //consider to remove later
+                  if (m_searchType == SEARCH_TYPE_NONE)
+                      m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;  // to make sure not blank
+                  // end
+                  // (new Snackbar("Switch to bookmark List!"))->show();
+                  printf("%s\n", "Bookmark");
+              }
+          } else {
+              m_memoryDump = m_memoryDump1;
+              m_memoryDump1 = nullptr;
+
+              if (m_menuLocation == CANDIDATES) {
+                  m_selectedEntrySaveBM = m_selectedEntry;
+                  m_addresslist_offsetSaveBM = m_addresslist_offset;
+                  m_selectedEntry = m_selectedEntrySaveSR;
+              }
+              m_addresslist_offset = m_addresslist_offsetSaveSR;
+
+              // (new Snackbar("Switch to Normal List!"))->show();
+          }
+
+          if (m_memoryDumpBookmark->size() == 0 && m_menuLocation == CANDIDATES && m_cheatCnt > 0) {
+              m_selectedEntry = m_selectedEntrySaveCL;
+              m_menuLocation = CHEATS;
+          }
+          printf("%s\n", "L key pressed");
+          // if (m_menuLocation == CANDIDATES)
+          //   m_selectedEntry = 0;
+      }
+
+      if ((kdown & KEY_ZR) && !(kheld & KEY_ZL)) {
+          if (m_menuLocation == CHEATS) {
+              cheatListOffset += 8;
+              m_selectedEntry += 8;
+              if (cheatListOffset >= m_cheatCnt) {
+                  cheatListOffset -= 8;
+                  m_selectedEntry -= 8;
+              }
+              if (m_selectedEntry + 1 > m_cheatCnt)
+                  m_selectedEntry = m_cheatCnt - 1;
+          } else {
+              m_addresslist_offset += 8;
+              if (m_addresslist_offset >= (m_memoryDump->size() / sizeof(u64)))
+                  m_addresslist_offset -= 8;
+              if (m_selectedEntry + m_addresslist_offset + 1 > (m_memoryDump->size() / sizeof(u64)))
+                  m_selectedEntry = (m_memoryDump->size() / sizeof(u64)) % 8 - 1;
+              // printf("%s\n", "ZR key pressed");
+          }
+      }
+
+      if ((kdown & KEY_ZR) && (kheld & KEY_ZL)) {
+          if (m_menuLocation == CHEATS) {
+              if (cheatListOffset >= 8) {
+                  cheatListOffset -= 8;
+                  m_selectedEntry -= 8;
+              } else {
+                  cheatListOffset = 0;
+                  m_selectedEntry = 0;
+              }
+          } else {
+              if (m_addresslist_offset >= 8)
+                  m_addresslist_offset -= 8;
+          }
+          // printf("%s\n", "ZL key pressed");
+      }
+
+      // End Mod
+      // hidScanInput();
+      if ((kdown & KEY_Y) && (kheld & KEY_ZL)) {
+          if (m_searchMenuLocation == SEARCH_NONE) {
+              if (m_memoryDump1 != nullptr) {  // in bookmark mode
+                  m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+                  m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+                  m_selectedEntry = 0;
+                  m_searchMenuLocation = SEARCH_POINTER;
+                  PSresumeSTATE();
+                  // m_showpointermenu = true;
+              } else {
+                  m_searchMenuLocation = SEARCH_VALUE;
+                  m_selectedEntry = 1;
+              }
+          }
+      }
+      // if ((kdown & KEY_X) && (kheld & KEY_ZL))
+      // {
+      //   printf("resume \n");
+      //   resumepointersearch2();
+      // }
+      if ((kdown & KEY_Y) && !(kheld & KEY_ZL)) {
+          if (m_menuLocation == CHEATS) {
+              m_selectedEntrySaveCL = m_selectedEntry;
+          } else if (m_memoryDump1 == nullptr) {
+              m_selectedEntrySaveSR = m_selectedEntry;
+              m_addresslist_offsetSaveSR = m_addresslist_offset;
+          } else {
+              m_selectedEntrySaveBM = m_selectedEntry;
+              m_addresslist_offsetSaveBM = m_addresslist_offset;
+          }
+          m_menuLocation = CANDIDATES;
+          if (m_searchMenuLocation == SEARCH_NONE) {
+              if ((Config::getConfig()->extra_value) && (m_memoryDump->size() == 0)) {  // enter multi search
+                  m_searchMenuLocation = SEARCH_editExtraSearchValues;
+                  m_selectedEntrySave = m_selectedEntry;
+                  m_selectedEntry = 0;
+                  load_multisearch_setup();
+              } else if (m_searchMode == SEARCH_MODE_NONE) {
+                  m_searchMenuLocation = SEARCH_MODE;
+                  if (m_selectedEntry > 11)
+                      m_selectedEntry = 0;
+                  // m_selectedEntry = m_searchType == SEARCH_TYPE_NONE ? 0 : m_searchType;
+              } else
+                  m_searchMenuLocation = SEARCH_VALUE;
+              // auto toggle between stateA and stateB
+              if (m_searchMode == SEARCH_MODE_DIFFA) {
+                  m_searchMode = SEARCH_MODE_SAMEA;
+                  m_selectedEntry = 1;
+              } else if (m_searchMode == SEARCH_MODE_SAMEA) {
+                  m_searchMode = SEARCH_MODE_DIFFA;
+                  m_selectedEntry = 1;
+              }
+              // else
+              //   m_selectedEntry = 0;
+
+              // cheatListOffset = 0;
+          }
+          printf("%s\n", "Y key pressed");
+          if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
+              printf("%s\n", Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str());
+          printf("%s\n", tidStr.c_str());
+          printf("%s\n", buildIDStr.c_str());
+          GuiCheats::_writegameid();
+          //make sure not using bookmark
+          // if (m_memoryDump1 != nullptr)
+          // {
+          //   m_memoryDump = m_memoryDump1;
+          //   m_memoryDump1 = nullptr;
+          // }
+          // m_addresslist_offset = 0;
+          // end mod
+      }
+  } else {
+      if ((m_searchMenuLocation == SEARCH_TYPE && m_searchType == SEARCH_TYPE_NONE) ||
+          (m_searchMenuLocation == SEARCH_MODE && m_searchMode == SEARCH_MODE_NONE) ||
+          (m_searchMenuLocation == SEARCH_REGION && m_searchRegion == SEARCH_REGION_NONE) ||
+          (m_searchMenuLocation == SEARCH_VALUE) ||
+          (m_searchMenuLocation == SEARCH_editRAM)) {
+          if (kdown & KEY_UP) {
+              switch (m_searchMenuLocation) {
+                  case SEARCH_TYPE:
+                  // [[fallthrough]]
+                  case SEARCH_MODE:
+                      if (m_selectedEntry % 2 == 1)
+                          m_selectedEntry--;
+                      break;
+                  case SEARCH_REGION:
+                      if (m_selectedEntry > 0)
+                          m_selectedEntry--;
+                      break;
+                  case SEARCH_VALUE:
+                      m_selectedEntry = 0;
+                      break;
+                  case SEARCH_NONE:
+                  case SEARCH_POINTER:
+                      break;
+                  case SEARCH_editRAM2:
+                  case SEARCH_editRAM:  // need UP
+                      if (m_selectedEntry > 4)
+                          m_selectedEntry -= 5;
+                      else {
+                          m_EditorBaseAddr -= 0x10;
+                      }
+
+                      break;
+                  case SEARCH_editExtraSearchValues:
+                  case SEARCH_pickjump:
+                  default:
+                      break;
+              }
+          }
+
+          if (kdown & KEY_DOWN) {
+              switch (m_searchMenuLocation) {
+                  case SEARCH_TYPE:
+                  // [[fallthrough]]
+                  case SEARCH_MODE:
+                      if ((m_selectedEntry + 1) < 12 && m_selectedEntry % 2 == 0)
+                          m_selectedEntry++;
+                      break;
+                  case SEARCH_REGION:
+                      if (m_selectedEntry < 3)
+                          m_selectedEntry++;
+                      break;
+                  case SEARCH_VALUE:
+                      if (m_searchType != SEARCH_TYPE_NONE && m_searchMode != SEARCH_MODE_NONE && m_searchRegion != SEARCH_REGION_NONE)
+                          m_selectedEntry = 1;
+                      break;
+                  case SEARCH_NONE:
+                  case SEARCH_POINTER:
+                      break;
+                  case SEARCH_editRAM2:
+                  case SEARCH_editRAM:  // need DOWN
+                      if (m_selectedEntry < 35)
+                          m_selectedEntry += 5;
+                      else {
+                          m_EditorBaseAddr += 0x10;
+                      }
+
+                      break;
+                  case SEARCH_editExtraSearchValues:
+                  case SEARCH_pickjump:
+                  default:
+                      break;
+              }
+          }
+
+          if (kdown & KEY_LEFT) {
+              switch (m_searchMenuLocation) {
+                  case SEARCH_TYPE:
+                  // [[fallthrough]]
+                  case SEARCH_MODE:
+                      if (m_selectedEntry >= 2)
+                          m_selectedEntry -= 2;
+                      break;
+                  case SEARCH_REGION:
+                      break;
+                  case SEARCH_VALUE:
+                      if (m_searchValueIndex == 1)
+                          m_searchValueIndex--;
+                      break;
+                  case SEARCH_NONE:
+                  case SEARCH_POINTER:
+                      break;
+                  case SEARCH_editRAM2:
+                  case SEARCH_editRAM:  // need LEFT
+                      if (m_selectedEntry % 5 > 1)
+                          m_selectedEntry--;
+                      break;
+                  case SEARCH_editExtraSearchValues:
+                  case SEARCH_pickjump:
+                  default:
+                      break;
+              }
+          }
+
+          if (kdown & KEY_RIGHT) {
+              switch (m_searchMenuLocation) {
+                  case SEARCH_TYPE:
+                  // [[fallthrough]]
+                  case SEARCH_MODE:
+                      if (m_selectedEntry <= 9)
+                          m_selectedEntry += 2;
+                      break;
+                  case SEARCH_REGION:
+                      break;
+                  case SEARCH_VALUE:
+                      if (m_searchValueIndex == 0 && (m_searchMode == SEARCH_MODE_RANGE || m_use_range || m_searchMode == SEARCH_MODE_TWO_VALUES))
+                          m_searchValueIndex++;
+                      break;
+                  case SEARCH_NONE:
+                  case SEARCH_POINTER:
+                      break;
+                  case SEARCH_editRAM2:
+                  case SEARCH_editRAM:  // need RIGHT
+                      if (m_selectedEntry % 5 < 4)
+                          m_selectedEntry++;
+                      break;
+                  case SEARCH_editExtraSearchValues:
+                  case SEARCH_pickjump:
+                  default:
+                      break;
+              }
+          }
+
+          if (m_searchMenuLocation == SEARCH_editRAM) {
+              if (kdown & KEY_PLUS) {
+                  u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+
+                  bookmark_t bookmark;
+                  if (address >= m_heapBaseAddr && address < m_heapEnd) {
+                      bookmark.offset = address - m_heapBaseAddr;
+                      bookmark.heap = true;
+                  } else if (address >= m_mainBaseAddr && address < m_mainend) {
+                      bookmark.offset = address - m_mainBaseAddr;
+                      bookmark.heap = false;
+                  }
+
+                  bookmark.type = m_searchType;
+                  Gui::requestKeyboardInput("输入标签", "输入添加到书签的标签", "", SwkbdType_QWERTY, bookmark.label, 18);
+                  m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+                  m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                  if (m_bookmark.pointer.depth > 0) {
+                      s64 offset = address - m_BookmarkAddr + m_bookmark.pointer.offset[0];
+                      // printf("address = %lx m_EditorBaseAddr = %lx m_bookmark.pointer.offset[0] = %lx m_addressmod = %lx\n", address, m_EditorBaseAddr, m_bookmark.pointer.offset[0],m_addressmod);
+                      if (offset >= 0 && offset < (s64)m_max_range) {
+                          memcpy(&(bookmark.pointer), &(m_bookmark.pointer), (m_bookmark.pointer.depth + 2) * 8);
+                          bookmark.pointer.offset[0] = (u64)offset;
+                          m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+                          m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                      }
+                  }
+                  m_AttributeDumpBookmark->flushBuffer();
+                  m_memoryDumpBookmark->flushBuffer();
+                  MemoryDump *BMDump = new MemoryDump(EDIZON_DIR "/BMDump.dat", DumpType::HELPER, false);
+                  BMDump->addData((u8 *)&bookmark.label, 18);
+                  BMDump->addData((u8 *)&address, sizeof(u64));
+                  delete BMDump;
+                  (new Snackbar("地址已添加到书签！"))->show();
+                  printf("%s\n", "PLUS key pressed3");
+              }
+              if (kdown & KEY_ZR) {
+                  m_EditorBaseAddr += 0x80;
+              }
+              if (kdown & KEY_ZL) {
+                  m_EditorBaseAddr -= 0x80;
+              }
+              if (kdown & KEY_R) {
+                  m_addressmod++;
+                  m_addressmod = m_addressmod % 4;
+              }
+              if (kdown & KEY_L) {
+                  m_addressmod--;
+                  m_addressmod = m_addressmod % 4;
+              }
+              if (kdown & KEY_X) {
+                  if (m_searchValueFormat == FORMAT_DEC)
+                      m_searchValueFormat = FORMAT_HEX;
+                  else
+                      m_searchValueFormat = FORMAT_DEC;
+              }
+              if (kdown & KEY_Y)  // BM9
+              {
+                  u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+                  std::stringstream ss;
+                  ss << "0x" << std::uppercase << std::hex << address;
+                  char input[19];
+                  if (Gui::requestKeyboardInput("输入地址", "输入添加到书签的地址。", ss.str(), SwkbdType_QWERTY, input, 18)) {
+                      address = static_cast<u64>(std::stoul(input, nullptr, 16));
+
+                      bookmark_t bookmark;
+                      bookmark.type = m_searchType;
+                      Gui::requestKeyboardInput("输入标签", "输入添加到书签的标签。", "", SwkbdType_QWERTY, bookmark.label, 18);
+                      m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
+                      m_AttributeDumpBookmark->flushBuffer();
+
+                      (new Snackbar("地址已添加到书签！"))->show();
+                      m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                      m_memoryDumpBookmark->flushBuffer();
+                  }
+              }
+          }
+
+          // inc and dec search value
+          if ((kdown & KEY_ZR) && (m_searchMenuLocation == SEARCH_VALUE)) {
+              switch (m_searchType) {
+                  case SEARCH_TYPE_FLOAT_32BIT:
+                      m_searchValue[m_searchValueIndex]._f32++;
+                      break;
+                  case SEARCH_TYPE_FLOAT_64BIT:
+                      m_searchValue[m_searchValueIndex]._f64++;
+                      break;
+                  default:
+                      m_searchValue[m_searchValueIndex]._u64++;
+              }
+              m_selectedEntry = 1;
+          };
+          if ((kdown & KEY_ZL) && (m_searchMenuLocation == SEARCH_VALUE)) {
+              switch (m_searchType) {
+                  case SEARCH_TYPE_FLOAT_32BIT:
+                      m_searchValue[m_searchValueIndex]._f32--;
+                      break;
+                  case SEARCH_TYPE_FLOAT_64BIT:
+                      m_searchValue[m_searchValueIndex]._f64--;
+                      break;
+                  default:
+                      m_searchValue[m_searchValueIndex]._u64--;
+              }
+              m_selectedEntry = 1;
+          };
+          if (m_searchMenuLocation == SEARCH_VALUE) {
+              if (kdown & KEY_DUP) {
+                  m_searchMode = SEARCH_MODE_SAME;
+                  {
+                      std::string s = m_edizon_dir + "/datadump2.datB";
+                      if (access(s.c_str(), F_OK) == 0) {
+                          if (m_store_extension == "B")
+                              m_store_extension = "A";
+                          else
+                              m_store_extension = "B";
+                          memcpy(Config::getConfig()->store_extension, m_store_extension.c_str(), m_store_extension.size());
+                          Config::getConfig()->store_extension[m_store_extension.size()] = 0;
+                          Config::writeConfig();
+                      }
+                  };
+              } else if (kdown & KEY_DDOWN) {
+                  m_searchMode = SEARCH_MODE_DIFF;
+              } else if (kdown & KEY_DLEFT) {
+                  m_searchMode = SEARCH_MODE_DEC;
+              } else if (kdown & KEY_DRIGHT) {
+                  m_searchMode = SEARCH_MODE_INC;
+              } else if (kdown & KEY_PLUS) {
+                if (m_searchMode == SEARCH_MODE_RANGE)
+                    m_searchMode = SEARCH_MODE_TWO_VALUES;
+                else
+                    m_searchMode = SEARCH_MODE_RANGE;
+              } else if (kdown & KEY_MINUS) {
+                  if (m_searchMode == SEARCH_MODE_RANGE) {
+                      m_searchMode = SEARCH_MODE_EQ;
+                      m_searchValue[0]._u64 = 0;
+                      m_selectedEntry = 1;
+                  } else if (m_searchMode == SEARCH_MODE_EQ) {
+                      m_searchMode = SEARCH_MODE_NEQ;
+                      m_selectedEntry = 1;
+                  } else {
+                      m_searchMode = SEARCH_MODE_EQ;
+                  }
+                  m_searchValueIndex = 0;
+              } else if (kdown & KEY_RSTICK) {
+                  m_searchMode = SEARCH_MODE_RANGE;
+                  m_searchType = SEARCH_TYPE_FLOAT_32BIT;
+                  m_searchValue[0]._f32 = 0.1;
+                  m_searchValue[1]._f32 = 2000;
+                  m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+                  m_selectedEntry = 1;
+              } else if (kdown & KEY_LSTICK) {
+                  if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                      m_searchType = SEARCH_TYPE_FLOAT_64BIT;
+                  } else
+                      m_searchType = SEARCH_TYPE_FLOAT_32BIT;
+                  m_searchValueIndex = 0;
+                  m_selectedEntry = 0;
+                  m_searchValue[0]._u64 = 0;
+                  m_searchValue[1]._u64 = 0;
+              } else if (kdown & KEY_Y) {
+                  if (m_searchType == SEARCH_TYPE_UNSIGNED_32BIT) {
+                      m_searchType = SEARCH_TYPE_UNSIGNED_8BIT;
+                  } else if (m_searchType == SEARCH_TYPE_UNSIGNED_8BIT) {
+                      m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+                  } else
+                      m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
+
+                  m_searchMode = SEARCH_MODE_EQ;
+                  m_searchValueIndex = 0;
+                  m_selectedEntry = 0;
+                  m_searchValue[0]._u64 = 0;
+                  m_searchValue[1]._u64 = 0;
+                  m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+              } else if (kdown & KEY_RSTICK_UP)  //search shortcut
+              {
+                  m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+                  m_searchValueFormat = FORMAT_HEX;
+                  m_searchRegion = SEARCH_REGION_MAIN;
+                  m_searchValue[0]._u64 = m_heapBaseAddr;
+                  m_searchValue[1]._u64 = m_heapEnd;
+              } else if (kdown & KEY_RSTICK_LEFT) {
+                  m_searchValue[0]._u64 = 0;
+              } else if (kdown & KEY_RSTICK_RIGHT) {
+                  m_searchValue[1]._u64 = 0;
+              } else if (kdown & KEY_R) {
+                  if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                      m_searchValue[0]._f32 = 0 - m_searchValue[0]._f32;
+                      m_searchValue[1]._f32 = 0 - m_searchValue[1]._f32;
+                  } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
+                      m_searchValue[0]._f64 = 0 - m_searchValue[0]._f64;
+                      m_searchValue[1]._f64 = 0 - m_searchValue[1]._f64;
+                  }
+              };
+          }
+          if (kdown & KEY_A) {
+              if (m_searchMenuLocation == SEARCH_editRAM) {  // BM3
+                  // EditRAM routine
+                  // to update to use L and R to select type and display it on the top line
+                  u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
+                  char input[19];
+                  char initialString[21];
+                  strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
+                  if (Gui::requestKeyboardInput("输入值", "输入应该写入此处的值。", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
+                      if (m_searchValueFormat == FORMAT_HEX) {
+                          auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
+                          m_debugger->writeMemory(&value, dataTypeSizes[m_searchType], address);
+                      } else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                          auto value = static_cast<float>(std::atof(input));
+                          m_debugger->writeMemory(&value, sizeof(value), address);
+                      } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
+                          auto value = std::atof(input);
+                          m_debugger->writeMemory(&value, sizeof(value), address);
+                      } else if (m_searchType != SEARCH_TYPE_NONE) {
+                          auto value = std::atol(input);
+                          m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
+                      }
+                  }
+              } else if (m_searchMenuLocation == SEARCH_TYPE)
+                  m_searchType = static_cast<searchType_t>(m_selectedEntry);
+              else if (m_searchMenuLocation == SEARCH_REGION)
+                  m_searchRegion = static_cast<searchRegion_t>(m_selectedEntry);
+              else if (m_searchMenuLocation == SEARCH_MODE)
+                  m_searchMode = static_cast<searchMode_t>(m_selectedEntry);
+              else if (m_searchMenuLocation == SEARCH_VALUE) {
+                  if (m_selectedEntry == 0) {
+                      m_selectedEntry = 1;
+                      char str[0x21];
+                      // Start Mod keep previous value
+                      // End Mod
+                      if ((m_searchValue[m_searchValueIndex]._u32 > 10) || (m_searchValueFormat == FORMAT_HEX)) {
+                          Gui::requestKeyboardInput("输入你想要搜素的值", "基于你之前选择的选项, EdiZon 期望不同的输入。", _getValueDisplayString(m_searchValue[m_searchValueIndex], m_searchType), m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
+                      } else {
+                          Gui::requestKeyboardInput("输入你想要搜素的值", "基于你之前选择的选项, EdiZon 期望不同的输入。", "", m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
+                      }
+                      if (std::string(str) == "")
+                          return;
+                      m_searchValue[m_searchValueIndex]._u64 = 0;  //hack to fix bug elsewhere
+                      if (m_searchValueFormat == FORMAT_HEX) {
+                          m_searchValue[m_searchValueIndex]._u64 = static_cast<u64>(std::stoul(str, nullptr, 16));
+                      } else {
+                          switch (m_searchType) {
+                              case SEARCH_TYPE_UNSIGNED_8BIT:
+                                  m_searchValue[m_searchValueIndex]._u8 = static_cast<u8>(std::stoul(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_UNSIGNED_16BIT:
+                                  m_searchValue[m_searchValueIndex]._u16 = static_cast<u16>(std::stoul(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_UNSIGNED_32BIT:
+                                  m_searchValue[m_searchValueIndex]._u32 = static_cast<u32>(std::stoul(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_UNSIGNED_64BIT:
+                                  m_searchValue[m_searchValueIndex]._u64 = static_cast<u64>(std::stoul(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_SIGNED_8BIT:
+                                  m_searchValue[m_searchValueIndex]._s8 = static_cast<s8>(std::stol(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_SIGNED_16BIT:
+                                  m_searchValue[m_searchValueIndex]._s16 = static_cast<s16>(std::stol(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_SIGNED_32BIT:
+                                  m_searchValue[m_searchValueIndex]._s32 = static_cast<s32>(std::stol(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_SIGNED_64BIT:
+                                  m_searchValue[m_searchValueIndex]._s64 = static_cast<s64>(std::stol(str, nullptr, 0));
+                                  break;
+                              case SEARCH_TYPE_FLOAT_32BIT:
+                                  m_searchValue[m_searchValueIndex]._f32 = static_cast<float>(std::stof(str));
+                                  break;
+                              case SEARCH_TYPE_FLOAT_64BIT:
+                                  m_searchValue[m_searchValueIndex]._f64 = static_cast<double>(std::stod(str));
+                                  break;
+                              case SEARCH_TYPE_POINTER:
+                                  m_searchValue[m_searchValueIndex]._u64 = static_cast<u64>(std::stol(str));
+                                  break;
+                              case SEARCH_TYPE_NONE:
+                                  break;
+                          }
+                      }
+                  } else if (m_selectedEntry == 1)  // search
+                  {
+                      if (m_searched) {
+                          if (m_memoryDump1 == nullptr)
+                              m_memoryDump->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
+                          else
+                              m_memoryDump1->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
+                          (new Snackbar("已对此会话执行了一次搜索，请重新启动以执行另一次搜索"))->show();
+                      } else {
+                          m_searched = true;
+                          (new MessageBox("遍历游戏内存。\n \n这可能需要一点时间...", MessageBox::NONE))->show();
+                          requestDraw();
+
+                          overclockSystem(true);
+
+                          if (m_searchMode == SEARCH_MODE_POINTER)
+                              m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+                          if (m_memoryDump1 != nullptr) {
+                              updatebookmark(true, false, true);
+                              m_memoryDump = m_memoryDumpBookmark;
+                          } else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {
+                              if (m_memoryDump->size() == 0) {
+                                  delete m_memoryDump;
+                                  m_use_range = false;
+                                  if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+                                      GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+                                  else
+                                      GuiCheats::searchMemoryValuesPrimary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                                  printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
+                              } else if (m_memoryDump->getDumpInfo().dumpType == DumpType::DATA) {
+                                  printf("%s%lx\n", "Dump Size = ", m_memoryDump->size());
+                                  if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+                                      GuiCheats::searchMemoryValuesSecondary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+                                  else
+                                      GuiCheats::searchMemoryValuesSecondary(m_debugger, m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                                  delete m_memoryDump;
+                                  // remove(EDIZON_DIR "/memdump1.dat");
+                                  // rename(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
+                                  // printf("%s\n", "renaming");
+                                  std::string s = m_edizon_dir + "/memdump1.dat";
+                                  REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
+                                  m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
+                              } else if (m_memoryDump->getDumpInfo().dumpType == DumpType::ADDR) {
+                                  if (m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {
+                                      if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+                                          GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_targetmemInfos);
+                                      else
+                                          GuiCheats::searchMemoryValuesTertiary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, m_use_range, &m_memoryDump, m_memoryInfo);
+                                      delete m_memoryDump;
+                                      // remove(EDIZON_DIR "/memdump1.dat");
+                                      // remove(EDIZON_DIR "/memdump1a.dat");
+                                      // rename(EDIZON_DIR "/memdump3.dat", EDIZON_DIR "/memdump1.dat");
+                                      // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat");
+                                      std::string s = m_edizon_dir + "/memdump1.dat";
+                                      REPLACEFILE(EDIZON_DIR "/memdump3.dat", s.c_str());
+                                      s = m_edizon_dir + "/memdump1a.dat";
+                                      REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+                                      m_memoryDump = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, false);
+                                      // remove(EDIZON_DIR "/datadump2.dat");
+                                      // rename(EDIZON_DIR "/datadump4.dat", EDIZON_DIR "/datadump2.dat");
+                                      s = m_edizon_dir + "/datadump2.dat";
+                                      REPLACEFILE(EDIZON_DIR "/datadump4.dat", s.c_str());
+                                      // // rename B to A
+                                      // remove(EDIZON_DIR "/datadumpA.dat");
+                                      // rename(EDIZON_DIR "/datadumpAa.dat", EDIZON_DIR "/datadumpA.dat");
+                                      REPLACEFILE(EDIZON_DIR "/datadumpAa.dat", EDIZON_DIR "/datadumpA.dat")
+                                      // remove(EDIZON_DIR "/datadumpB.dat");
+                                      // rename(EDIZON_DIR "/datadumpBa.dat", EDIZON_DIR "/datadumpB.dat");
+                                      REPLACEFILE(EDIZON_DIR "/datadumpBa.dat", EDIZON_DIR "/datadumpB.dat");
+                                  } else {
+                                      m_nothingchanged = false;
+                                      GuiCheats::searchMemoryAddressesSecondary2(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
+                                      if (m_nothingchanged == false) {
+                                          // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
+                                          // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
+                                          std::string s = m_edizon_dir + "/memdump1a.dat";
+                                          REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+                                      }
+                                      // else
+                                      // {
+                                      //   std::string s = m_edizon_dir + "/datadump2.dat";
+                                      //   REPLACEFILE(EDIZON_DIR "/predatadump2.dat", s.c_str());
+                                      // }
+                                  }
+                              }
+                          } else {
+                              if (m_memoryDump->size() == 0) {
+                                  delete m_memoryDump;
+                                  if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
+                                      GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+                                  else
+                                      GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                              } else {
+                                  m_nothingchanged = false;
+                                  GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
+                                  if (m_nothingchanged == false) {
+                                      // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
+                                      // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
+                                      std::string s = m_edizon_dir + "/memdump1a.dat";
+                                      REPLACEFILE(EDIZON_DIR "/memdump3a.dat", s.c_str());
+                                  }
+                              }
+                          }
+
+                          overclockSystem(false);
+
+                          Gui::g_currMessageBox->hide();
+
+                          m_searchMenuLocation = SEARCH_NONE;
+                          // m_searchMode = SEARCH_MODE_NONE;
+                      }
+                  }
+              }
+          }
+      }
+
+      if (kdown & KEY_X && !(kheld & KEY_ZL)) {
+          if (m_searchMenuLocation == SEARCH_VALUE) {
+              if (m_searchValueFormat == FORMAT_DEC)
+                  m_searchValueFormat = FORMAT_HEX;
+              else
+                  m_searchValueFormat = FORMAT_DEC;
+          }
+      } else if (kdown & KEY_X && (kheld & KEY_ZL)) {
+          // key available
+      }
+
+      if (kdown & KEY_L) {
+          if (m_searchMenuLocation == SEARCH_VALUE) {
+              m_searchMenuLocation = SEARCH_REGION;
+              m_selectedEntry = m_searchRegion == SEARCH_REGION_NONE ? 0 : static_cast<u32>(m_searchRegion);
+          } else if (m_searchMenuLocation == SEARCH_REGION) {
+              m_searchMenuLocation = SEARCH_MODE;
+              m_selectedEntry = m_searchMode == SEARCH_MODE_NONE ? 0 : static_cast<u32>(m_searchMode);
+          } else if (m_searchMenuLocation == SEARCH_MODE) {
+              m_searchMenuLocation = SEARCH_TYPE;
+              m_selectedEntry = m_searchType == SEARCH_TYPE_NONE ? 0 : static_cast<u32>(m_searchType);
+          }
+      }
+
+      if (kdown & KEY_R) {
+          if (m_searchMenuLocation == SEARCH_TYPE) {
+              m_searchMenuLocation = SEARCH_MODE;
+              m_selectedEntry = m_searchMode == SEARCH_MODE_NONE ? 0 : static_cast<u32>(m_searchMode);
+          } else if (m_searchMenuLocation == SEARCH_MODE) {
+              m_searchMenuLocation = SEARCH_REGION;
+              m_selectedEntry = m_searchRegion == SEARCH_REGION_NONE ? 0 : static_cast<u32>(m_searchRegion);
+          } else if (m_searchMenuLocation == SEARCH_REGION) {
+              m_searchMenuLocation = SEARCH_VALUE;
+              m_selectedEntry = 0;
+              m_searchValueIndex = 0;
           }
         }
-      }
-    }
-
-    if (kdown & KEY_X && !(kheld & KEY_ZL))
-    {
-      if (m_searchMenuLocation == SEARCH_VALUE)
-      {
-        if (m_searchValueFormat == FORMAT_DEC)
-          m_searchValueFormat = FORMAT_HEX;
-        else
-          m_searchValueFormat = FORMAT_DEC;
-      }
-    }
-    else if (kdown & KEY_X && (kheld & KEY_ZL))
-    {
-      // key available
-    }
-
-    if (kdown & KEY_L)
-    {
-      if (m_searchMenuLocation == SEARCH_VALUE)
-      {
-        m_searchMenuLocation = SEARCH_REGION;
-        m_selectedEntry = m_searchRegion == SEARCH_REGION_NONE ? 0 : static_cast<u32>(m_searchRegion);
-      }
-      else if (m_searchMenuLocation == SEARCH_REGION)
-      {
-        m_searchMenuLocation = SEARCH_MODE;
-        m_selectedEntry = m_searchMode == SEARCH_MODE_NONE ? 0 : static_cast<u32>(m_searchMode);
-      }
-      else if (m_searchMenuLocation == SEARCH_MODE)
-      {
-        m_searchMenuLocation = SEARCH_TYPE;
-        m_selectedEntry = m_searchType == SEARCH_TYPE_NONE ? 0 : static_cast<u32>(m_searchType);
-      }
-    }
-
-    if (kdown & KEY_R)
-    {
-      if (m_searchMenuLocation == SEARCH_TYPE)
-      {
-        m_searchMenuLocation = SEARCH_MODE;
-        m_selectedEntry = m_searchMode == SEARCH_MODE_NONE ? 0 : static_cast<u32>(m_searchMode);
-      }
-      else if (m_searchMenuLocation == SEARCH_MODE)
-      {
-        m_searchMenuLocation = SEARCH_REGION;
-        m_selectedEntry = m_searchRegion == SEARCH_REGION_NONE ? 0 : static_cast<u32>(m_searchRegion);
-      }
-      else if (m_searchMenuLocation == SEARCH_REGION)
-      {
-        m_searchMenuLocation = SEARCH_VALUE;
-        m_selectedEntry = 0;
-        m_searchValueIndex = 0;
-      }
-    }
   }
 }
 
@@ -5876,6 +5592,16 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
             helperinfo.count++;
           }
           break;
+        case SEARCH_MODE_TWO_VALUES:
+          if (realValue._s64 == searchValue1._s64) {
+            memset(&nextValue, 0, 8);
+            memcpy(&nextValue, buffer + i + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+            if (nextValue._s64 == searchValue2._s64){
+                (*displayDump)->addData((u8 *)&address, sizeof(u64));
+                helperinfo.count++;
+            }
+          }
+          break;
         case SEARCH_MODE_NEQ:
           memset(&nextValue, 0, 8);
           memcpy(&nextValue, buffer + i + dataTypeSizes[searchType], dataTypeSizes[searchType]);
@@ -6052,7 +5778,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
   MemoryDump *debugdump1 = new MemoryDump(EDIZON_DIR "/debugdump1.dat", DumpType::HELPER, true);
   if (helperDump->size() == 0)
   {
-    (new Snackbar("Helper file not found !"))->show();
+    (new Snackbar("帮助文件未找到！"))->show();
     return;
   }
   else
@@ -6114,7 +5840,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         helperDump->getData(helper_offset, &helperinfo, sizeof(helperinfo));
         debugger->readMemory(ram_buffer, helperinfo.size, helperinfo.address);
       }
-      searchValue_t value = {0};
+      searchValue_t value = {0}, nextValue = {0};
       // searchValue_t testing = {0}; // temp
       u64 address = 0;
 
@@ -6158,6 +5884,16 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newhelperinfo.count++;
+        }
+        break;
+      case SEARCH_MODE_TWO_VALUES:
+        if (value._s64 == searchValue1._s64) {
+          memset(&nextValue, 0, 8);
+          memcpy(&nextValue, ram_buffer + address - helperinfo.address + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+          if (nextValue._s64 == searchValue2._s64){
+            newDump->addData((u8 *)&address, sizeof(u64));
+            newhelperinfo.count++;
+          }
         }
         break;
       case SEARCH_MODE_NEQ:
@@ -6314,7 +6050,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
   MemoryDump *lastdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, false);
   if (lastdataDump->size() == 0)
   {
-    (new Snackbar("No previous value found !"))->show();
+    (new Snackbar("找不到以前的值！"))->show();
     m_nothingchanged = true;
     delete lastdataDump;
     return;
@@ -6408,7 +6144,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         helperDump->getData(helper_offset, &helperinfo, sizeof(helperinfo));
         debugger->readMemory(ram_buffer, helperinfo.size, helperinfo.address);
       }
-      searchValue_t value = {0};
+      searchValue_t value = {0}, nextValue = {0};
       // searchValue_t testing = {0}; // temp
       u64 address = 0;
 
@@ -6453,6 +6189,16 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newhelperinfo.count++;
+        }
+        break;
+      case SEARCH_MODE_TWO_VALUES:
+        if (value._s64 == searchValue1._s64) {
+          memset(&nextValue, 0, 8);
+          memcpy(&nextValue, ram_buffer + address - helperinfo.address + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+          if (nextValue._s64 == searchValue2._s64){
+            newDump->addData((u8 *)&address, sizeof(u64));
+            newhelperinfo.count++;
+          }
         }
         break;
       case SEARCH_MODE_NEQ:
@@ -6865,6 +6611,7 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
         case SEARCH_MODE_GT:
         case SEARCH_MODE_LT:
         case SEARCH_MODE_NOT_POINTER:
+        case SEARCH_MODE_TWO_VALUES:
           printf("error 123\n");
           break;
         }
@@ -7178,6 +6925,7 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
       case SEARCH_MODE_GT:
       case SEARCH_MODE_LT:
       case SEARCH_MODE_NOT_POINTER:
+      case SEARCH_MODE_TWO_VALUES:
         break;
       }
     }
@@ -10622,3 +10370,132 @@ bool GuiCheats::_check_extra_not_OK(u8 *buffer, u32 index)
   }
   return false;
 }
+void GuiCheats::inc_candidate_entries() {
+    if (m_memoryDump1 == nullptr) {
+        for (u32 line = 0; line < 1000; line++) {
+            if ((line) >= (m_memoryDump->size() / sizeof(u64)))
+                break;
+            u64 address = 0;
+            m_memoryDump->getData((line) * sizeof(u64), &address, sizeof(u64));
+            searchValue_t searchValue;
+            searchValue._u64 = m_debugger->peekMemory(address);
+            if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                auto value = searchValue._f32;
+                value = value + (line + 1);
+                m_debugger->writeMemory(&value, sizeof(value), address);
+            } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
+                auto value = searchValue._f64;
+                value = value + (line + 1);
+                m_debugger->writeMemory(&value, sizeof(value), address);
+            } else if (m_searchType != SEARCH_TYPE_NONE) {
+                auto value = searchValue._u64;
+                value = value + (line + 1);
+                m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
+            };
+        };
+        (new Snackbar("候选增加了！(最大到前1000）"))->show();
+    };
+}
+void GuiCheats::write_candidate_entries() {
+    if (m_memoryDump1 == nullptr) {
+        u64 address = 0;
+        char input[19];
+        char initialString[21];
+        m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+        strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
+        if (Gui::requestKeyboardInput("输入值", "输入一个应在此处写入的值。", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
+            for (u32 line = 0; line < 1000; line++) {
+                m_memoryDump->getData((line) * sizeof(u64), &address, sizeof(u64));
+                if ((line) >= (m_memoryDump->size() / sizeof(u64)))
+                    break;
+                if (m_searchValueFormat == FORMAT_HEX) {
+                    auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
+                    m_debugger->writeMemory(&value, sizeof(value), address);
+                } else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                    auto value = static_cast<float>(std::atof(input));
+                    m_debugger->writeMemory(&value, sizeof(value), address);
+                } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
+                    auto value = std::atof(input);
+                    m_debugger->writeMemory(&value, sizeof(value), address);
+                } else if (m_searchType != SEARCH_TYPE_NONE) {
+                    auto value = std::atol(input);
+                    m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
+                };
+            };
+            (new Snackbar("候选更新了！(最大到前1000）"))->show();
+        };
+    };
+}
+void GuiCheats::jump_to_memoryexplorer() {
+        u64 address = 0;
+        char input[19];
+        char initialString[21] = {0};
+        address = m_heapBaseAddr;
+        // m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
+        // strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
+        snprintf(initialString,sizeof(initialString)-1,"0x%010lx",address);
+        if (Gui::requestKeyboardInput("输入值", "输入要浏览的内存地址。", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
+            // m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
+            m_EditorBaseAddr = static_cast<u64>(std::stoul(input, nullptr, 16));
+            m_BookmarkAddr = m_EditorBaseAddr;
+            // m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
+            m_bookmark.pointer.depth = 0;
+            m_searchMenuLocation = SEARCH_editRAM2;
+            m_selectedEntrySave = m_selectedEntry;
+            m_selectedEntry = (m_EditorBaseAddr % 16) / 4 + 11;
+        };
+}
+void GuiCheats::freeze_candidate_entries() {
+    if (m_memoryDump1 == nullptr) {
+        for (u32 line = 0; line < 100; line++) {
+            if ((line) >= (m_memoryDump->size() / sizeof(u64)))
+                break;
+            u64 address = 0;
+            m_memoryDump->getData((line) * sizeof(u64), &address, sizeof(u64));
+            u64 outValue;
+            if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[m_searchType], &outValue))) {
+                m_frozenAddresses.insert({address, outValue});
+            };
+        };
+        (new Snackbar("候选冻结了！(最大到前100）"))->show();
+    }
+}
+void GuiCheats::unfreeze_candidate_entries() {
+    if (m_memoryDump1 == nullptr) {
+        for (u32 line = 0; line < 100; line++) {
+            if ((line) >= (m_memoryDump->size() / sizeof(u64)))
+                break;
+            u64 address = 0;
+            m_memoryDump->getData((line) * sizeof(u64), &address, sizeof(u64));
+            if (R_SUCCEEDED(dmntchtDisableFrozenAddress(address))) {
+                m_frozenAddresses.erase(address);
+            };
+        };
+        (new Snackbar("候选解除冻结了！(最大到前100）"))->show();
+    }
+}
+
+    // if (!_isAddressFrozen(address)) {
+    //     u64 outValue;
+    //     if (m_memoryDump1 == nullptr) {
+    //         if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[m_searchType], &outValue))) {
+    //             (new Snackbar("Froze variable!"))->show();
+    //             m_frozenAddresses.insert({address, outValue});
+    //         } else
+    //             (new Snackbar("Failed to freeze variable!"))->show();
+    //     } else {
+    //         bookmark_t bookmark;
+    //         m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &bookmark, sizeof(bookmark_t));
+    //         if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[bookmark.type], &outValue))) {
+    //             (new Snackbar("Froze variable!"))->show();
+    //             m_frozenAddresses.insert({address, outValue});
+    //         } else
+    //             (new Snackbar("Failed to freeze variable!"))->show();
+    //     }
+    // } else {
+    //     if (R_SUCCEEDED(dmntchtDisableFrozenAddress(address))) {
+    //         (new Snackbar("Unfroze variable!"))->show();
+    //         m_frozenAddresses.erase(address);
+    //     } else
+    //         (new Snackbar("Failed to unfreeze variable!"))->show();
+    // }
