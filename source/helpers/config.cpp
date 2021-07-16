@@ -10,7 +10,7 @@ if (access(CONFIG_PATH, F_OK) == 0) {
     fread(&configData, 1, sizeof(config_data_t), configFile);
     fclose(configFile);
 
-    if (strcmp(configData.magic, "EDZNCFG") != 0) {
+    if (strcmp(configData.magic, "EDZOCFG") != 0) {
     memset(&configData, 0x00, sizeof(config_data_t));
     Config::writeConfig();
     }
@@ -21,7 +21,7 @@ if (access(CONFIG_PATH, F_OK) == 0) {
 void Config::writeConfig() {
 FILE *configFile = fopen(CONFIG_PATH, "wr");
 
-memcpy(configData.magic, "EDZNCFG", 8);
+memcpy(configData.magic, "EDZOCFG", 8);
 fwrite(&configData, 1, sizeof(config_data_t), configFile);
 
 fclose(configFile);

@@ -26,6 +26,7 @@ namespace Config {
     bool separatebookmark;
     bool enabletargetedscan;
     int extraMB;
+    int two_value_range;
     bool use_absolute_address;
     bool not_first_run;
     bool easymode;

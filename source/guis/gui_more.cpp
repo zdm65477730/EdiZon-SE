@@ -20,19 +20,20 @@ void GuiMore::draw() {
     draw2();
     return;
   }
-  std::stringstream extra_seg_str;
+  std::stringstream extra_seg_str, two_value_range_str;
   extra_seg_str << "\uE0B2 +  \uE0B1 -  Extra MB " << Config::getConfig()->extraMB;
+  two_value_range_str << "\uE0A5 +  \uE0A4 - 2 value search range " << Config::getConfig()->two_value_range;
   Gui::beginDraw();
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x30, 0x39, 0x29, 0xFF));
   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "More options", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, COLOR_BLACK, "Use L, R, ZL, ZR and B to choose storage directory for your search press A to continue", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, COLOR_BLACK, "", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2+60, COLOR_BLACK, "Use X, Y, - to toggle options, if you disable this screen use R+B to exit will show this on next launch", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->enabletargetedscan ? COLOR_WHITE : COLOR_BLACK, "\uE0AF Enable targeted scan", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->enabletargetedscan ? COLOR_WHITE : COLOR_BLACK, extra_seg_str.str().c_str(), ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width *4 / 5, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->use_absolute_address ? COLOR_WHITE : COLOR_BLACK, "\uE0B0 Use absolute address", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 250, Config::getConfig()->easymode ? COLOR_WHITE : COLOR_BLACK, "\uE0C4 Easy Mode", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, Gui::g_framebuffer_height / 2+250, Config::getConfig()->freeze ? COLOR_WHITE : COLOR_BLACK, "\uE0C5 add freeze game code", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, m_edizon_dir.c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, two_value_range_str.str().c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
   // for (u8 i = 0; i < 3; i++)
   // {
   //   // Gui::drawRectangled((Gui::g_framebuffer_width / 4) * (i + 1), Gui::g_framebuffer_height / 2 + 270, 300, 60, currTheme.separatorColor);
@@ -61,23 +62,26 @@ void GuiMore::onInput(u32 kdown)
   }
   if (kdown & KEY_L)
   {
-    m_edizon_dir = "/switch/EdiZon/1";
+    // m_edizon_dir = "/switch/EdiZon/1";
+    if (Config::getConfig()->two_value_range > 0)
+        Config::getConfig()->two_value_range = Config::getConfig()->two_value_range - 1;
   }
   else if (kdown & KEY_R)
   {
-    m_edizon_dir = "/switch/EdiZon/2";
+    // m_edizon_dir = "/switch/EdiZon/2";
+    Config::getConfig()->two_value_range = Config::getConfig()->two_value_range + 1;
   }
     if (kdown & KEY_ZL)
   {
-    m_edizon_dir = "/switch/EdiZon/3";
+    // m_edizon_dir = "/switch/EdiZon/3";
   }
   else if (kdown & KEY_ZR)
   {
-    m_edizon_dir = "/switch/EdiZon/4";
+    // m_edizon_dir = "/switch/EdiZon/4";
   }
   else if (kdown & KEY_B)
   {
-    m_edizon_dir = "/switch/EdiZon";
+    // m_edizon_dir = "/switch/EdiZon";
   }
   else if (kdown & KEY_X)
   {
