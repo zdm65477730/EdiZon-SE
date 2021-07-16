@@ -20,8 +20,9 @@ void GuiMore::draw() {
     draw2();
     return;
   }
-  std::stringstream extra_seg_str;
+  std::stringstream extra_seg_str, two_value_range_str;
   extra_seg_str << "\uE0B2 +  \uE0B1 -  额外MB " << Config::getConfig()->extraMB;
+  two_value_range_str << "\uE0A5 +  \uE0A4 - 两值搜素范围 " << Config::getConfig()->two_value_range;
   Gui::beginDraw();
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x30, 0x39, 0x29, 0xFF));
   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "更多选项", ALIGNED_CENTER);
