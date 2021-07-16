@@ -25,14 +25,14 @@ void GuiMore::draw() {
   Gui::beginDraw();
   Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0x30, 0x39, 0x29, 0xFF));
   Gui::drawTextAligned(fontHuge, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 - 100, COLOR_WHITE, "更多选项", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, COLOR_BLACK, "使用L，R，ZL，ZR和B键来选择要搜索的存储目录，请按A继续", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2, COLOR_BLACK, "", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2+60, COLOR_BLACK, "使用X，Y和-键来切换选项，如果禁用此屏幕，请使用R + B退出，将在下次启动时显示", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->enabletargetedscan ? COLOR_WHITE : COLOR_BLACK, "\uE0AF 启用目标扫描", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->enabletargetedscan ? COLOR_WHITE : COLOR_BLACK, extra_seg_str.str().c_str(), ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width *4 / 5, Gui::g_framebuffer_height / 2 + 200, Config::getConfig()->use_absolute_address ? COLOR_WHITE : COLOR_BLACK, "\uE0B0 使用绝对地址", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 250, Config::getConfig()->easymode ? COLOR_WHITE : COLOR_BLACK, "\uE0C4 简易模式", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, Gui::g_framebuffer_height / 2+250, Config::getConfig()->freeze ? COLOR_WHITE : COLOR_BLACK, "\uE0C5 添加锁定游戏代码", ALIGNED_CENTER);
-  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, m_edizon_dir.c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 250, COLOR_WHITE, two_value_range_str.str().c_str() , ALIGNED_CENTER);//"\uE070  Don't show this warning anymore"
   // for (u8 i = 0; i < 3; i++)
   // {
   //   // Gui::drawRectangled((Gui::g_framebuffer_width / 4) * (i + 1), Gui::g_framebuffer_height / 2 + 270, 300, 60, currTheme.separatorColor);
@@ -61,23 +61,26 @@ void GuiMore::onInput(u32 kdown)
   }
   if (kdown & KEY_L)
   {
-    m_edizon_dir = "/switch/EdiZon/1";
+    // m_edizon_dir = "/switch/EdiZon/1";
+    if (Config::getConfig()->two_value_range > 0)
+        Config::getConfig()->two_value_range = Config::getConfig()->two_value_range - 1;
   }
   else if (kdown & KEY_R)
   {
-    m_edizon_dir = "/switch/EdiZon/2";
+    // m_edizon_dir = "/switch/EdiZon/2";
+    Config::getConfig()->two_value_range = Config::getConfig()->two_value_range + 1;
   }
     if (kdown & KEY_ZL)
   {
-    m_edizon_dir = "/switch/EdiZon/3";
+    // m_edizon_dir = "/switch/EdiZon/3";
   }
   else if (kdown & KEY_ZR)
   {
-    m_edizon_dir = "/switch/EdiZon/4";
+    // m_edizon_dir = "/switch/EdiZon/4";
   }
   else if (kdown & KEY_B)
   {
-    m_edizon_dir = "/switch/EdiZon";
+    // m_edizon_dir = "/switch/EdiZon";
   }
   else if (kdown & KEY_X)
   {
