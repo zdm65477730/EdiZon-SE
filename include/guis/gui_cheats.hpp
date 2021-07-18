@@ -185,6 +185,7 @@ private:
   u64 m_EditorBaseAddr = 0x00;
   u64 m_BookmarkAddr = 0;
   u8 m_addressmod = 0;
+  searchValue_t m_copy;
   bool m_64bit_offset = false;
   bool m_usealias = false;
   time_t m_Time1;
