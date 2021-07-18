@@ -80,7 +80,8 @@
         "stop_token": "cpp",
         "numbers": "cpp",
         "span": "cpp",
-        "dmntcht.h": "c"
+        "dmntcht.h": "c",
+        "coroutine": "cpp"
     },
     "C_Cpp.default.includePath": [
         "include"

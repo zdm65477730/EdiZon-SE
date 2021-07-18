@@ -4216,8 +4216,15 @@ void GuiCheats::onInput(u32 kdown)
                   MemoryInfo meminfo = {0};
                   u64 t_start = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
                   u64 t_end = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
-                  if (t_end > m_heapEnd && m_heapEnd != 0)
-                      t_end = m_heapEnd;
+                  
+                  if (m_EditorBaseAddr >= m_heapBaseAddr && m_EditorBaseAddr < m_heapEnd && m_heapEnd != 0) {
+                      if (t_end > m_heapEnd)
+                          t_end = m_heapEnd;
+                  } else if (m_EditorBaseAddr >= m_mainBaseAddr && m_EditorBaseAddr < m_mainend) {
+                      if (t_end > m_mainend)
+                          t_end = m_mainend;
+                  }
+
                   meminfo = m_debugger->queryMemory(t_start);
                   u64 seg_endp = meminfo.addr + meminfo.size;
                   meminfo.addr = t_start;
