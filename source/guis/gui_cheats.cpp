@@ -2996,7 +2996,8 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     }
   } else if ((kdown & KEY_LSTICK) && !(kheld & KEY_ZL)) {
       u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
-      m_copy._u64 = m_debugger->peekMemory(address);
+      m_copy._u64 = 0;
+      m_debugger->readMemory((void *)&m_copy, dataTypeSizes[m_searchType], address);
   } else if ((kdown & KEY_A) && (kheld & KEY_ZL)) {
       u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 + m_addressmod;
       m_debugger->writeMemory((void *)&m_copy, dataTypeSizes[m_searchType], address);
