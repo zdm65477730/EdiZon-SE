@@ -81,7 +81,12 @@
         "numbers": "cpp",
         "span": "cpp",
         "dmntcht.h": "c",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "barrier": "cpp",
+        "source_location": "cpp",
+        "latch": "cpp",
+        "semaphore": "cpp",
+        "syncstream": "cpp"
     },
     "C_Cpp.default.includePath": [
         "include"

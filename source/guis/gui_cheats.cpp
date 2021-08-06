@@ -814,7 +814,7 @@ void GuiCheats::draw()
       if (m_memoryDump->size() > 0)
       {
         if (kheld & KEY_R) {
-        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "Rstick \uE143 Inc 1000 \uE145 Freeze 100 \uE146 UnFreeze 100 \uE144 Jump to memoryexplorer", ALIGNED_RIGHT);
+        Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "Rstick \uE143 Inc 1000  \uE145 Freeze 100 from cursor \uE146 UnFreeze 100 from cursor  \uE144 Jump to memoryexplorer", ALIGNED_RIGHT);
         Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "Lstick \uE090 Set Value 1000", ALIGNED_RIGHT);
       } else {
         Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "\uE0E6+\uE0E1 Detach debugger  \uE0E4 BM toggle \uE0E5 Hex Mode  \uE0EF BM add \uE0F0 Reset search \uE0E3 Search again \uE0E2 Freeze value  \uE0E0 Edit value   \uE0E1 Quit", ALIGNED_RIGHT);
@@ -5042,9 +5042,15 @@ void GuiCheats::onInput(u32 kdown)
                   m_searchValue[0]._u64 = m_heapBaseAddr;
                   m_searchValue[1]._u64 = m_heapEnd;
               } else if (kdown & KEY_RSTICK_LEFT) {
-                  m_searchValue[0]._u64 = 0;
+                  if (m_searchValue[0]._u64 == 0)
+                      m_searchValue[0] = m_copy;
+                  else
+                      m_searchValue[0]._u64 = 0;
               } else if (kdown & KEY_RSTICK_RIGHT) {
-                  m_searchValue[1]._u64 = 0;
+                  if (m_searchValue[1]._u64 == 0)
+                      m_searchValue[1] = m_copy;
+                  else
+                      m_searchValue[1]._u64 = 0;
               } else if (kdown & KEY_R) {
                   if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
                       m_searchValue[0]._f32 = 0 - m_searchValue[0]._f32;
@@ -10546,10 +10552,10 @@ void GuiCheats::jump_to_memoryexplorer() {
 void GuiCheats::freeze_candidate_entries() {
     if (m_memoryDump1 == nullptr) {
         for (u32 line = 0; line < 100; line++) {
-            if ((line) >= (m_memoryDump->size() / sizeof(u64)))
+            if ((line + m_selectedEntry + m_addresslist_offset) >= (m_memoryDump->size() / sizeof(u64)))
                 break;
             u64 address = 0;
-            m_memoryDump->getData((line) * sizeof(u64), &address, sizeof(u64));
+            m_memoryDump->getData((line + m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
             u64 outValue;
             if (R_SUCCEEDED(dmntchtEnableFrozenAddress(address, dataTypeSizes[m_searchType], &outValue))) {
                 m_frozenAddresses.insert({address, outValue});
@@ -10561,10 +10567,10 @@ void GuiCheats::freeze_candidate_entries() {
 void GuiCheats::unfreeze_candidate_entries() {
     if (m_memoryDump1 == nullptr) {
         for (u32 line = 0; line < 100; line++) {
-            if ((line) >= (m_memoryDump->size() / sizeof(u64)))
+            if ((line + m_selectedEntry + m_addresslist_offset) >= (m_memoryDump->size() / sizeof(u64)))
                 break;
             u64 address = 0;
-            m_memoryDump->getData((line) * sizeof(u64), &address, sizeof(u64));
+            m_memoryDump->getData((line + m_selectedEntry + m_addresslist_offset) * sizeof(u64), &address, sizeof(u64));
             if (R_SUCCEEDED(dmntchtDisableFrozenAddress(address))) {
                 m_frozenAddresses.erase(address);
             };
