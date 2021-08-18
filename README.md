@@ -68,6 +68,9 @@ There are a few things that affects your switch environment.
 8. Bad file in /atmosphere/config/. Make sure you know what you are doing. Anything wrong here can severely affect the operation of atmosphere. 
 9. The cheat code you use. Check the cheat file you are using. Disable all cheats before you start the game. You can quickly call up edizon se while the game is still booting check that the cheats are all off. After the game boots up to where you want to use the cheats check which one may be causing the problem. You should suspect every cheat code until you have tested it throughly.  
 
+## How to turn off sysmodule
+1. Launch EdiZon SE without game. Press L. Press Y. Use A to toggle off sysmodules. Press "Home" to exit back to home screen.
+
 # How to compile
 
   1. Clone the EdiZon SE repo to your computer using `git clone https://github.com/tomvita/EdiZon-SE`.
