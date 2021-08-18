@@ -3977,9 +3977,13 @@ void GuiCheats::onInput(u32 kdown)
                           break;
                       case 4:
                           bookmark.type = SEARCH_TYPE_UNSIGNED_32BIT;
+                          if (((cheat.opcodes[i + 2] & 0xF0000000) == 0x40000000) || ((cheat.opcodes[i + 2] & 0xF0000000) == 0x30000000) || ((cheat.opcodes[i + 2] & 0xF0000000) == 0xC0000000))
+                              bookmark.type = SEARCH_TYPE_FLOAT_32BIT;
                           break;
                       case 8:
                           bookmark.type = SEARCH_TYPE_UNSIGNED_64BIT;
+                          if (((cheat.opcodes[i + 1] & 0xF0000000) == 0x40000000) || ((cheat.opcodes[i + 1] & 0xF0000000) == 0x30000000) || ((cheat.opcodes[i + 1] & 0xF0000000) == 0xC0000000))
+                              bookmark.type = SEARCH_TYPE_FLOAT_64BIT;
                           break;
                       default:
                           printf("cheat code processing error, wrong width value\n");
@@ -4511,7 +4515,7 @@ void GuiCheats::onInput(u32 kdown)
       if ((kdown & KEY_R) && (kheld & KEY_ZL)) {
           if (m_menuLocation == CANDIDATES && m_memoryDump1 != nullptr) {
               m_AttributeDumpBookmark->getData((m_selectedEntry + m_addresslist_offset) * sizeof(bookmark_t), &m_bookmark, sizeof(bookmark_t));
-              if (m_bookmark.type < SEARCH_TYPE_FLOAT_64BIT) {
+              if (m_bookmark.type < SEARCH_TYPE_POINTER) {
                   u8 i = static_cast<u8>(m_bookmark.type) + 1;
                   m_bookmark.type = static_cast<searchType_t>(i);
               }

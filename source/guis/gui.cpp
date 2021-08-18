@@ -608,7 +608,7 @@ bool Gui::requestKeyboardInput(std::string headerText, std::string subHeaderText
   kbd.arg.arg.arg.leftButtonText = '.';
   kbd.arg.arg.arg.rightButtonText = '-';
   kbd.arg.arg.arg.stringLenMax = maxLength;
-  kbd.arg.arg.arg.stringLenMaxExt = 1;
+  // kbd.arg.arg.arg.stringLenMaxExt = 1;
   kbd.arg.arg.arg.textDrawType = SwkbdTextDrawType_Line;
   kbd.arg.arg.arg.returnButtonFlag = false;
   kbd.arg.arg.arg.type = type;
