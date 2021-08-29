@@ -4232,8 +4232,8 @@ void GuiCheats::onInput(u32 kdown)
                   printf("\nstart scan range select ....................\n");
                   m_memoryDump->getData((m_selectedEntry + m_addresslist_offset) * sizeof(u64), &m_EditorBaseAddr, sizeof(u64));
                   MemoryInfo meminfo = {0};
-                  u64 t_start = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT - (Config::getConfig()->extraMB + 1) * 1024 * 1024;
-                  u64 t_end = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT + (Config::getConfig()->extraMB + 1) * 1024 * 1024;
+                  u64 t_start = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT - (Config::getConfig()->extraMB) * 1024 * 1024 - 1024;
+                  u64 t_end = m_EditorBaseAddr - m_EditorBaseAddr % M_ALIGNMENT + (Config::getConfig()->extraMB) * 1024 * 1024 + 1024;
                   
                   if (m_EditorBaseAddr >= m_heapBaseAddr && m_EditorBaseAddr < m_heapEnd && m_heapEnd != 0) {
                       if (t_end > m_heapEnd)
@@ -8619,7 +8619,10 @@ bool GuiCheats::loadcheatsfromfile()
     {
       if (cheatentry.definition.num_opcodes != 0)
       {
-        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+        if (cheatentry.enabled == true)
+            dmntchtSetMasterCheat(&(cheatentry.definition));
+        else
+            dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
       }
       /* Parse a normal cheat set to off */
       cheatentry.definition.num_opcodes = 0;

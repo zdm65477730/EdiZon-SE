@@ -99,16 +99,16 @@ Result dmntchtForceOpenCheatProcess(void) {
     return _dmntchtCmdVoid(&g_dmntchtSrv, 65003);
 }
 
-Result dmntchtForceCloseCheatProcess(void) {
-    return _dmntchtCmdVoid(&g_dmntchtSrv, 65009);
-}
-
 Result dmntchtPauseCheatProcess(void) {
     return _dmntchtCmdVoid(&g_dmntchtSrv, 65004);
 }
 
 Result dmntchtResumeCheatProcess(void) {
     return _dmntchtCmdVoid(&g_dmntchtSrv, 65005);
+}
+
+Result dmntchtForceCloseCheatProcess(void) {
+    return _dmntchtCmdVoid(&g_dmntchtSrv, 65006);
 }
 
 static Result _dmntchtGetCount(u64 *out_count, u32 cmd_id) {
@@ -206,6 +206,13 @@ Result dmntchtWriteStaticRegister(u8 which, u64 value) {
 
 Result dmntchtResetStaticRegisters() {
     return _dmntchtCmdVoid(&g_dmntchtSrv, 65208);
+}
+
+Result dmntchtSetMasterCheat(DmntCheatDefinition *cheat_def)  {
+    return serviceDispatch(&g_dmntchtSrv, 65209,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias | SfBufferAttr_FixedSize },
+        .buffers = { { cheat_def, sizeof(*cheat_def) } },
+    );
 }
 
 Result dmntchtGetFrozenAddressCount(u64 *out_count) {
