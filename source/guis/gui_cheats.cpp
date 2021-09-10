@@ -8865,6 +8865,9 @@ bool GuiCheats::dumpcodetofile()
     SS.str("");
     for (u32 i = 0; i < m_cheatCnt; i++)
     {
+      if (m_cheats[i].cheat_id==0)
+      SS << "{" << m_cheats[i].definition.readable_name << "}\n";
+      else
       SS << "[" << m_cheats[i].definition.readable_name << "]\n";
       ss.str("");
       for (u32 j = 0; j < m_cheats[i].definition.num_opcodes; j++)
