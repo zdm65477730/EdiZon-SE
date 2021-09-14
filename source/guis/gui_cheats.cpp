@@ -16,6 +16,7 @@
 // #define checkheap
 // #define printpointerchain
 #define MAX_BUFFER_SIZE 0x1000000 // increase size for faster speed
+#include "merge.hpp"
 #define STARTTIMER \
   time_t unixTime1 = time(NULL);
 #define ENDTIMER \

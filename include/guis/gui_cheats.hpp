@@ -48,7 +48,11 @@ enum
   FORMAT_DEC,
   FORMAT_HEX
 } m_searchValueFormat = FORMAT_DEC;
-
+typedef struct
+{
+    MemoryDump *data_Dump{nullptr};
+    std::string filename;
+} datafile_t;
 class GuiCheats : public Gui
 {
 
@@ -404,6 +408,9 @@ private:
   void write_candidate_entries();
   void jump_to_memoryexplorer();
 
+  void sortfile(datafile_t file, datafile_t file2);
+  void mergechunk(datafile_t file, datafile_t file2, int sortedsize);
+  void sortchunk(datafile_t file, int i, int bufferSize);
   void searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t searchValue1,
                                       searchValue_t searchValue2, searchType_t searchType,
                                       searchMode_t searchMode, bool use_range, MemoryDump **displayDump);
