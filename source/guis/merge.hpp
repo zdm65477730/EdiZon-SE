@@ -43,38 +43,55 @@ void GuiCheats::mergechunk(datafile_t file, datafile_t file2, int sortedsize){
     int filesize = file.data_Dump->size();
 	int bufferSize1 = MAX_BUFFER_SIZE;
 	int bufferSize2 = MAX_BUFFER_SIZE;
+	int sortedsize1 = sortedsize;
+	int sortedsize2 = sortedsize;
     // merge them here
     for (int i = 0; i < filesize; i += sortedsize * 2) {
         int index1 = 0;
         int index2 = 0;
-
-        if (bufferSize1 > filesize - i) {
-            bufferSize1 = filesize - i;
-			bufferSize2 = 0;
+        int offset1 = 0;
+        int offset2 = 0;
+        if (sortedsize1 > filesize - i ) {
+            sortedsize1 = filesize - i;
+            sortedsize2 = 0;
         };
-        if (bufferSize2 > filesize - i - sortedsize ) {
-            bufferSize2 = filesize - i - sortedsize;
+        if (sortedsize2 > filesize - i - sortedsize) {
+            sortedsize2 = filesize - i - sortedsize;
         };
+        if (bufferSize1 > sortedsize1) bufferSize1 = sortedsize1;
+		if (bufferSize2 > sortedsize2) bufferSize2 = sortedsize2;
 
         u8 *buffer1 = new u8[bufferSize1];
-        file.data_Dump->getData(i, buffer1, bufferSize1);
+        file.data_Dump->getData(i + offset1, buffer1, bufferSize1);
 
         u8 *buffer2 = nullptr;
         if (bufferSize2 != 0) {
             buffer2 = new u8[bufferSize2];
-            file.data_Dump->getData(i + sortedsize, buffer2, bufferSize2);
+            file.data_Dump->getData(i + offset2 + sortedsize, buffer2, bufferSize2);
         }
 
-        while (index1 < bufferSize1 && index2 < bufferSize2) {
+        while (index1 + offset1 < sortedsize1 && index2 + offset2 < sortedsize2) {
             if (m_64bit_offset) {
                 auto A = (u64 *)(buffer1 + index1);
                 auto B = (u64 *)(buffer2 + index2);
                 if (A < B) {
                     file2.data_Dump->addData((u8 *)&(A), 8);
                     index1 += 8;
+                    if (index1 == bufferSize1) {
+                        index1 = 0;
+                        offset1 += bufferSize1;
+                        if (bufferSize1 > sortedsize1 - offset1) bufferSize1 = sortedsize1 - offset1;
+                        if (bufferSize1 > 0) file.data_Dump->getData(i + offset1, buffer1, bufferSize1);
+                    }
                 } else {
                     file2.data_Dump->addData((u8 *)&(B), 8);
                     index2 += 8;
+                    if (index2 == bufferSize2) {
+                        index2 = 0;
+                        offset2 += bufferSize2;
+                        if (bufferSize2 > sortedsize2 - offset2) bufferSize2 = sortedsize2 - offset2;
+                        if (bufferSize2 > 0) file.data_Dump->getData(i + offset2 + sortedsize, buffer2, bufferSize2);
+                    }
                 }
             } else {
                 auto A = (u32 *)(buffer1 + index1);
@@ -82,17 +99,40 @@ void GuiCheats::mergechunk(datafile_t file, datafile_t file2, int sortedsize){
                 if (A < B) {
                     file2.data_Dump->addData((u8 *)&(A), 4);
                     index1 += 4;
+                    if (index1 == bufferSize1) {
+                        index1 = 0;
+                        offset1 += bufferSize1;
+                        if (bufferSize1 > sortedsize1 - offset1) bufferSize1 = sortedsize1 - offset1;
+                        if (bufferSize1 > 0) file.data_Dump->getData(i + offset1, buffer1, bufferSize1);
+                    }					
                 } else {
                     file2.data_Dump->addData((u8 *)&(B), 4);
                     index2 += 4;
+                    if (index2 == bufferSize2) {
+                        index2 = 0;
+                        offset2 += bufferSize2;
+                        if (bufferSize2 > sortedsize2 - offset2) bufferSize2 = sortedsize2 - offset2;
+                        if (bufferSize2 > 0) file.data_Dump->getData(i + offset2 + sortedsize, buffer2, bufferSize2);
+                    }					
                 }
             }
         };
-        if (index1 < bufferSize1) {
+        while (index1 + offset1 < sortedsize1) {
             file2.data_Dump->addData((u8 *)&(buffer1[index1]), bufferSize1 - index1);
-        } else if (index2 < bufferSize2) {
-            file2.data_Dump->addData((u8 *)&(buffer2[index2]), bufferSize2 - index2);
+            index1 = 0;
+            offset1 += bufferSize1;
+            if (bufferSize1 > sortedsize1 - offset1) bufferSize1 = sortedsize1 - offset1;
+            if (bufferSize1 > 0) file.data_Dump->getData(i + offset1, buffer1, bufferSize1);
         }
+        while (index2 + offset2 < sortedsize2) {
+            file2.data_Dump->addData((u8 *)&(buffer2[index2]), bufferSize2 - index2);
+            index2 = 0;
+            offset2 += bufferSize2;
+            if (bufferSize2 > sortedsize2 - offset2) bufferSize2 = sortedsize2 - offset2;
+            if (bufferSize2 > 0) file.data_Dump->getData(i + offset2 + sortedsize, buffer2, bufferSize2);
+        }
+        delete buffer1;
+        if (buffer2 != nullptr) delete buffer2;
     }
 
         file2.data_Dump->flushBuffer();
