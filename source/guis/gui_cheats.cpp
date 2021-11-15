@@ -88,9 +88,10 @@ bool dmntpresent() {
         if (R_SUCCEEDED(pminfoGetProgramId(&titeID, process_ids[i]))) {
             if (titeID == 0x010000000000000D) {
                 return true;
-            } else if (titeID == 0x010000000000D609) {
-                return false;
-            }
+            } 
+            // else if (titeID == 0x010000000000D609) {
+            //     return false;
+            // }
         };
     }
     return false;
