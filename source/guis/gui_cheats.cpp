@@ -1683,8 +1683,17 @@ void GuiCheats::drawEditRAMMenu2()
     else
     {
       ss.str("");
-      ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (addr) << " ]";
-      Gui::drawTextAligned(font20, 200 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
+      ss << "[" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (addr) << "]";
+      char ascii[17];
+      m_debugger->readMemory(&ascii, sizeof(ascii), addr);
+      for (u8 k = 0; k < 16; k++) {
+          if (ascii[k] < 32) {
+              ascii[k] = 46;
+          }
+      }
+      ascii[16] = 0;
+      ss << (char) 10 << ascii;
+      Gui::drawTextAligned(font14, 5 + (i % 5) * 225, 245 + (i / 5) * 50, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
     }
   }
 
@@ -3059,6 +3068,10 @@ void GuiCheats::drawSearchRAMMenu()
       ss << "   [ " << regionNames[m_searchRegion] << " ]";
       if (m_use_range)
       ss << "   [ using range ]";
+      if (Config::getConfig()->use_bitmask) {
+        ss << " BM on";
+      }
+
   }
   Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
   ss.str("");
@@ -5617,7 +5630,9 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           memcpy(&realValue, buffer + i, 4);
         else
           memcpy(&realValue, buffer + i, dataTypeSizes[searchType]);
-
+        if (Config::getConfig()->use_bitmask) {
+            realValue._u64 = Config::getConfig()->bitmask & realValue._u64;
+        }
         if (Config::getConfig()->exclude_ptr_candidates && searchMode != SEARCH_MODE_POINTER)
         {
           searchValue_t ptr_address;
@@ -5912,6 +5927,9 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
       address = *reinterpret_cast<u64 *>(&buffer[i]); //(*displayDump)->getData(i * sizeof(u64), &address, sizeof(u64));
 
       memcpy(&value, ram_buffer + address - helperinfo.address, dataTypeSizes[searchType]); // extrat from buffer instead of making call
+      if (Config::getConfig()->use_bitmask) {
+          value._u64 = Config::getConfig()->bitmask & value._u64;
+      }
       helperinfo.count--;                                                                   // each fetch dec
       // testing = value;                                                                      // temp
       // debugger->readMemory(&value, dataTypeSizes[searchType], address);
