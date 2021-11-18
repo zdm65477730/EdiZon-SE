@@ -5659,6 +5659,9 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           if (realValue._s64 == searchValue1._s64) {
             memset(&nextValue, 0, 8);
             memcpy(&nextValue, buffer + i + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+            if (Config::getConfig()->use_bitmask) {
+                nextValue._u64 = Config::getConfig()->bitmask & nextValue._u64;
+            }
             if (nextValue._s64 == searchValue2._s64){
                 (*displayDump)->addData((u8 *)&address, sizeof(u64));
                 helperinfo.count++;
@@ -5672,6 +5675,9 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
                     if ((k != 0) && (i + k * dataTypeSizes[searchType] >= 0) && (i + k * dataTypeSizes[searchType] + dataTypeSizes[searchType] <= bufferSize)) {
                         memset(&nextValue, 0, 8);
                         memcpy(&nextValue, buffer + i + k * dataTypeSizes[searchType], dataTypeSizes[searchType]);
+                        if (Config::getConfig()->use_bitmask) {
+                            nextValue._u64 = Config::getConfig()->bitmask & nextValue._u64;
+                        }
                         if (nextValue._s64 == searchValue2._s64) {
                             (*displayDump)->addData((u8 *)&address, sizeof(u64));
                             helperinfo.count++;
@@ -5973,6 +5979,9 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         if (value._s64 == searchValue1._s64) {
           memset(&nextValue, 0, 8);
           memcpy(&nextValue, ram_buffer + address - helperinfo.address + dataTypeSizes[searchType], dataTypeSizes[searchType]);
+          if (Config::getConfig()->use_bitmask) {
+              nextValue._u64 = Config::getConfig()->bitmask & nextValue._u64;
+          }
           if (nextValue._s64 == searchValue2._s64){
             newDump->addData((u8 *)&address, sizeof(u64));
             newhelperinfo.count++;
@@ -5988,6 +5997,9 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
                       //     if (k != 0) {
                       memset(&nextValue, 0, 8);
                       memcpy(&nextValue, ram_buffer + address - helperinfo.address + k * dataTypeSizes[searchType], dataTypeSizes[searchType]);
+                      if (Config::getConfig()->use_bitmask) {
+                          nextValue._u64 = Config::getConfig()->bitmask & nextValue._u64;
+                      }
                       if (nextValue._s64 == searchValue2._s64) {
                           newDump->addData((u8 *)&address, sizeof(u64));
                           newhelperinfo.count++;
