@@ -3858,13 +3858,17 @@ void GuiCheats::onInput(u32 kdown)
           // Edit cheats
           // WIP
           // if (m_cheats[m_selectedEntry].definition.opcodes[0])
-
+          int count = m_cheatCnt;
           for (u64 i = 0; i < m_cheatCnt; i++)
               if (m_cheatDelete[i]) {
                   m_cheatDelete[i] = false;
                   dmntchtRemoveCheat(m_cheats[i].cheat_id);
+                  count --;
               }
-          reloadcheats();
+          if (count == 0) {
+            Gui::g_requestExit = true;
+          } else
+              reloadcheats();
 
           // m_menuLocation = CANDIDATES;
           // m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
