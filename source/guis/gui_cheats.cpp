@@ -425,7 +425,7 @@ if (!(m_debugger->m_dmnt)){
       filebuildIDStr << m_edizon_dir + "/" << buildIDStr.str() << ".dat";
     else
       filebuildIDStr << EDIZON_DIR "/" << buildIDStr.str() << ".dat";
-    m_PCDump_filename << EDIZON_DIR "/" << buildIDStr.str() << ".dmp1";
+    m_PCDump_filename << EDIZON_DIR "/" << buildIDStr.str() << ".dmp0";
   }
   if (Config::getConfig()->deletebookmark)
   {
@@ -9184,6 +9184,8 @@ bool GuiCheats::addstaticcodetofile(u64 index)
 void GuiCheats::PCdump()
 {
   bool ledOn = true;
+  m_PCDump_filename.seekp(-1, std::ios_base::end);
+  m_PCDump_filename << 1;
   u8 j = 1;
   while (access(m_PCDump_filename.str().c_str(), F_OK) == 0)
   {
@@ -9233,6 +9235,8 @@ void GuiCheats::PCdump()
 
 void GuiCheats::searchMemoryAddressesPrimary2(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
 {
+  m_PCDump_filename.seekp(-1, std::ios_base::end);
+  m_PCDump_filename << 1;
   u8 j = 1;
   int k = -1;
   while (access(m_PCDump_filename.str().c_str(), F_OK) == 0)
