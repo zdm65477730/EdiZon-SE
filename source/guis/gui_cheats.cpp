@@ -1703,7 +1703,7 @@ void GuiCheats::drawEditRAMMenu2()
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "Lstick \uE090 Set Value 1000", ALIGNED_RIGHT);
   } else {
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, Config::getConfig()->swap_jumpback_button?"\uE104 Copy \uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E6+\uE0E1 JumpBack" :"\uE104 Copy \uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E1 JumpBack", ALIGNED_RIGHT);  //\uE0E4 Change Mode
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E0 Paste \uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E7 PageDown  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, Config::getConfig()->swap_jumpback_button?"\uE0E6+\uE0E0 Paste \uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E7 PageDown  \uE0E6+\uE0E7 PageUp  \uE0E1 Quit":"\uE0E6+\uE0E0 Paste \uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E7 PageDown  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
   }
 }
 void GuiCheats::drawEditExtraSearchValues()
