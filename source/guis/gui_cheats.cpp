@@ -1702,7 +1702,7 @@ void GuiCheats::drawEditRAMMenu2()
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 65, currTheme.textColor, "Rstick \uE143 Inc 1000 \uE145 Freeze 100 \uE146 UnFreeze 100 \uE144 Jump to memoryexplorer", ALIGNED_RIGHT);
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "Lstick \uE090 Set Value 1000", ALIGNED_RIGHT);
   } else {
-      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, "\uE104 Copy \uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E1 JumpBack", ALIGNED_RIGHT);  //\uE0E4 Change Mode
+      Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 70, currTheme.textColor, Config::getConfig()->swap_jumpback_button?"\uE104 Copy \uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E6+\uE0E1 JumpBack" :"\uE104 Copy \uE105 MarkSearch \uE0E3 Change offset \uE0EF BM add \uE0E0 Edit value \uE0E4 Backward \uE0E5 Forward \uE0E1 JumpBack", ALIGNED_RIGHT);  //\uE0E4 Change Mode
       Gui::drawTextAligned(font14, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 35, currTheme.textColor, "\uE0E6+\uE0E0 Paste \uE0E6+\uE0E4 \uE0E6+\uE0E5 Change Type  \uE0E6+\uE0E3 Goto any address  \uE0E7 PageDown  \uE0E6+\uE0E7 PageUp  \uE0E6+\uE0E1 Quit", ALIGNED_RIGHT);
   }
 }
@@ -2579,7 +2579,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
 }
 void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory explorer
 {
-  if (kdown & KEY_B && kheld & KEY_ZL)
+  if (kdown & KEY_B && ( Config::getConfig()->swap_jumpback_button? !(kheld & KEY_ZL):kheld & KEY_ZL))
   {
     m_selectedEntry = m_selectedEntrySave;
     m_searchMenuLocation = SEARCH_NONE;
@@ -2672,7 +2672,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
     (new Snackbar("Multi search setup created!"))->show();
     GuiCheats::save_multisearch_setup();
   }
-  else if (kdown & KEY_B && !(kheld & KEY_ZL))
+  else if (kdown & KEY_B && ( Config::getConfig()->swap_jumpback_button? kheld & KEY_ZL : !(kheld & KEY_ZL)))
   {
     // if (m_jump_stack_index > 0)
     // {

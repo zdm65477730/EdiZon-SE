@@ -48,6 +48,7 @@ void GuiMore::draw() {
 
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width * 4 / 5, Gui::g_framebuffer_height / 2 + 150, COLOR_WHITE, "About \uE0B3", ALIGNED_CENTER);
   Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 5, Gui::g_framebuffer_height / 2 + 150, Config::getConfig()->use_bitmask ? COLOR_WHITE : COLOR_BLACK, Config::getConfig()->use_bitmask ? bit_mask_str.str().c_str() : "\uE0A6 use bit mask", ALIGNED_CENTER);
+  Gui::drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height / 2 + 150, Config::getConfig()->swap_jumpback_button ? COLOR_WHITE : COLOR_BLACK, "\uE0A7 swap_jumpback_button", ALIGNED_CENTER);
   Gui::endDraw();
 }
 // u32 kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
@@ -91,6 +92,7 @@ void GuiMore::onInput(u32 kdown)
   }
   else if (kdown & KEY_ZR)
   {
+    Config::getConfig()->swap_jumpback_button = !Config::getConfig()->swap_jumpback_button;
     // m_edizon_dir = "/switch/EdiZon/4";
   }
   else if (kdown & KEY_B)

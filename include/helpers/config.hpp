@@ -35,6 +35,7 @@ namespace Config {
     char store_extension[10];
     bool extra_value;
     bool use_bitmask;
+    bool swap_jumpback_button;
     u64 bitmask;
   } config_data_t;
 
