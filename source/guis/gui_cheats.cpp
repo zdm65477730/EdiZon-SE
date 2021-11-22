@@ -988,7 +988,7 @@ void GuiCheats::draw()
       {
         ss << "Main + ";
       }
-      ss << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << bookmark.offset;
+      ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << bookmark.offset;
       ss << " " << dataTypes[bookmark.type];
       Gui::drawTextAligned(font14, 768, 205, currTheme.textColor, ss.str().c_str(), ALIGNED_CENTER);
     }
