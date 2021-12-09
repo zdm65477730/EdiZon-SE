@@ -304,8 +304,10 @@ GuiCheats::GuiCheats() : Gui()
 
     if (meminfo.type == MemType_CodeStatic && meminfo.perm == Perm_Rx)
     {
-      if (mod == 1)
+      if (mod == 1){
         m_mainBaseAddr = meminfo.addr;
+        m_mainCodeEnd = meminfo.addr + meminfo.size;
+      };
       mod++;
     }
 
@@ -8006,6 +8008,10 @@ void GuiCheats::_writegameid()
   fputs(buildIDStr.c_str(),pfile);
   fputs("\n", pfile);
   fputs(cheatpathStr.c_str(),pfile);
+  fputs("\n", pfile);
+  char st[100];
+  snprintf(st, 100, "%010lx\n%010lx\n%010lx\n",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
+  fputs(st, pfile);
   fclose(pfile);
 }
 void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
