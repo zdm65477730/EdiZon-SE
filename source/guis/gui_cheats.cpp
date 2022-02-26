@@ -5153,7 +5153,7 @@ void GuiCheats::onInput(u32 kdown)
                       } else {
                           Gui::requestKeyboardInput("Enter the value you want to search for", "Based on your previously chosen options, EdiZon will expect different input here.", "", m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
                       }
-                      if (std::string(str) == "")
+                      if (std::string(str) == "" || std::string(str) == "0x" || std::string(str) == "0X")
                           return;
                       m_searchValue[m_searchValueIndex]._u64 = 0;  //hack to fix bug elsewhere
                       if (m_searchValueFormat == FORMAT_HEX) {
@@ -5625,6 +5625,8 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
       u32 inc_i;
       if (searchMode == SEARCH_MODE_POINTER)
         inc_i = 4;
+      else if (searchType == SEARCH_TYPE_UNSIGNED_16BIT)
+        inc_i = 1;
       else
         inc_i = dataTypeSizes[searchType];
 
@@ -8010,7 +8012,7 @@ void GuiCheats::_writegameid()
   fputs(cheatpathStr.c_str(),pfile);
   fputs("\n", pfile);
   char st[100];
-  snprintf(st, 100, "%010lx\n%010lx\n%010lx\n",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
+  snprintf(st, 100, "%010lx\n%010lx\n%010lx",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
   fputs(st, pfile);
   fclose(pfile);
 }
