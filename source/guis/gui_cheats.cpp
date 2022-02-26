@@ -1024,7 +1024,7 @@ void GuiCheats::draw()
   else
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B", "A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB"};
       ss.str("");
       ss << "Search Type [ " << dataTypes[m_searchType] << " ]";
       ss << "   Search Mode [ " << modeNames[m_searchMode] << " ]";
@@ -1773,7 +1773,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 2)
     {
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ","~PTR"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB"};
       // if (M_ENTRY.type != SEARCH_TYPE_POINTER)
       Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
     }
@@ -2074,6 +2074,7 @@ void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t
         case SEARCH_MODE_NONE:
         case SEARCH_MODE_SAME:
         case SEARCH_MODE_DIFF:
+        case SEARCH_MODE_NOTAB:
         case SEARCH_MODE_INC:
         case SEARCH_MODE_DEC:
         case SEARCH_MODE_NOT_POINTER:
@@ -2171,7 +2172,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
           updatebookmark(true, false, true);
           m_memoryDump = m_memoryDumpBookmark;
         }
-        else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
+        else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_NOTAB || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)
         {
           if (m_memoryDump->size() == 0)
           {
@@ -3059,7 +3060,7 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  "};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB"};
       ss.str("");
       if (m_memoryDump1 != nullptr)
         ss << "\uE132   Search Bookmark";
@@ -3087,8 +3088,8 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawTextAligned(font20, 1010, 160, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "VALUE", ALIGNED_CENTER);
 
   static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "void*"};
-  static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val"};
-  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR", "A,B","A,,B", "+ + Val", "- - Val"};
+  static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB"};
+  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB"};
   static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
 
   switch (m_searchMenuLocation) // search menu
@@ -3169,8 +3170,8 @@ void GuiCheats::drawSearchRAMMenu()
                            ALIGNED_CENTER);
 
     //Gui::drawRectangle(300, 250, Gui::g_framebuffer_width - 600, 80, currTheme.separatorColor);
-    if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {m_selectedEntry = 1;};
-    if (!(m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) || m_use_range)
+    if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_NOTAB || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {m_selectedEntry = 1;};
+    if (!(m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_NOTAB || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) || m_use_range)
     {
       Gui::drawRectangle(300, 327, Gui::g_framebuffer_width - 600, 3, currTheme.textColor);
       if (m_searchValueFormat == FORMAT_DEC)
@@ -3202,7 +3203,7 @@ void GuiCheats::drawSearchRAMMenu()
       if (cursorBlinkCnt++ % 20 > 10 && m_selectedEntry == 0 && (m_searchValueIndex == 0))
         Gui::drawRectangled(312 + strWidth, 285, 3, 35, currTheme.highlightColor);
 
-      if (m_searchMode == SEARCH_MODE_RANGE || m_searchMode == SEARCH_MODE_TWO_VALUES ||m_searchMode == SEARCH_MODE_TWO_VALUES_PLUS || (m_use_range && (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)) )
+      if (m_searchMode == SEARCH_MODE_RANGE || m_searchMode == SEARCH_MODE_TWO_VALUES ||m_searchMode == SEARCH_MODE_TWO_VALUES_PLUS || (m_use_range && (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_NOTAB || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA)) )
       {
         ss.str("");
         if (m_searchValueFormat == FORMAT_DEC)
@@ -5026,7 +5027,10 @@ void GuiCheats::onInput(u32 kdown)
                       }
                   };
               } else if (kdown & KEY_DDOWN) {
-                  m_searchMode = SEARCH_MODE_DIFF;
+                  if (m_searchMode == SEARCH_MODE_DIFF)
+                      m_searchMode = SEARCH_MODE_NOTAB;
+                  else
+                      m_searchMode = SEARCH_MODE_DIFF;
               } else if (kdown & KEY_DLEFT) {
                 if (m_searchMode == SEARCH_MODE_DEC)
                     m_searchMode = SEARCH_MODE_DEC_BY;
@@ -5217,7 +5221,7 @@ void GuiCheats::onInput(u32 kdown)
                           if (m_memoryDump1 != nullptr) {
                               updatebookmark(true, false, true);
                               m_memoryDump = m_memoryDumpBookmark;
-                          } else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_INC_BY || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DEC_BY || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {
+                          } else if (m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_NOTAB || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_INC_BY || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DEC_BY || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) {
                               if (m_memoryDump->size() == 0) {
                                   delete m_memoryDump;
                                   m_use_range = false;
@@ -5806,6 +5810,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
         case SEARCH_MODE_NONE:
         case SEARCH_MODE_SAME:
         case SEARCH_MODE_DIFF:
+        case SEARCH_MODE_NOTAB:
         case SEARCH_MODE_INC:
         case SEARCH_MODE_DEC:
         case SEARCH_MODE_INC_BY:
@@ -6075,6 +6080,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         }
         break;
       case SEARCH_MODE_DIFF:
+      case SEARCH_MODE_NOTAB:
         if (value._s64 != searchValue1._s64)
         {
           newDump->addData((u8 *)&address, sizeof(u64));
@@ -6409,6 +6415,13 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
           newhelperinfo.count++;
         }
         break;
+      case SEARCH_MODE_NOTAB:
+          if ((value._s64 != prevalue._s64) && ((value._s64 >= searchValue1._s64 && value._s64 <= searchValue2._s64) || !m_use_range)) {
+              newDump->addData((u8 *)&address, sizeof(u64));
+              newdataDump->addData((u8 *)&prevalue, sizeof(u64));
+              newhelperinfo.count++;
+          }
+          break;
       case SEARCH_MODE_INC:
         if ((value._s64 > prevalue._s64)&& ((value._s64 >= searchValue1._s64 && value._s64 <= searchValue2._s64) || !m_use_range))
         {
@@ -6696,6 +6709,13 @@ void GuiCheats::searchMemoryValuesSecondary(Debugger *debugger, searchType_t sea
             helperinfo.count++;
           }
           break;
+        case SEARCH_MODE_NOTAB:
+            if ((newValue._u64 != oldValue._u64) && (newValue._u64 <= m_heapBaseAddr || newValue._u64 >= (m_heapEnd))) {
+                addrDump->addData((u8 *)&addr, sizeof(u64));
+                newMemDump->addData((u8 *)&oldValue, sizeof(u64));
+                helperinfo.count++;
+            }
+            break;
         case SEARCH_MODE_SAMEA:
         case SEARCH_MODE_DIFFA:
           if (newValue._u64 != oldValue._u64)
@@ -7085,6 +7105,14 @@ void GuiCheats::searchMemoryValuesTertiary(Debugger *debugger, searchValue_t sea
           newhelperinfo.count++;
         }
         break;
+      case SEARCH_MODE_NOTAB:
+          if ((value._s64 != oldvalue._s64))  // && (value._u64 <= m_heapBaseAddr || value._u64 >= (m_heapEnd)))
+          {
+              newDump->addData((u8 *)&address, sizeof(u64));
+              newvalueDump->addData((u8 *)&oldvalue, sizeof(u64));
+              newhelperinfo.count++;
+          }
+          break;
       case SEARCH_MODE_INC:
         if (value._s64 > oldvalue._s64)
         {
