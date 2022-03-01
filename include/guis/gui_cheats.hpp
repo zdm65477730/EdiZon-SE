@@ -212,7 +212,7 @@ private:
 
 #define MAX_NUM_SOURCE_POINTER 200 // bound check for debugging;
 #define MAX_POINTER_DEPTH 12       // up to 4 seems OK with forward only search took 94s. 215s for big dump
-#define MAX_POINTER_RANGE 0x2000
+#define MAX_POINTER_RANGE 0x2000000
 #define MAX_NUM_POINTER_OFFSET 30
 #define HAVESAVE (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr) //m_havesave
   // #define MAX_JUMP_STACK 50

@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include/**",
+                "f:/Download2/EdiZongit/include",
                 "F:/devkitPro/devkitA64/include/**",
                 "F:/devkitPro/devkitA64/aarch64-none-elf/include/**",
                 "F:/devkitPro/libnx/include/**",
