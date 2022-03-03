@@ -411,6 +411,7 @@ if (!(m_debugger->m_dmnt)){
     Config::readConfig();
     strncpy(m_searchString, Config::getConfig()->searchString, sizeof m_searchString);
     m_searchString[32] = 0;
+    Config::writeConfig();
     if (Config::getConfig()->disablerangeonunknown) m_use_range = false;
     m_searchValue[0] = m_memoryDump->getDumpInfo().searchValue[0];
     m_searchValue[1] = m_memoryDump->getDumpInfo().searchValue[1];
