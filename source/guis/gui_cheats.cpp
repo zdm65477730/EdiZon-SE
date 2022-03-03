@@ -410,6 +410,7 @@ if (!(m_debugger->m_dmnt)){
     m_use_range = m_memoryDump->getDumpInfo().use_range;
     Config::readConfig();
     strncpy(m_searchString, Config::getConfig()->searchString, sizeof m_searchString);
+    m_searchString[32] = 0;
     if (Config::getConfig()->disablerangeonunknown) m_use_range = false;
     m_searchValue[0] = m_memoryDump->getDumpInfo().searchValue[0];
     m_searchValue[1] = m_memoryDump->getDumpInfo().searchValue[1];
@@ -5190,8 +5191,12 @@ void GuiCheats::onInput(u32 kdown)
                       if (m_searchMode == SEARCH_MODE_STRING) {
                           Config::readConfig();
                           Gui::requestKeyboardInput("Enter the string you want to search for", "", Config::getConfig()->searchString, SwkbdType_QWERTY, m_searchString, 32);
-                          strncpy(Config::getConfig()->searchString, m_searchString, sizeof m_searchString);
-                          Config::writeConfig();
+                          if (strlen(m_searchString) == 0)
+                              strncpy(m_searchString, Config::getConfig()->searchString, sizeof m_searchString);
+                          else {
+                              strncpy(Config::getConfig()->searchString, m_searchString, sizeof m_searchString);
+                              Config::writeConfig();
+                          }
                           return;
                       } else if ((m_searchValue[m_searchValueIndex]._u32 > 10) || (m_searchValueFormat == FORMAT_HEX)) {
                           Gui::requestKeyboardInput("Enter the value you want to search for", "Based on your previously chosen options, EdiZon will expect different input here.", _getValueDisplayString(m_searchValue[m_searchValueIndex], m_searchType), m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
