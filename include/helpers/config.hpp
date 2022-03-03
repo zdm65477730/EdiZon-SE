@@ -37,6 +37,7 @@ namespace Config {
     bool use_bitmask;
     bool swap_jumpback_button;
     u64 bitmask;
+    char searchString[40] {"TBD"};
   } config_data_t;
 
   void readConfig();

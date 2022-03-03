@@ -396,9 +396,9 @@ if (!(m_debugger->m_dmnt)){
 
     // m_searchType = SEARCH_TYPE_NONE;
     // m_searchRegion = SEARCH_REGION_NONE;
-    m_searchType = SEARCH_TYPE_UNSIGNED_16BIT;
+    m_searchType = SEARCH_TYPE_UNSIGNED_32BIT;
     m_searchMode = SEARCH_MODE_EQ;
-    m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+    m_searchRegion = SEARCH_REGION_RAM;
     m_searchValue[0]._u64 = 0;
     m_searchValue[1]._u64 = 0;
   }
@@ -409,6 +409,7 @@ if (!(m_debugger->m_dmnt)){
     m_searchMode = m_memoryDump->getDumpInfo().searchMode;
     m_use_range = m_memoryDump->getDumpInfo().use_range;
     Config::readConfig();
+    strncpy(m_searchString, Config::getConfig()->searchString, sizeof m_searchString);
     if (Config::getConfig()->disablerangeonunknown) m_use_range = false;
     m_searchValue[0] = m_memoryDump->getDumpInfo().searchValue[0];
     m_searchValue[1] = m_memoryDump->getDumpInfo().searchValue[1];
@@ -1024,7 +1025,7 @@ void GuiCheats::draw()
   else
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B", "A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "NotA", "SameA","SameB"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B", "A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "String", "NotA", "SameA","SameB"};
       ss.str("");
       ss << "Search Type [ " << dataTypes[m_searchType] << " ]";
       ss << "   Search Mode [ " << modeNames[m_searchMode] << " ]";
@@ -1124,7 +1125,12 @@ void GuiCheats::draw()
             else
               ss << "[ BASE + 0x" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address - m_memoryDump->getDumpInfo().addrSpaceBaseAddress) << " ]";
 
-            ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)m_searchType) << " )";
+            char st[40];
+            if (m_searchMode == SEARCH_MODE_STRING) {
+                m_debugger->readMemory(st, sizeof st, address);
+                ss << "  ( " << st << " )";
+            } else
+                ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)m_searchType) << " )";
 
             if (m_frozenAddresses.find(address) != m_frozenAddresses.end())
               ss << "   \uE130";
@@ -1773,7 +1779,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 2)
     {
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "NotA", "SameA","SameB"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "String", "NotA", "SameA","SameB"};
       // if (M_ENTRY.type != SEARCH_TYPE_POINTER)
       Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
     }
@@ -3063,7 +3069,7 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "NotA", "SameA","SameB"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "String", "NotA", "SameA","SameB"};
       ss.str("");
       if (m_memoryDump1 != nullptr)
         ss << "\uE132   Search Bookmark";
@@ -3091,8 +3097,8 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawTextAligned(font20, 1010, 160, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "VALUE", ALIGNED_CENTER);
 
   static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "void*"};
-  static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "NotA", "SameA","SameB"};
-  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "NotA", "SameA","SameB"};
+  static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "String", "NotA", "SameA","SameB"};
+  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "String", "NotA", "SameA","SameB"};
   static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
 
   switch (m_searchMenuLocation) // search menu
@@ -3177,7 +3183,9 @@ void GuiCheats::drawSearchRAMMenu()
     if (!(m_searchMode == SEARCH_MODE_SAME || m_searchMode == SEARCH_MODE_DIFF || m_searchMode == SEARCH_MODE_NOTAB || m_searchMode == SEARCH_MODE_NOTA || m_searchMode == SEARCH_MODE_SAME_A || m_searchMode == SEARCH_MODE_SAME_B || m_searchMode == SEARCH_MODE_INC || m_searchMode == SEARCH_MODE_DEC || m_searchMode == SEARCH_MODE_DIFFA || m_searchMode == SEARCH_MODE_SAMEA) || m_use_range)
     {
       Gui::drawRectangle(300, 327, Gui::g_framebuffer_width - 600, 3, currTheme.textColor);
-      if (m_searchValueFormat == FORMAT_DEC)
+      if (m_searchMode == SEARCH_MODE_STRING) {
+          ss << m_searchString;
+      } else if (m_searchValueFormat == FORMAT_DEC)
         ss << _getValueDisplayString(m_searchValue[0], m_searchType);
       else if (m_searchValueFormat == FORMAT_HEX)
       {
@@ -5079,6 +5087,10 @@ void GuiCheats::onInput(u32 kdown)
                   } else if (m_searchMode == SEARCH_MODE_EQ) {
                       m_searchMode = SEARCH_MODE_NEQ;
                       m_selectedEntry = 1;
+                  } else if (m_searchMode == SEARCH_MODE_NEQ) {
+                      m_searchMode = SEARCH_MODE_STRING;
+                      m_searchType = SEARCH_TYPE_UNSIGNED_8BIT;
+                      m_selectedEntry = 1;
                   } else {
                       m_searchMode = SEARCH_MODE_EQ;
                   }
@@ -5175,7 +5187,13 @@ void GuiCheats::onInput(u32 kdown)
                       char str[0x21];
                       // Start Mod keep previous value
                       // End Mod
-                      if ((m_searchValue[m_searchValueIndex]._u32 > 10) || (m_searchValueFormat == FORMAT_HEX)) {
+                      if (m_searchMode == SEARCH_MODE_STRING) {
+                          Config::readConfig();
+                          Gui::requestKeyboardInput("Enter the string you want to search for", "", Config::getConfig()->searchString, SwkbdType_QWERTY, m_searchString, 32);
+                          strncpy(Config::getConfig()->searchString, m_searchString, sizeof m_searchString);
+                          Config::writeConfig();
+                          return;
+                      } else if ((m_searchValue[m_searchValueIndex]._u32 > 10) || (m_searchValueFormat == FORMAT_HEX)) {
                           Gui::requestKeyboardInput("Enter the value you want to search for", "Based on your previously chosen options, EdiZon will expect different input here.", _getValueDisplayString(m_searchValue[m_searchValueIndex], m_searchType), m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
                       } else {
                           Gui::requestKeyboardInput("Enter the value you want to search for", "Based on your previously chosen options, EdiZon will expect different input here.", "", m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, str, 0x20);
@@ -5638,14 +5656,16 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
 
     u64 offset = 0;
     u64 bufferSize = MAX_BUFFER_SIZE; // consider to increase from 10k to 1M (not a big problem)
-    u8 *buffer = new u8[bufferSize];
+    u8 *buffer = new u8[bufferSize + 32];// make buffer size bigger to accomodate string that is at the border.
     while (offset < meminfo.size)
     {
 
       if (meminfo.size - offset < bufferSize)
         bufferSize = meminfo.size - offset;
-
-      debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
+      if (m_searchMode == SEARCH_MODE_STRING && (meminfo.size - offset > bufferSize + 32)) {
+          debugger->readMemory(buffer, bufferSize + 32, meminfo.addr + offset);
+      } else
+          debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
 
       searchValue_t realValue = {0};
       searchValue_t nextValue = {0};
@@ -5678,6 +5698,18 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
         // if (_check_extra_not_OK(buffer, i)) continue; // if not match let's continue
         switch (searchMode)
         {
+        case SEARCH_MODE_STRING: 
+          {
+            u32 pos = 0;
+            while ((pos < strlen(m_searchString)) && (buffer[i + pos] == m_searchString[pos])) {
+                pos++;
+            };
+            if (pos == strlen(m_searchString)) {
+                (*displayDump)->addData((u8 *)&address, sizeof(u64));
+                helperinfo.count++;
+            };
+          }; 
+          break;
         case SEARCH_MODE_EQ:
           if (realValue._s64 == searchValue1._s64)
           {
@@ -5932,14 +5964,17 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
     requestDraw();
   }
 
-  u8 *ram_buffer = new u8[bufferSize];
+  u8 *ram_buffer = new u8[bufferSize + 32];  // make buffer size bigger to accomodate string that is at the border.
   u64 helper_offset = 0;
   helperinfo_t helperinfo;
   helperinfo_t newhelperinfo;
   newhelperinfo.count = 0;
 
   helperDump->getData(helper_offset, &helperinfo, sizeof(helperinfo)); // helper_offset+=sizeof(helperinfo)
-  debugger->readMemory(ram_buffer, helperinfo.size, helperinfo.address);
+  if (m_searchMode == SEARCH_MODE_STRING && (debugger->queryMemory(helperinfo.address).size + debugger->queryMemory(helperinfo.address).addr < helperinfo.address + helperinfo.size + 32))
+      debugger->readMemory(ram_buffer, helperinfo.size + 32, helperinfo.address);
+  else
+      debugger->readMemory(ram_buffer, helperinfo.size, helperinfo.address);
   // helper init end
   while (offset < (*displayDump)->size())
   {
@@ -6007,6 +6042,18 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
 
       switch (searchMode)
       {
+      case SEARCH_MODE_STRING: 
+        {
+          u32 pos = 0;
+          while ((pos < strlen(m_searchString)) && (ram_buffer[address - helperinfo.address + pos] == m_searchString[pos])) {
+              pos++;
+          };
+          if (pos == strlen(m_searchString)) {
+              newDump->addData((u8 *)&address, sizeof(u64));
+              newhelperinfo.count++;
+          };
+        }; 
+        break;  
       case SEARCH_MODE_EQ:
         if (value._s64 == searchValue1._s64)
         {
@@ -8117,7 +8164,11 @@ void GuiCheats::_writegameid()
   fputs(cheatpathStr.c_str(),pfile);
   fputs("\n", pfile);
   char st[100];
-  snprintf(st, 100, "%010lx\n%010lx\n%010lx",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
+  snprintf(st, 100, "%010lx\n%010lx\n%010lx\n",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
+  fputs(st, pfile);
+  snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr, "00000000");
+  fputs(st, pfile);
+  snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr, "00000000");
   fputs(st, pfile);
   fclose(pfile);
 }

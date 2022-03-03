@@ -84,6 +84,7 @@ private:
   bool m_narrow_down = false;
 
   searchValue_t m_searchValue[2];
+  char m_searchString[40] = "";
 
   enum
   {
