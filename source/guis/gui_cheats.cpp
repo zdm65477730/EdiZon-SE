@@ -2176,6 +2176,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
         (new MessageBox("Traversing title memory.\n \nThis may take a while...", MessageBox::NONE))->show();
         requestDraw();
         overclockSystem(true);
+        m_debugger->pause();
         if (m_searchMode == SEARCH_MODE_POINTER)
           m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
         if (m_memoryDump1 != nullptr)
@@ -2260,6 +2261,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
           }
         }
         overclockSystem(false);
+        m_debugger->resume();
         Gui::g_currMessageBox->hide();
         m_searchMenuLocation = SEARCH_NONE;
       }
@@ -5262,6 +5264,7 @@ void GuiCheats::onInput(u32 kdown)
                           requestDraw();
 
                           overclockSystem(true);
+                          m_debugger->pause();
 
                           if (m_searchMode == SEARCH_MODE_POINTER)
                               m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
@@ -5353,7 +5356,7 @@ void GuiCheats::onInput(u32 kdown)
                           }
 
                           overclockSystem(false);
-
+                          m_debugger->resume();
                           Gui::g_currMessageBox->hide();
 
                           m_searchMenuLocation = SEARCH_NONE;
@@ -8985,6 +8988,7 @@ bool GuiCheats::unfreeze()
   // Config::readConfig();
   // if (Config::getConfig()->freeze)
   // {
+    overclockSystem(false);
     m_debugger->resume();
     return true;
   // }
