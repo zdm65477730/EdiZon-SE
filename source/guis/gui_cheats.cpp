@@ -1489,7 +1489,7 @@ void GuiCheats::drawEditRAMMenu2()
   if (m_searchMenuLocation != SEARCH_editRAM2)
     return;
   if (m_EditorBaseAddr >= m_mainBaseAddr && m_EditorBaseAddr <= m_mainend)
-    Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, Gui::makeColor(0xFF, 0xFF, 0xC0, 0x40));
+    Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.mainbackgroundColor);
   else
     Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor); //background
   Gui::drawText(font24, 30, 10 , currTheme.textColor, "\uE132   Memory Explorer");
