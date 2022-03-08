@@ -2172,7 +2172,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
       }
       else
       {
-        m_searched = true;
+        // m_searched = true;
         (new MessageBox("Traversing title memory.\n \nThis may take a while...", MessageBox::NONE))->show();
         requestDraw();
         overclockSystem(true);
@@ -5261,7 +5261,7 @@ void GuiCheats::onInput(u32 kdown)
                               m_memoryDump1->setSearchParams(m_searchType, m_searchMode, m_searchRegion, m_searchValue[0], m_searchValue[1], m_use_range);
                           (new Snackbar("Already did one search for this session, relaunch to do another"))->show();
                       } else {
-                          m_searched = true;
+                          // m_searched = true;
                           (new MessageBox("Traversing title memory.\n \nThis may take a while...", MessageBox::NONE))->show();
                           requestDraw();
 
