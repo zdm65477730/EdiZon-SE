@@ -6109,6 +6109,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         if (value._s64 != searchValue1._s64)
         {
           newDump->addData((u8 *)&address, sizeof(u64));
+          newdataDump->addData((u8 *)&value, sizeof(u64));
           newhelperinfo.count++;
         }
         break;
@@ -6116,6 +6117,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         if (value._s64 > searchValue1._s64)
         {
           newDump->addData((u8 *)&address, sizeof(u64));
+          newdataDump->addData((u8 *)&value, sizeof(u64));
           newhelperinfo.count++;
         }
         break;
@@ -6130,6 +6132,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         if (value._s64 < searchValue1._s64)
         {
           newDump->addData((u8 *)&address, sizeof(u64));
+          newdataDump->addData((u8 *)&value, sizeof(u64));
           newhelperinfo.count++;
         }
         break;
