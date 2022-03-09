@@ -1027,7 +1027,7 @@ void GuiCheats::draw()
   else
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B", "A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "DiffBA", "String", "NotA", "SameA","SameB"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B", "A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "==*", "DiffBA", "String", "NotA", "SameA","SameB"};
       ss.str("");
       ss << "Search Type [ " << dataTypes[m_searchType] << " ]";
       ss << "   Search Mode [ " << modeNames[m_searchMode] << " ]";
@@ -1781,7 +1781,7 @@ void GuiCheats::drawEditExtraSearchValues()
     }
     else if ((i % 6) == 2)
     {
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "DiffBA", "String", "NotA", "SameA","SameB"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "==*", "DiffBA", "String", "NotA", "SameA","SameB"};
       // if (M_ENTRY.type != SEARCH_TYPE_POINTER)
       Gui::drawTextAligned(font20, c3, 160 + linegape * (1 + i / 6), cellColor, modeNames[m_multisearch.Entries[i / 6].mode], ALIGNED_CENTER);
     }
@@ -3073,7 +3073,7 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawRectangle(100, 135, Gui::g_framebuffer_width - 200, 1, currTheme.textColor);
   {
       static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM", "  "};
-      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "DiffBA", "String", "NotA", "SameA","SameB"};
+      static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "==*", "DiffBA", "String", "NotA", "SameA","SameB"};
       ss.str("");
       if (m_memoryDump1 != nullptr)
         ss << "\uE132   Search Bookmark";
@@ -3101,8 +3101,8 @@ void GuiCheats::drawSearchRAMMenu()
   Gui::drawTextAligned(font20, 1010, 160, m_searchMenuLocation == SEARCH_VALUE ? currTheme.selectedColor : currTheme.textColor, "VALUE", ALIGNED_CENTER);
 
   static const char *const typeNames[] = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "flt", "dbl", "void*"};
-  static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "DiffBA", "String", "NotA", "SameA","SameB"};
-  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "DiffBA", "String", "NotA", "SameA","SameB"};
+  static const char *const modeNames[] = {"==", "!=", ">", "StateB", "<", "StateA", "A..B", "SAME", "DIFF", "+ +", "- -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "==*", "DiffBA", "String", "NotA", "SameA","SameB"};
+  static const char *const modeNames1[] = {"==", "!=", ">", "StateA", "<", "", "A..B", "", "Unknown", "? +", "? -", "PTR", "A,B","A,,B", "+ + Val", "- - Val", "  ", "~PTR", "NotAB", "==*", "DiffBA", "String", "NotA", "SameA","SameB"};
   static const char *const regionNames[] = {"HEAP", "MAIN", "HEAP + MAIN", "RAM"};
 
   switch (m_searchMenuLocation) // search menu
@@ -5091,6 +5091,10 @@ void GuiCheats::onInput(u32 kdown)
                       m_searchValue[0]._u64 = 0;
                       m_selectedEntry = 1;
                   } else if (m_searchMode == SEARCH_MODE_EQ) {
+                      m_searchMode = SEARCH_MODE_EQA;
+                      m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
+                      m_selectedEntry = 1;
+                  } else if (m_searchMode == SEARCH_MODE_EQA) {
                       m_searchMode = SEARCH_MODE_NEQ;
                       m_selectedEntry = 1;
                   } else if (m_searchMode == SEARCH_MODE_NEQ) {
@@ -5130,7 +5134,7 @@ void GuiCheats::onInput(u32 kdown)
                   m_selectedEntry = 0;
                   m_searchValue[0]._u64 = 0;
                   m_searchValue[1]._u64 = 0;
-                  m_searchRegion = SEARCH_REGION_HEAP_AND_MAIN;
+                  m_searchRegion = SEARCH_REGION_RAM;
               } else if (kdown & KEY_RSTICK_UP)  //search shortcut
               {
                   m_searchType = SEARCH_TYPE_UNSIGNED_64BIT;
@@ -5681,8 +5685,8 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
       searchValue_t realValue = {0};
       searchValue_t nextValue = {0};
       u32 inc_i;
-      if (searchMode == SEARCH_MODE_POINTER)
-        inc_i = 4;
+      if (searchMode == SEARCH_MODE_POINTER || searchMode == SEARCH_MODE_EQA)
+          inc_i = 4;
       else if (searchType == SEARCH_TYPE_UNSIGNED_16BIT)
         inc_i = 1;
       else
@@ -5721,6 +5725,12 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
             };
           }; 
           break;
+        case SEARCH_MODE_EQA:
+          if (realValue._s64 == searchValue1._s64 || realValue._f32 == (float) searchValue1._s64 || realValue._f64 == (double) searchValue1._s64 )  {
+                (*displayDump)->addData((u8 *)&address, sizeof(u64));
+                helperinfo.count++;
+            }
+            break;
         case SEARCH_MODE_EQ:
           if (realValue._s64 == searchValue1._s64)
           {
@@ -6065,6 +6075,13 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
           };
         }; 
         break;  
+      case SEARCH_MODE_EQA:
+        if (value._s64 == searchValue1._s64 || value._f32 == (float) searchValue1._s64 || value._f64 == (double) searchValue1._s64 )  
+        {
+          newDump->addData((u8 *)&address, sizeof(u64));
+          newhelperinfo.count++;
+        }
+        break;
       case SEARCH_MODE_EQ:
         if (value._s64 == searchValue1._s64)
         {
