@@ -1134,7 +1134,7 @@ void GuiCheats::draw()
             } else if (m_searchMode == SEARCH_MODE_EQA) {
                 searchValue_t value;
                 m_debugger->readMemory(&value, sizeof value, address);
-                if (value._f64 == floor(value._f64)) {
+                if (value._f64 == floor(value._f64) && value._f64 < 100000000 && value._f64 > -100000000) {
                     ss << "  D( " << _getAddressDisplayString(address, m_debugger, SEARCH_TYPE_FLOAT_64BIT) << " )";
                 } else if (value._s32 < 100000000 && value._s32 > -100000000) {
                     ss << "  ( " << _getAddressDisplayString(address, m_debugger, SEARCH_TYPE_SIGNED_32BIT) << " )";
@@ -4402,7 +4402,7 @@ void GuiCheats::onInput(u32 kdown)
                           searchValue_t value;
                           searchType_t m_EQAType;
                           m_debugger->readMemory(&value, sizeof value, address);
-                          if (value._f64 == floor(value._f64))
+                          if (value._f64 == floor(value._f64) && value._f64 < 100000000 && value._f64 > -100000000)
                               m_EQAType = SEARCH_TYPE_FLOAT_64BIT;
                           else if (value._s32 < 100000000 && value._s32 > -100000000)
                               m_EQAType = SEARCH_TYPE_SIGNED_32BIT;
