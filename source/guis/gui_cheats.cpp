@@ -1131,6 +1131,16 @@ void GuiCheats::draw()
             if (m_searchMode == SEARCH_MODE_STRING) {
                 m_debugger->readMemory(st, sizeof st, address);
                 ss << "  ( " << st << " )";
+            } else if (m_searchMode == SEARCH_MODE_EQA) {
+                searchValue_t value;
+                m_debugger->readMemory(&value, sizeof value, address);
+                if (value._f64 == floor(value._f64)) {
+                    ss << "  D( " << _getAddressDisplayString(address, m_debugger, SEARCH_TYPE_FLOAT_64BIT) << " )";
+                } else if (value._s32 < 100000000 && value._s32 > -100000000) {
+                    ss << "  ( " << _getAddressDisplayString(address, m_debugger, SEARCH_TYPE_SIGNED_32BIT) << " )";
+                } else {  // if ((value._f32 < 1000000 && value._f32 > 0.00001) || (value._f32 < -0.00001 && value._f32 > -1000000))
+                    ss << "  F( " << _getAddressDisplayString(address, m_debugger, SEARCH_TYPE_FLOAT_32BIT) << " )";
+                }
             } else
                 ss << "  ( " << _getAddressDisplayString(address, m_debugger, (searchType_t)m_searchType) << " )";
 
@@ -4388,20 +4398,49 @@ void GuiCheats::onInput(u32 kdown)
                       // start mod address content edit Hex option
 
                       //
-                      strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
-                      if (Gui::requestKeyboardInput("Enter value", "Enter a value that should get written at this .", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
-                          if (m_searchValueFormat == FORMAT_HEX) {
-                              auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
-                              m_debugger->writeMemory(&value, sizeof(value), address);
-                          } else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
-                              auto value = static_cast<float>(std::atof(input));
-                              m_debugger->writeMemory(&value, sizeof(value), address);
-                          } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
-                              auto value = std::atof(input);
-                              m_debugger->writeMemory(&value, sizeof(value), address);
-                          } else if (m_searchType != SEARCH_TYPE_NONE) {
-                              auto value = std::atol(input);
-                              m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
+                      if (m_searchMode == SEARCH_MODE_EQA) {
+                          searchValue_t value;
+                          searchType_t m_EQAType;
+                          m_debugger->readMemory(&value, sizeof value, address);
+                          if (value._f64 == floor(value._f64))
+                              m_EQAType = SEARCH_TYPE_FLOAT_64BIT;
+                          else if (value._s32 < 100000000 && value._s32 > -100000000)
+                              m_EQAType = SEARCH_TYPE_SIGNED_32BIT;
+                          else
+                              m_EQAType = SEARCH_TYPE_FLOAT_32BIT;
+
+                          strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_EQAType).c_str());
+                          if (Gui::requestKeyboardInput("Enter value", "Enter a value that should get written at this .", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
+                              if (m_searchValueFormat == FORMAT_HEX) {
+                                  auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
+                                  m_debugger->writeMemory(&value, sizeof(value), address);
+                              } else if (m_EQAType == SEARCH_TYPE_FLOAT_32BIT) {
+                                  auto value = static_cast<float>(std::atof(input));
+                                  m_debugger->writeMemory(&value, sizeof(value), address);
+                              } else if (m_EQAType == SEARCH_TYPE_FLOAT_64BIT) {
+                                  auto value = std::atof(input);
+                                  m_debugger->writeMemory(&value, sizeof(value), address);
+                              } else if (m_EQAType != SEARCH_TYPE_NONE) {
+                                  auto value = std::atol(input);
+                                  m_debugger->writeMemory((void *)&value, dataTypeSizes[m_EQAType], address);
+                              };
+                          };
+                      } else {
+                          strcpy(initialString, _getAddressDisplayString(address, m_debugger, m_searchType).c_str());
+                          if (Gui::requestKeyboardInput("Enter value", "Enter a value that should get written at this .", initialString, m_searchValueFormat == FORMAT_DEC ? SwkbdType_NumPad : SwkbdType_QWERTY, input, 18)) {
+                              if (m_searchValueFormat == FORMAT_HEX) {
+                                  auto value = static_cast<u64>(std::stoul(input, nullptr, 16));
+                                  m_debugger->writeMemory(&value, sizeof(value), address);
+                              } else if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
+                                  auto value = static_cast<float>(std::atof(input));
+                                  m_debugger->writeMemory(&value, sizeof(value), address);
+                              } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
+                                  auto value = std::atof(input);
+                                  m_debugger->writeMemory(&value, sizeof(value), address);
+                              } else if (m_searchType != SEARCH_TYPE_NONE) {
+                                  auto value = std::atol(input);
+                                  m_debugger->writeMemory((void *)&value, dataTypeSizes[m_searchType], address);
+                              }
                           }
                       }
                   } else if ((m_memoryDump->size() / sizeof(u64)) < 25) {
