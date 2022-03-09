@@ -6299,7 +6299,9 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
   MemoryDump *predataDump = new MemoryDump(EDIZON_DIR "/predatadump2.dat", DumpType::DATA, false);
   MemoryDump *newdataDump = new MemoryDump(EDIZON_DIR "/datadump2.dat", DumpType::DATA, true);
   s = m_edizon_dir + "/datadump2B.dat" + m_store_extension;
-  REPLACEFILE(s.c_str(), EDIZON_DIR "/predatadump2B.dat");
+  if (access(s.c_str(), F_OK) == 0) {
+      REPLACEFILE(s.c_str(), EDIZON_DIR "/predatadump2B.dat");
+  }
   MemoryDump *predataDumpB = new MemoryDump(EDIZON_DIR "/predatadump2B.dat", DumpType::DATA, false);
   MemoryDump *newdataDumpB = new MemoryDump(EDIZON_DIR "/datadump2B.dat", DumpType::DATA, true);
   // MemoryDump *debugdump1 = new MemoryDump(EDIZON_DIR "/debugdump1.dat", DumpType::HELPER, true);
