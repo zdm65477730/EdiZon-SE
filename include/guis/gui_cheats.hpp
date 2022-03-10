@@ -27,6 +27,14 @@ struct MultiSearchEntry_t
   searchMode_t mode = SEARCH_MODE_EQ;
   searchValue_t value1 = {0}, value2 = {0};
 };
+#define M_ENTRY_MAX 10
+struct MultiSearch_t
+  {
+    char laber[40] = {0};
+    u32 target = 0;
+    u32 count = 0, first = 0, last = 0, size = 0, adjustment = 0, target_offset = 0;
+    MultiSearchEntry_t Entries[M_ENTRY_MAX];
+  };
 struct fromto32_t
 {
   u32 from;
@@ -124,9 +132,8 @@ private:
   MemoryDump *m_PC_DumpP = nullptr; // Pointer distance to main file ptr_distance_t
   MemoryDump *m_PC_DumpTo = nullptr; // File to hold list of "To" to be process next
 
-  #define M_ENTRY_MAX 10
   #define M_TARGET m_multisearch.Entries[m_multisearch.target]
-  #define M_ALIGNMENT 16
+  #define M_ALIGNMENT m_MTalignment
   #define FORWARD_DEPTH 2
   struct forward_chain_t
   {
@@ -140,13 +147,7 @@ private:
   {
     bool main:1,l1:1,l2:1,l3:1,l4:1,l5:1,l6:1,l7:1;
   };
-  struct MultiSearch_t
-  {
-    char laber[40] = {0};
-    u32 target = 0;
-    u32 count = 0, first = 0, last = 0, size = 0, adjustment = 0, target_offset = 0;
-    MultiSearchEntry_t Entries[M_ENTRY_MAX];
-  };
+  
   MultiSearch_t m_multisearch;
 
   struct PSsetup_t

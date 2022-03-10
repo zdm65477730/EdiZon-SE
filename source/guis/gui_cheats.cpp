@@ -13,6 +13,7 @@
 #include "lz.h"
 #include "version.h"
 #include "unzipper.h"
+#include "ini.h"
 // #define checkheap
 // #define printpointerchain
 #define MAX_BUFFER_SIZE 0x1000000 // increase size for faster speed
@@ -65,7 +66,7 @@ static const std::vector<s128> dataTypeMinValues = {std::numeric_limits<u8>::min
 static std::string titleNameStr, tidStr, pidStr, buildIDStr, cheatpathStr;
 
 static u32 cheatListOffset = 0;
-
+static u32 m_MTalignment = 0x10;
 static bool _isAddressFrozen(uintptr_t);
 static std::string _getAddressDisplayString(u64, Debugger *debugger, searchType_t searchType);
 static std::string _getValueDisplayString(searchValue_t searchValue, searchType_t searchType);
@@ -2130,6 +2131,84 @@ void GuiCheats::MTsearchMemoryAddressesPrimary(Debugger *debugger, searchValue_t
   newstringDump->flushBuffer(); // temp
   delete newstringDump;         //
 }
+//WIP MT
+static int MTinihandler(void *user, const char *section, const char *name, const char *value) {
+    MultiSearch_t *pconfig = (MultiSearch_t *)user;
+#define M_LABEL(s) (strcmp(section, s) == 0)
+#define M_NAME(n) (strcmp(name, n) == 0)
+#define LAST pconfig->last
+#define C_ENTRY pconfig->Entries[LAST]
+    printf("MT section'%s' name '%s' value '%s'\n", section, name, value);
+    if M_LABEL (C_ENTRY.label) {
+    } else if (C_ENTRY.label[0] == 0) {
+        strncpy(C_ENTRY.label, section, sizeof C_ENTRY.label);
+    } else {
+        LAST++;
+        strncpy(C_ENTRY.label, section, sizeof C_ENTRY.label);
+    };
+
+    if M_NAME ("Offset") {
+        C_ENTRY.offset = std::strtol(value, nullptr, 0); //atoi(value);
+    } else if M_NAME ("Value1") {
+        switch (C_ENTRY.type) {
+            case SEARCH_TYPE_FLOAT_32BIT:
+                printf("V1 f32 %s\n", value);
+                C_ENTRY.value1._f32 = atof(value);
+                break;
+            case SEARCH_TYPE_FLOAT_64BIT:
+                C_ENTRY.value1._f64 = atof(value);
+                break;
+            default:
+                C_ENTRY.value1._s64 = std::strtol(value, nullptr, 0);
+                break;
+        };
+    } else if M_NAME ("Value2") {
+        switch (C_ENTRY.type) {
+            case SEARCH_TYPE_FLOAT_32BIT:
+                C_ENTRY.value2._f32 = atof(value);
+                break;
+            case SEARCH_TYPE_FLOAT_64BIT:
+                C_ENTRY.value2._f64 = atof(value);
+                break;
+            default:
+                C_ENTRY.value2._s64 = std::strtol(value, nullptr, 0);
+                break;
+        };
+    } else if M_NAME ("alignment") {
+        m_MTalignment = std::strtol(value, nullptr, 0);
+        printf("m_MTalignment = %d\n",m_MTalignment);
+    } else if M_NAME ("On") {
+        C_ENTRY.on = ON;
+    } else if M_NAME ("Off") {
+        C_ENTRY.on = OFF;
+    } else if M_NAME ("Target") {
+        C_ENTRY.on = TARGET;
+    } else if M_NAME ("EQ") {
+        C_ENTRY.mode = SEARCH_MODE_EQ;
+    } else if M_NAME ("PTR") {
+        C_ENTRY.mode = SEARCH_MODE_POINTER;
+    } else if M_NAME ("A..B") {
+        C_ENTRY.mode = SEARCH_MODE_RANGE;
+    } else if M_NAME ("~PTR") {
+        C_ENTRY.mode = SEARCH_MODE_NOT_POINTER;
+    } else if M_NAME ("u8") {
+        C_ENTRY.type = SEARCH_TYPE_UNSIGNED_8BIT;
+    } else if M_NAME ("u16") {
+        C_ENTRY.type = SEARCH_TYPE_UNSIGNED_16BIT;
+    } else if M_NAME ("u32") {
+        C_ENTRY.type = SEARCH_TYPE_UNSIGNED_32BIT;
+    } else if M_NAME ("u64") {
+        C_ENTRY.type = SEARCH_TYPE_UNSIGNED_64BIT;
+    } else if M_NAME ("flt") {
+        C_ENTRY.type = SEARCH_TYPE_FLOAT_32BIT;
+    } else if M_NAME ("dbl") {
+        C_ENTRY.type = SEARCH_TYPE_FLOAT_64BIT;
+    } else {
+        printf("unknown name in MT import %s\n", name);
+    };
+
+    return 1;
+}
 // end new dev
 void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
 {
@@ -2296,96 +2375,105 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
   }
   else if (kdown & KEY_MINUS && (kheld & KEY_ZL))
   {
-    m_multisearch.Entries[0].on = TARGET;
-    m_multisearch.target = 0;
-    u8 i = 0;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
-    m_multisearch.Entries[i].value1._u64 = 0;
-    m_multisearch.Entries[i].value2._u64 = 0;
-    ss.str("");
-    ss << "Item " << std::dec << (u16)i + 1;
+    std::string s = m_edizon_dir + "/multisearch.ini";
+    printf("minus pressed %s\n",s.c_str());
+    if (access(s.c_str(), F_OK) == 0) {
+      printf("mt ini OK\n");
+      m_multisearch = {0};
+      ini_parse(s.c_str(), MTinihandler, &m_multisearch);
+      //WIP MT
+    } else {
+        m_multisearch.Entries[0].on = TARGET;
+        m_multisearch.target = 0;
+        u8 i = 0;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_32BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
+        m_multisearch.Entries[i].value1._u64 = 0;
+        m_multisearch.Entries[i].value2._u64 = 0;
+        ss.str("");
+        ss << "Item " << std::dec << (u16)i + 1;
 
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
-    i = 1;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
-    m_multisearch.Entries[i].value1._f32 = 0.1;
-    m_multisearch.Entries[i].value2._f32 = 1000;
-    ss.str("");
-    ss << "Range 32+";
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 1;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+        m_multisearch.Entries[i].value1._f32 = 0.1;
+        m_multisearch.Entries[i].value2._f32 = 1000;
+        ss.str("");
+        ss << "Range 32+";
 
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
-    i = 2;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
-    m_multisearch.Entries[i].value1._f32 = -0.1;
-    m_multisearch.Entries[i].value2._f32 = -1000;
-    ss.str("");
-    ss << "Range 32-";
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 2;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_32BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+        m_multisearch.Entries[i].value1._f32 = -0.1;
+        m_multisearch.Entries[i].value2._f32 = -1000;
+        ss.str("");
+        ss << "Range 32-";
 
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
-    i = 3;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
-    m_multisearch.Entries[i].value1._f64 = 0;
-    m_multisearch.Entries[i].value2._f64 = 0;
-    ss.str("");
-    ss << "Double";
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 3;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_EQ;
+        m_multisearch.Entries[i].value1._f64 = 0;
+        m_multisearch.Entries[i].value2._f64 = 0;
+        ss.str("");
+        ss << "Double";
 
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
-    i = 4;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
-    m_multisearch.Entries[i].value1._f64 = 0.1;
-    m_multisearch.Entries[i].value2._f64 = 1000;
-    ss.str("");
-    ss << "Range 64+";
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 4;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+        m_multisearch.Entries[i].value1._f64 = 0.1;
+        m_multisearch.Entries[i].value2._f64 = 1000;
+        ss.str("");
+        ss << "Range 64+";
 
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
-    i = 5;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
-    m_multisearch.Entries[i].value1._f64 = -0.1;
-    m_multisearch.Entries[i].value2._f64 = -1000;
-    ss.str("");
-    ss << "Range 64-";
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 5;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_FLOAT_64BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+        m_multisearch.Entries[i].value1._f64 = -0.1;
+        m_multisearch.Entries[i].value2._f64 = -1000;
+        ss.str("");
+        ss << "Range 64-";
 
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
 
-    i = 6;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_64BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
-    m_multisearch.Entries[i].value1._u64 = m_heapBaseAddr;
-    m_multisearch.Entries[i].value2._u64 = m_heapEnd;
-    ss.str("");
-    ss << "Heap " << std::dec << (u16)i + 1;
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 6;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_64BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+        m_multisearch.Entries[i].value1._u64 = m_heapBaseAddr;
+        m_multisearch.Entries[i].value2._u64 = m_heapEnd;
+        ss.str("");
+        ss << "Heap " << std::dec << (u16)i + 1;
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
 
-    i = 7;
-    m_multisearch.Entries[i].offset = i * 0x8;
-    m_multisearch.Entries[i].on = OFF;
-    m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_64BIT;
-    m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
-    m_multisearch.Entries[i].value1._u64 = m_mainBaseAddr;
-    m_multisearch.Entries[i].value2._u64 = m_mainend;
-    ss.str("");
-    ss << "Main " << std::dec << (u16)i + 1;
-    strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+        i = 7;
+        m_multisearch.Entries[i].offset = i * 0x8;
+        m_multisearch.Entries[i].on = OFF;
+        m_multisearch.Entries[i].type = SEARCH_TYPE_UNSIGNED_64BIT;
+        m_multisearch.Entries[i].mode = SEARCH_MODE_RANGE;
+        m_multisearch.Entries[i].value1._u64 = m_mainBaseAddr;
+        m_multisearch.Entries[i].value2._u64 = m_mainend;
+        ss.str("");
+        ss << "Main " << std::dec << (u16)i + 1;
+        strcpy(m_multisearch.Entries[i].label, ss.str().c_str());
+    }
   }
   else if (kdown & KEY_X && !(kheld & KEY_ZL))
   {
