@@ -2138,7 +2138,6 @@ static int MTinihandler(void *user, const char *section, const char *name, const
 #define M_NAME(n) (strcmp(name, n) == 0)
 #define LAST pconfig->last
 #define C_ENTRY pconfig->Entries[LAST]
-    printf("MT section'%s' name '%s' value '%s'\n", section, name, value);
     if M_LABEL (C_ENTRY.label) {
     } else if (C_ENTRY.label[0] == 0) {
         strncpy(C_ENTRY.label, section, sizeof C_ENTRY.label);
@@ -2152,7 +2151,6 @@ static int MTinihandler(void *user, const char *section, const char *name, const
     } else if M_NAME ("Value1") {
         switch (C_ENTRY.type) {
             case SEARCH_TYPE_FLOAT_32BIT:
-                printf("V1 f32 %s\n", value);
                 C_ENTRY.value1._f32 = atof(value);
                 break;
             case SEARCH_TYPE_FLOAT_64BIT:
@@ -2375,9 +2373,7 @@ void GuiCheats::EditExtraSearchValues_input(u32 kdown, u32 kheld)
   else if (kdown & KEY_MINUS && (kheld & KEY_ZL))
   {
     std::string s = m_edizon_dir + "/multisearch.ini";
-    printf("minus pressed %s\n",s.c_str());
     if (access(s.c_str(), F_OK) == 0) {
-      printf("mt ini OK\n");
       m_multisearch = {0};
       ini_parse(s.c_str(), MTinihandler, &m_multisearch);
       //WIP MT
