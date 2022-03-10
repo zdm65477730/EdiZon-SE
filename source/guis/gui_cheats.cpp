@@ -66,7 +66,6 @@ static const std::vector<s128> dataTypeMinValues = {std::numeric_limits<u8>::min
 static std::string titleNameStr, tidStr, pidStr, buildIDStr, cheatpathStr;
 
 static u32 cheatListOffset = 0;
-static u32 m_MTalignment = 0x10;
 static bool _isAddressFrozen(uintptr_t);
 static std::string _getAddressDisplayString(u64, Debugger *debugger, searchType_t searchType);
 static std::string _getValueDisplayString(searchValue_t searchValue, searchType_t searchType);
@@ -1741,6 +1740,7 @@ void GuiCheats::drawEditExtraSearchValues()
       ss.str("");
       ss << "\uE132   Multi Target Memory Search";
       ss << "   [ " << regionNames[m_searchRegion] << " ]";
+      ss << "  Alignment = " << m_multisearch.Alignment;
       // ss << " line = " << m_selectedEntry / 6;
   }
   Gui::drawText(font24, 120, 70, currTheme.textColor, ss.str().c_str());
@@ -2174,9 +2174,8 @@ static int MTinihandler(void *user, const char *section, const char *name, const
                 C_ENTRY.value2._s64 = std::strtol(value, nullptr, 0);
                 break;
         };
-    } else if M_NAME ("alignment") {
-        m_MTalignment = std::strtol(value, nullptr, 0);
-        printf("m_MTalignment = %d\n",m_MTalignment);
+    } else if M_NAME ("Alignment") {
+        pconfig->Alignment = std::strtol(value, nullptr, 0);
     } else if M_NAME ("On") {
         C_ENTRY.on = ON;
     } else if M_NAME ("Off") {

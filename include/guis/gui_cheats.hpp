@@ -34,6 +34,7 @@ struct MultiSearch_t
     u32 target = 0;
     u32 count = 0, first = 0, last = 0, size = 0, adjustment = 0, target_offset = 0;
     MultiSearchEntry_t Entries[M_ENTRY_MAX];
+    u32 Alignment = 0x10;
   };
 struct fromto32_t
 {
@@ -133,7 +134,7 @@ private:
   MemoryDump *m_PC_DumpTo = nullptr; // File to hold list of "To" to be process next
 
   #define M_TARGET m_multisearch.Entries[m_multisearch.target]
-  #define M_ALIGNMENT m_MTalignment
+  #define M_ALIGNMENT m_multisearch.Alignment
   #define FORWARD_DEPTH 2
   struct forward_chain_t
   {
