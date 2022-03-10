@@ -2142,7 +2142,7 @@ static int MTinihandler(void *user, const char *section, const char *name, const
     } else if (C_ENTRY.label[0] == 0) {
         strncpy(C_ENTRY.label, section, sizeof C_ENTRY.label);
     } else {
-        LAST++;
+        if (LAST + 1 < M_ENTRY_MAX) LAST++;
         strncpy(C_ENTRY.label, section, sizeof C_ENTRY.label);
     };
 
