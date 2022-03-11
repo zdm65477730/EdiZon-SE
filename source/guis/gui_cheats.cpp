@@ -5450,7 +5450,10 @@ void GuiCheats::onInput(u32 kdown)
                                       REPLACEFILE(EDIZON_DIR "/datadumpBa.dat", EDIZON_DIR "/datadumpB.dat");
                                   } else {
                                       m_nothingchanged = false;
-                                      GuiCheats::searchMemoryAddressesSecondary2(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
+                                      if (dataTypeSizes[m_searchType] == 8)
+                                          GuiCheats::searchMemoryAddressesSecondary2(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
+                                      else
+                                          GuiCheats::searchMemoryAddressesSecondary232(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, &m_memoryDump);
                                       if (m_nothingchanged == false) {
                                           // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
                                           // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
@@ -5467,13 +5470,23 @@ void GuiCheats::onInput(u32 kdown)
                           } else {
                               if (m_memoryDump->size() == 0) {
                                   delete m_memoryDump;
-                                  if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0)
-                                      GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
-                                  else
-                                      GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                                  if (Config::getConfig()->enabletargetedscan && m_targetmemInfos.size() != 0) {
+                                      if (dataTypeSizes[m_searchType] == 8)
+                                          GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+                                      else
+                                          GuiCheats::searchMemoryAddressesPrimary32(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_targetmemInfos);
+                                  } else {
+                                      if (dataTypeSizes[m_searchType] == 8)
+                                          GuiCheats::searchMemoryAddressesPrimary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                                      else
+                                          GuiCheats::searchMemoryAddressesPrimary32(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_searchRegion, &m_memoryDump, m_memoryInfo);
+                                  }
                               } else {
                                   m_nothingchanged = false;
-                                  GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
+                                  if (dataTypeSizes[m_searchType] == 8)
+                                      GuiCheats::searchMemoryAddressesSecondary(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
+                                  else
+                                      GuiCheats::searchMemoryAddressesSecondary32(m_debugger, m_searchValue[0], m_searchValue[1], m_searchType, m_searchMode, m_use_range, &m_memoryDump);
                                   if (m_nothingchanged == false) {
                                       // remove(EDIZON_DIR "/memdump1a.dat");                              // remove old helper
                                       // rename(EDIZON_DIR "/memdump3a.dat", EDIZON_DIR "/memdump1a.dat"); // rename new helper to current helper
@@ -6799,7 +6812,7 @@ void GuiCheats::searchMemoryAddressesSecondary2(Debugger *debugger, searchValue_
   printf("%s%lx\n", "Stop Time secondary search ", unixTime2);
   printf("%s%ld\n", "Stop Time ", unixTime2 - unixTime1);
 }
-
+#include "gui_cheats_32.h"
 ///////////////////////////////////////////////
 // read
 void GuiCheats::searchMemoryValuesPrimary(Debugger *debugger, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)

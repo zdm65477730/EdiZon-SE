@@ -434,4 +434,15 @@ private:
                                   searchValue_t searchValue2, searchType_t searchType,
                                   searchMode_t searchMode, searchRegion_t searchRegion, bool use_range,
                                   MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
+
+  void searchMemoryAddressesPrimary32(Debugger *debugger, searchValue_t searchValue1,
+                                      searchValue_t searchValue2, searchType_t searchType,
+                                      searchMode_t searchMode, searchRegion_t searchRegion,
+                                      MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
+  void searchMemoryAddressesSecondary32(Debugger *debugger, searchValue_t searchValue1,
+                                        searchValue_t searchValue2, searchType_t searchType,
+                                        searchMode_t searchMode, bool use_range, MemoryDump **displayDump);
+  void searchMemoryAddressesSecondary232(Debugger *debugger, searchValue_t searchValue1,
+                                         searchValue_t searchValue2, searchType_t searchType,
+                                         searchMode_t searchMode, MemoryDump **displayDump);
 };
