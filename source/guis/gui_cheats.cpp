@@ -5862,7 +5862,7 @@ void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t s
           }; 
           break;
         case SEARCH_MODE_EQA:
-          if (realValue._s64 == searchValue1._s64 || realValue._f32 == (float) searchValue1._s64 || realValue._f64 == (double) searchValue1._s64 )  {
+          if (realValue._s32 == searchValue1._s32 || realValue._f32 == (float) searchValue1._s64 || realValue._f64 == (double) searchValue1._s64 )  {
                 (*displayDump)->addData((u8 *)&address, sizeof(u64));
                 helperinfo.count++;
             }
@@ -6212,7 +6212,7 @@ void GuiCheats::searchMemoryAddressesSecondary(Debugger *debugger, searchValue_t
         }; 
         break;  
       case SEARCH_MODE_EQA:
-        if (value._s64 == searchValue1._s64 || value._f32 == (float) searchValue1._s64 || value._f64 == (double) searchValue1._s64 )  
+        if (value._s32 == searchValue1._s32 || value._f32 == (float) searchValue1._s64 || value._f64 == (double) searchValue1._s64 )  
         {
           newDump->addData((u8 *)&address, sizeof(u64));
           newhelperinfo.count++;
