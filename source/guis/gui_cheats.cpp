@@ -5760,8 +5760,201 @@ static std::string _getValueDisplayString(searchValue_t searchValue, searchType_
   return ss.str();
 }
 // read
+void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValue1,
+                                    searchValue_t searchValue2, searchType_t searchType,
+                                    searchMode_t searchMode, searchRegion_t searchRegion,
+                                    MemoryDump **displayDump, std::vector<MemoryInfo> memInfos) {
+    // WIP MTarget
+    typedef struct
+    {
+        u32 start{0};
+        u32 size{0};  // in bytes
+    } MT_block_t;
+    std::map<u64, std::vector<u64>> mymap; // target, source vector 
+    std::map<u64, std::vector<MT_block_t>> myMT; // target, source index for access to MTfile
+    u64 ptrcount = 0;
+    u64 cycle = 0;
+    u64 mtcount = 0;
+    u32 index = 0; // index into the MTfile
+    // std::string filename = "/MTfile";
+    // filename = EDIZON_DIR + filename;
+    MemoryDump *MTfile = new MemoryDump(EDIZON_DIR "/MTfile.dat", DumpType::DATA, true);  // start this file
+    auto writeMT = [&]() {
+        // std::map<u64, std::vector<u64>>::iterator itr = mymap.begin();
+        auto itr = mymap.begin();
+        while (itr != mymap.end()) {
+            u32 size = itr->second.size();
+            if (size > 5) {
+                size = size * 8;
+                MTfile->addData((u8 *)&(itr->second[0]), size);
+                // myMT[target.first].push_back({index, size});
+                index += size;
+                // target.second.clear();
+                itr = mymap.erase(itr);
+            } else {
+                ++itr;
+            }
+        }
+        // for (auto target : mymap) {
+        //     if (target.second.size() > 5) {
+        //     };
+        // };
+        printf("index = %d\n", index);
+    };
+    auto storeMT = [&]() {
+        for (auto target : mymap) {
+            u32 size = target.second.size() * 8;
+            MTfile->addData((u8 *)&(target.second), size);
+            myMT[target.first].push_back({index, size});
+            index += size;
+            mymap.erase(target.first);
+        };
+        {                                // write myMT to file
+            MTfile->setMToffset(index);  // record location of myMT to MTfile
+            for (auto target : myMT) {   // target, size, data
+                u32 size = target.second.size() * sizeof(MT_block_t);
+                MTfile->addData((u8 *)&(target.first), 8);
+                MTfile->addData((u8 *)&(size), 4);
+                MTfile->addData((u8 *)&(target.second), size);
+                index += size + 12;
+            };
+            MTfile->flushBuffer();
+        };
+    };
+    //
+
+    u8 *buffer = new u8[MAX_BUFFER_SIZE];
+    bool ledOn = false;
+    time_t unixTime1 = time(NULL);
+    printf("%s%lx\n", "Start Time MTarget search", unixTime1);
+    for (MemoryInfo meminfo : memInfos) {
+        if (searchRegion == SEARCH_REGION_HEAP && meminfo.type != MemType_Heap)
+            continue;
+        else if (searchRegion == SEARCH_REGION_MAIN &&
+                 (((meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable && meminfo.type != MemType_CodeStatic) || !(meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
+            continue;
+        else if (searchRegion == SEARCH_REGION_HEAP_AND_MAIN &&
+                 (((meminfo.type != MemType_Heap && meminfo.type != MemType_CodeWritable && meminfo.type != MemType_CodeMutable)) || !((meminfo.addr < m_heapEnd && meminfo.addr >= m_heapBaseAddr) || (meminfo.addr < m_mainend && meminfo.addr >= m_mainBaseAddr))))
+            continue;
+        else if (searchRegion == SEARCH_REGION_RAM && (meminfo.perm & Perm_Rw) != Perm_Rw)  // searchRegion == SEARCH_REGION_RAM &&
+            continue;
+        setLedState(true);
+        ledOn = !ledOn;
+        u64 offset = 0;
+        u64 bufferSize = MAX_BUFFER_SIZE;  // consider to increase from 10k to 1M (not a big problem)
+        while (offset < meminfo.size) {
+            if (meminfo.size - offset < bufferSize)
+                bufferSize = meminfo.size - offset;
+            debugger->readMemory(buffer, bufferSize, meminfo.addr + offset);
+            searchValue_t realValue = {0};
+            u32 inc_i;
+            if (searchMode == SEARCH_MODE_POINTER || searchMode == SEARCH_MODE_EQA)
+                inc_i = 4;
+            else if (searchType == SEARCH_TYPE_UNSIGNED_16BIT)
+                inc_i = 1;
+            else
+                inc_i = dataTypeSizes[searchType];
+            for (u32 i = 0; i < bufferSize; i += inc_i) {
+                u64 address = meminfo.addr + offset + i;
+                memset(&realValue, 0, 8);
+                if (searchMode == SEARCH_MODE_POINTER && m_32bitmode)
+                    memcpy(&realValue, buffer + i, 4);
+                else
+                    memcpy(&realValue, buffer + i, dataTypeSizes[searchType]);
+
+                // WIP MTarget
+                if ((realValue._u64 != 0))
+                    if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd)))) {
+                        mymap[realValue._u64].push_back(address);
+                        ptrcount++;
+                        if (ptrcount > 100000) {
+                          writeMT();
+                          printf("index = %d\n", index);
+                          // if (mymap[realValue._u64].size() > 5) {
+                          //     writeMT(realValue._u64, source);
+                          //     mymap.erase(realValue._u64);
+                          //     mtcount++;
+                          // }
+                          // printf("size = %lx\n", mymap.size());
+                          u32 EQ1 = 0;
+                          u32 EQ2 = 0;
+                          u32 EQ3 = 0;
+                          u32 EQ4 = 0;
+                          u32 EQ5 = 0;
+                          u32 GT5 = 0;
+                          u32 total = 0;
+                          for (auto target : mymap) {
+                              // auto memin = debugger->queryMemory(addr);
+                              // printf("Target:%lx SourceCount:%lx \n", target.first, target.second.size());
+                              // totalsize += memin.size;
+                              total += target.second.size() * 8;
+                              if (target.second.size() == 1) EQ1++;
+                              if (target.second.size() == 2) EQ2++;
+                              if (target.second.size() == 3) EQ3++;
+                              if (target.second.size() == 4) EQ4++;
+                              if (target.second.size() == 5) EQ5++;
+                              if (target.second.size() > 5) GT5++;
+                            };
+                            printf("%d:size = %lx EQ1 = %d EQ2 = %d EQ3 = %d EQ4 = %d EQ5 = %d GT5 = %d Total = %d\n", cycle, mymap.size(), EQ1, EQ2, EQ3, EQ4, EQ5, GT5, total);
+                            cycle++;
+                            ptrcount = 0;
+                            // mymap.clear();
+                            // printf("clcle = %ld mtcount = %ld\n", cycle, mtcount);
+                        };
+                    }
+                //
+            }
+            offset += bufferSize;
+        }
+    }
+// Do update one more time then save myMT
+    printf("before storeMT\n");
+    // storeMT();
+
+    setLedState(false);
+    delete[] buffer;
+
+    time_t unixTime2 = time(NULL);
+    printf("%s%lx\n", "Stop Time ", unixTime2);
+    printf("%s%ld\n", "Stop Time ", unixTime2 - unixTime1);
+
+    {  // WIP MTarget
+        // u64 totalsize = 0;
+
+        // u64 count = 0;
+        printf("size = %lx\n", mymap.size());
+        u32 EQ1 = 0;
+        u32 EQ2 = 0;
+        u32 EQ3 = 0;
+        u32 EQ4 = 0;
+        u32 EQ5 = 0;
+        u32 total = 0;
+        for (auto target : mymap) {
+            // auto memin = debugger->queryMemory(addr);
+            // printf("Target:%lx SourceCount:%lx \n", target.first, target.second.size());
+            // totalsize += memin.size;
+            total +=target.second.size();
+            if (target.second.size() == 1) EQ1++;
+            if (target.second.size() == 2) EQ2++;
+            if (target.second.size() == 3) EQ3++;
+            if (target.second.size() == 4) EQ4++;
+            if (target.second.size() == 5) EQ5++;
+        };
+        printf("EQ1 = %d EQ2 = %d EQ3 = %d EQ4 = %d EQ5 = %d\n", EQ1, EQ2,EQ3,EQ4,EQ5);
+        printf("Total = %d\n", total);
+
+
+        delete MTfile;
+        mymap.clear();
+        myMT.clear();
+        printf("After\n");
+    }
+}
+
 void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
 {
+  searchMemoryMTarget(debugger,  searchValue1,  searchValue2,  searchType,  searchMode,  searchRegion, displayDump, memInfos);
+  return;
   (*displayDump) = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, true);
   (*displayDump)->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
   m_use_range = (searchMode == SEARCH_MODE_RANGE);

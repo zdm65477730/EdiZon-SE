@@ -379,6 +379,10 @@ private:
   void easymode_input(u32 kdown, u32 kheld);
   void pickjump_input(u32 kdown, u32 kheld);
   void drawSearchPointerMenu();
+  void searchMemoryMTarget(Debugger *debugger, searchValue_t searchValue1,
+                                    searchValue_t searchValue2, searchType_t searchType,
+                                    searchMode_t searchMode, searchRegion_t searchRegion,
+                                    MemoryDump **displayDump, std::vector<MemoryInfo> memInfos);
   void searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1,
                                     searchValue_t searchValue2, searchType_t searchType,
                                     searchMode_t searchMode, searchRegion_t searchRegion,

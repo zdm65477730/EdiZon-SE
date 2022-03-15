@@ -285,7 +285,12 @@ data_header_t MemoryDump::getDumpInfo()
 {
   return m_dataHeader;
 }
-
+u32 MemoryDump::getMToffset(){
+  return m_dataHeader.maxrange; // reuse maxrange as it won't be applicable to avoid change to the file format
+};
+void MemoryDump::setMToffset(u32 offset){
+  m_dataHeader.maxrange = offset;
+};
 void MemoryDump::setDumpType(DumpType dumpType)
 {
   if (m_dataHeader.dumpType != UNDEFINED)

@@ -27,6 +27,9 @@ public:
 
 	data_header_t getDumpInfo();
 
+	u32 getMToffset();
+	void setMToffset(u32 offset);
+
 	void setDumpType(enum DumpType dumpType);
 	void flushBuffer();
 	bool m_compress = false;
