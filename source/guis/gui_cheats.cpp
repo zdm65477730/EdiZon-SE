@@ -5770,7 +5770,12 @@ void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValu
         u32 start{0};
         u32 size{0};  // in bytes
     } MT_block_t;
-    std::map<u64, std::vector<u64>> mymap; // target, source vector 
+    typedef struct
+    {
+        u64 target{0};
+        u32 index{0};  // in bytes
+    } PACKED MT_map_t;
+    std::map<u64, u32> mymap;                    // target, source vector
     std::map<u64, std::vector<MT_block_t>> myMT; // target, source index for access to MTfile
     u64 ptrcount = 0;
     u64 cycle = 0;
@@ -5778,50 +5783,72 @@ void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValu
     u32 index = 0; // index into the MTfile
     // std::string filename = "/MTfile";
     // filename = EDIZON_DIR + filename;
+    MT_map_t *MTmap;
+    u64 *MTdata;
+
     MemoryDump *MTfile = new MemoryDump(EDIZON_DIR "/MTfile.dat", DumpType::DATA, true);  // start this file
-    auto writeMT = [&]() {
-        // std::map<u64, std::vector<u64>>::iterator itr = mymap.begin();
+    auto prepareMT = [&]() {
+        u32 index = 0;
+        MTmap = new MT_map_t[mymap.size()];
+        u32 i = 0;
         auto itr = mymap.begin();
         while (itr != mymap.end()) {
-            u32 size = itr->second.size();
-            if (size > 5) {
-                size = size * 8;
-                MTfile->addData((u8 *)&(itr->second[0]), size);
-                // myMT[target.first].push_back({index, size});
-                index += size;
-                // target.second.clear();
-                itr = mymap.erase(itr);
-            } else {
-                ++itr;
-            }
+            auto temp = itr->second;
+            itr->second = index;
+            MTmap[i].target = itr->first;
+            MTmap[i].index = index;
+            i++;
+            index += temp;
+            ++itr;
+        };
+        // store it to file
+        MTfile->setMToffset(index);  // record location of mymap to MTfile
+        MTfile->setMTsize(mymap.size());
+        MTfile->flushBuffer();
+        MTfile->putData(index*8, (u8 *)&(MTmap[0]), mymap.size()*12);
+        MTfile->flushBuffer();
+        printf("mymap size = %d index= %d, index+size = %ld\n",mymap.size(), index, index + mymap.size()*12);
+        for (int j = 0; j < 10; j++) {
+          printf ("target = %lx index = %d \n", MTmap[mymap.size()-10+j].target,MTmap[mymap.size()-10+j].index);
         }
-        // for (auto target : mymap) {
-        //     if (target.second.size() > 5) {
-        //     };
-        // };
-        printf("index = %d\n", index);
+        delete [] MTmap;
+        // MTdata = new u64[index];
     };
-    auto storeMT = [&]() {
-        for (auto target : mymap) {
-            u32 size = target.second.size() * 8;
-            MTfile->addData((u8 *)&(target.second), size);
-            myMT[target.first].push_back({index, size});
-            index += size;
-            mymap.erase(target.first);
-        };
-        {                                // write myMT to file
-            MTfile->setMToffset(index);  // record location of myMT to MTfile
-            for (auto target : myMT) {   // target, size, data
-                u32 size = target.second.size() * sizeof(MT_block_t);
-                MTfile->addData((u8 *)&(target.first), 8);
-                MTfile->addData((u8 *)&(size), 4);
-                MTfile->addData((u8 *)&(target.second), size);
-                index += size + 12;
-            };
-            MTfile->flushBuffer();
-        };
-    };
-    //
+    // if (size > 5) {
+    //     size = size * 8;
+    //     MTfile->addData((u8 *)&(itr->second[0]), size);
+    //     // myMT[target.first].push_back({index, size});
+    //     index += size;
+    //     // target.second.clear();
+    //     itr = mymap.erase(itr);
+    // } else {
+    // }
+    // for (auto target : mymap) {
+    //     if (target.second.size() > 5) {
+    //     };
+    // };
+    // printf("index = %d\n", index);
+    // auto storeMT = [&]() {
+    //     for (auto target : mymap) {
+    //         u32 size = target.second.size() * 8;
+    //         MTfile->addData((u8 *)&(target.second), size);
+    //         myMT[target.first].push_back({index, size});
+    //         index += size;
+    //         mymap.erase(target.first);
+    //     };
+    //     {                                // write myMT to file
+    //         MTfile->setMToffset(index);  // record location of myMT to MTfile
+    //         for (auto target : myMT) {   // target, size, data
+    //             u32 size = target.second.size() * sizeof(MT_block_t);
+    //             MTfile->addData((u8 *)&(target.first), 8);
+    //             MTfile->addData((u8 *)&(size), 4);
+    //             MTfile->addData((u8 *)&(target.second), size);
+    //             index += size + 12;
+    //         };
+    //         MTfile->flushBuffer();
+    //     };
+    // };
+    // //
 
     u8 *buffer = new u8[MAX_BUFFER_SIZE];
     bool ledOn = false;
@@ -5865,42 +5892,47 @@ void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValu
                 // WIP MTarget
                 if ((realValue._u64 != 0))
                     if (((realValue._u64 >= m_mainBaseAddr) && (realValue._u64 <= (m_mainend))) || ((realValue._u64 >= m_heapBaseAddr) && (realValue._u64 <= (m_heapEnd)))) {
-                        mymap[realValue._u64].push_back(address);
+                        // if (mymap.size()+0x1000 < mymap.max_size())
+                        mymap[realValue._u64>>16]++;
+                        // else
+                        //   printf("max size approaching size = %08lX max = %08lX\n",mymap.size(),mymap.max_size());
                         ptrcount++;
-                        if (ptrcount > 100000) {
-                          writeMT();
-                          printf("index = %d\n", index);
-                          // if (mymap[realValue._u64].size() > 5) {
-                          //     writeMT(realValue._u64, source);
-                          //     mymap.erase(realValue._u64);
-                          //     mtcount++;
-                          // }
-                          // printf("size = %lx\n", mymap.size());
-                          u32 EQ1 = 0;
-                          u32 EQ2 = 0;
-                          u32 EQ3 = 0;
-                          u32 EQ4 = 0;
-                          u32 EQ5 = 0;
-                          u32 GT5 = 0;
-                          u32 total = 0;
-                          for (auto target : mymap) {
-                              // auto memin = debugger->queryMemory(addr);
-                              // printf("Target:%lx SourceCount:%lx \n", target.first, target.second.size());
-                              // totalsize += memin.size;
-                              total += target.second.size() * 8;
-                              if (target.second.size() == 1) EQ1++;
-                              if (target.second.size() == 2) EQ2++;
-                              if (target.second.size() == 3) EQ3++;
-                              if (target.second.size() == 4) EQ4++;
-                              if (target.second.size() == 5) EQ5++;
-                              if (target.second.size() > 5) GT5++;
-                            };
-                            printf("%d:size = %lx EQ1 = %d EQ2 = %d EQ3 = %d EQ4 = %d EQ5 = %d GT5 = %d Total = %d\n", cycle, mymap.size(), EQ1, EQ2, EQ3, EQ4, EQ5, GT5, total);
-                            cycle++;
-                            ptrcount = 0;
-                            // mymap.clear();
-                            // printf("clcle = %ld mtcount = %ld\n", cycle, mtcount);
-                        };
+                        if (ptrcount % 1000000 == 0) {
+                          printf("mymap size = 0x%10lX\n",mymap.size());
+                            //       writeMT();
+                            //       printf("index = %d\n", index);
+                            //       // if (mymap[realValue._u64].size() > 5) {
+                            //       //     writeMT(realValue._u64, source);
+                            //       //     mymap.erase(realValue._u64);
+                            //       //     mtcount++;
+                            //       // }
+                                  // printf("size = %lx\n", mymap.size());
+                            //       u32 EQ1 = 0;
+                            //       u32 EQ2 = 0;
+                            //       u32 EQ3 = 0;
+                            //       u32 EQ4 = 0;
+                            //       u32 EQ5 = 0;
+                            //       u32 GT5 = 0;
+                                  // u32 total = 0;
+                                  // for (auto target : mymap) {
+                                  //     printf("address= %10lx count= %d total= %d\n", target.first, target.second, total = total + target.second);
+                                  //     // auto memin = debugger->queryMemory(addr);
+                                  //     // printf("Target:%lx SourceCount:%lx \n", target.first, target.second.size());
+                                  //     // totalsize += memin.size;
+                                  //     // total += target.second.size() * 8;
+                                  //     // if (target.second.size() == 1) EQ1++;
+                                  //     // if (target.second.size() == 2) EQ2++;
+                                  //     // if (target.second.size() == 3) EQ3++;
+                                  //     // if (target.second.size() == 4) EQ4++;
+                                  //     // if (target.second.size() == 5) EQ5++;
+                                  //     // if (target.second.size() > 5) GT5++;
+                                  //   };
+                            //         printf("%d:size = %lx EQ1 = %d EQ2 = %d EQ3 = %d EQ4 = %d EQ5 = %d GT5 = %d Total = %d\n", cycle, mymap.size(), EQ1, EQ2, EQ3, EQ4, EQ5, GT5, total);
+                            //         cycle++;
+                            //         ptrcount = 0;
+                            //         // mymap.clear();
+                            //         // printf("clcle = %ld mtcount = %ld\n", cycle, mtcount);
+                        }
                     }
                 //
             }
@@ -5908,7 +5940,7 @@ void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValu
         }
     }
 // Do update one more time then save myMT
-    printf("before storeMT\n");
+    printf("ptrcount = %ld\n",ptrcount);
     // storeMT();
 
     setLedState(false);
@@ -5917,44 +5949,45 @@ void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValu
     time_t unixTime2 = time(NULL);
     printf("%s%lx\n", "Stop Time ", unixTime2);
     printf("%s%ld\n", "Stop Time ", unixTime2 - unixTime1);
+    prepareMT();
 
     {  // WIP MTarget
         // u64 totalsize = 0;
 
         // u64 count = 0;
-        printf("size = %lx\n", mymap.size());
-        u32 EQ1 = 0;
-        u32 EQ2 = 0;
-        u32 EQ3 = 0;
-        u32 EQ4 = 0;
-        u32 EQ5 = 0;
-        u32 total = 0;
-        for (auto target : mymap) {
-            // auto memin = debugger->queryMemory(addr);
-            // printf("Target:%lx SourceCount:%lx \n", target.first, target.second.size());
-            // totalsize += memin.size;
-            total +=target.second.size();
-            if (target.second.size() == 1) EQ1++;
-            if (target.second.size() == 2) EQ2++;
-            if (target.second.size() == 3) EQ3++;
-            if (target.second.size() == 4) EQ4++;
-            if (target.second.size() == 5) EQ5++;
-        };
-        printf("EQ1 = %d EQ2 = %d EQ3 = %d EQ4 = %d EQ5 = %d\n", EQ1, EQ2,EQ3,EQ4,EQ5);
-        printf("Total = %d\n", total);
+        // printf("size = %lx\n", mymap.size());
+        // u32 EQ1 = 0;
+        // u32 EQ2 = 0;
+        // u32 EQ3 = 0;
+        // u32 EQ4 = 0;
+        // u32 EQ5 = 0;
+        // u32 total = 0;
+        // for (auto target : mymap) {
+        //     // auto memin = debugger->queryMemory(addr);
+        //     // printf("Target:%lx SourceCount:%lx \n", target.first, target.second.size());
+        //     // totalsize += memin.size;
+        //     total +=target.second.size();
+        //     if (target.second.size() == 1) EQ1++;
+        //     if (target.second.size() == 2) EQ2++;
+        //     if (target.second.size() == 3) EQ3++;
+        //     if (target.second.size() == 4) EQ4++;
+        //     if (target.second.size() == 5) EQ5++;
+        // };
+        // printf("EQ1 = %d EQ2 = %d EQ3 = %d EQ4 = %d EQ5 = %d\n", EQ1, EQ2,EQ3,EQ4,EQ5);
+        // printf("Total = %d\n", total);
 
 
         delete MTfile;
         mymap.clear();
         myMT.clear();
-        printf("After\n");
+        printf("After max size = %08lX\n",mymap.max_size());
     }
 }
 
 void GuiCheats::searchMemoryAddressesPrimary(Debugger *debugger, searchValue_t searchValue1, searchValue_t searchValue2, searchType_t searchType, searchMode_t searchMode, searchRegion_t searchRegion, MemoryDump **displayDump, std::vector<MemoryInfo> memInfos)
 {
-  searchMemoryMTarget(debugger,  searchValue1,  searchValue2,  searchType,  searchMode,  searchRegion, displayDump, memInfos);
-  return;
+  // searchMemoryMTarget(debugger,  searchValue1,  searchValue2,  searchType,  searchMode,  searchRegion, displayDump, memInfos);
+  // return;
   (*displayDump) = new MemoryDump(EDIZON_DIR "/memdump1.dat", DumpType::ADDR, true);
   (*displayDump)->setBaseAddresses(m_addressSpaceBaseAddr, m_heapBaseAddr, m_mainBaseAddr, m_heapSize, m_mainSize);
   m_use_range = (searchMode == SEARCH_MODE_RANGE);

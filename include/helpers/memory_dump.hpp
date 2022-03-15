@@ -29,6 +29,8 @@ public:
 
 	u32 getMToffset();
 	void setMToffset(u32 offset);
+	u32 getMTsize();
+	void setMTsize(u32 size);
 
 	void setDumpType(enum DumpType dumpType);
 	void flushBuffer();

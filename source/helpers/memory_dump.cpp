@@ -291,6 +291,12 @@ u32 MemoryDump::getMToffset(){
 void MemoryDump::setMToffset(u32 offset){
   m_dataHeader.maxrange = offset;
 };
+u32 MemoryDump::getMTsize(){
+  return m_dataHeader.max_depth; // reuse max_depth as it won't be applicable to avoid change to the file format
+};
+void MemoryDump::setMTsize(u32 size){
+  m_dataHeader.max_depth = size;
+};
 void MemoryDump::setDumpType(DumpType dumpType)
 {
   if (m_dataHeader.dumpType != UNDEFINED)
