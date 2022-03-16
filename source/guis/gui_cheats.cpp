@@ -1478,6 +1478,7 @@ void GuiCheats::drawEditRAMMenu()
 // WIP edit ram
 std::string GuiCheats::buttonStr(u32 buttoncode)
 {
+  if ((buttoncode & 0xFF000000) != 0x80000000) return "";
   std::stringstream buttonstring;
   for (u32 i = 0; i < buttonCodes.size(); i++)
   {
