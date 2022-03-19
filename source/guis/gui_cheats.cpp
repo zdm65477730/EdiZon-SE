@@ -1609,14 +1609,16 @@ void GuiCheats::drawEditRAMMenu2()
         }
         nextaddress += m_bookmark.pointer.offset[z];
         m_jump_stack[z].from = nextaddress;
-        MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
-        if (meminfo.perm == Perm_Rw)
-          m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress);
-        else
+        // MemoryInfo meminfo = m_debugger->queryMemory(nextaddress);
+        // if (meminfo.perm == Perm_Rw)
+        if (m_debugger->readMemory(&nextaddress, ((m_32bitmode) ? sizeof(u32) : sizeof(u64)), nextaddress) != 0)
+        // else
         {
-          m_jump_stack[z].to = 0;
-          ss << "(*access denied*)";
-          break;
+            m_jump_stack[z].to = 0;
+            ss << "(*access denied*)";
+            m_depth_count++;
+            m_jump_stack[z].to = nextaddress;
+            break;
         }
         m_depth_count++;
         if (z > 0)
@@ -2997,7 +2999,7 @@ void GuiCheats::editor_input(u32 kdown, u32 kheld) //ME2 Key input for memory ex
       m_bookmark.pointer.offset[m_z] = address - ((m_bookmark.heap) ? m_heapBaseAddr : m_mainBaseAddr);
     else
       m_bookmark.pointer.offset[m_z] = address - m_jump_stack[m_z + 1].to;
-    if ((pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend) || (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd))
+    if ((pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend) || (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd) || true)
     {
       if (m_z == 0)
       {
@@ -5519,6 +5521,7 @@ void GuiCheats::onInput(u32 kdown)
           }
       } else if (kdown & KEY_X && (kheld & KEY_ZL)) {
           // key available
+          _makecode();
       }
 
       if (kdown & KEY_L) {
@@ -8572,12 +8575,35 @@ void GuiCheats::_writegameid()
   char st[100];
   snprintf(st, 100, "%010lx\n%010lx\n%010lx\n",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
   fputs(st, pfile);
-  snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr, "00000000");
+  snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr-0x400, "00000000");
   fputs(st, pfile);
-  snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr, "00000000");
+  snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr-0x400, "00000000");
   fputs(st, pfile);
   fclose(pfile);
 }
+void GuiCheats::_makecode()
+{
+  FILE *pfile;
+  pfile = fopen(EDIZON_DIR "/code.txt", "w");
+  if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
+    fputs(Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str(),pfile);
+  fputs("\n",pfile);
+  fputs(tidStr.c_str(),pfile);
+  fputs("\n", pfile);
+  fputs(buildIDStr.c_str(),pfile);
+  fputs("\n", pfile);
+  fputs(cheatpathStr.c_str(),pfile);
+  fputs("\n", pfile);
+  char st[100];
+  snprintf(st, 100, "%010lx\n%010lx\n%010lx\n",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
+  fputs(st, pfile);
+  snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr-0x400, "00000000");
+  fputs(st, pfile);
+  snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr-0x400, "00000000");
+  fputs(st, pfile);
+  fclose(pfile);
+}
+
 void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
 {
   std::stringstream lonelyCheatPath;

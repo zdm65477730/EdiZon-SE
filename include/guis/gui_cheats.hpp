@@ -351,6 +351,7 @@ private:
   bool _check_extra_not_OK(u8 *buffer, u32 i);
   void _moveLonelyCheats(u8 *buildID, u64 titleID);
   void _writegameid();
+  void _makecode();
   u64 m_heapSize = 0;
   u64 m_mainSize = 0;
   u64 m_heapEnd = 0;
