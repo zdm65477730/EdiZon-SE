@@ -96,6 +96,7 @@ bool dmntpresent() {
     }
     return false;
 };
+DmntCheatProcessMetadata metadata;
 GuiCheats::GuiCheats() : Gui()
 {
   if (Config::getConfig()->deletebookmark)
@@ -140,7 +141,6 @@ GuiCheats::GuiCheats() : Gui()
   //   return;
 
 
-  DmntCheatProcessMetadata metadata;
   if (m_debugger->m_dmnt)
     dmntchtGetCheatProcessMetadata(&metadata);
   else
@@ -1410,7 +1410,61 @@ void GuiCheats::drawSearchPointerMenu()
     //   break;
   }
 }
-
+std::string GuiCheats::SegmentStr(MemoryInfo mem_info){
+  char s1[100];
+  std::string perm_str;
+  if (mem_info.perm == Perm_Rx)
+      perm_str = "RX";
+  else if (mem_info.perm == Perm_Rw)
+      perm_str = "RW";
+  else if (mem_info.perm == Perm_R)
+      perm_str = "R";
+  else
+      perm_str = "";
+  snprintf(s1,100,"(%d%s)",mem_info.type,perm_str.c_str());
+  return s1;
+}
+std::string GuiCheats::ModuleName(u64 address, u64 *modulebase) {
+#define PathLengthMax 0x200
+    struct {
+        u32 zero;
+        s32 path_length;
+        char path[PathLengthMax];
+    } module_path;
+    MemoryInfo pointed_address_info = m_debugger->queryMemory(address);
+    u32 i = 0;
+    while (pointed_address_info.type == 9 || pointed_address_info.type == 4) {
+        pointed_address_info = m_debugger->queryMemory(pointed_address_info.addr - 1);
+        printf("addr = %lx type = %d i= %d\n", pointed_address_info.addr - 1, pointed_address_info.type, i);
+        if (i++ == 10) break;
+        // return "Not83";
+    };
+    if (pointed_address_info.type == 8 || pointed_address_info.type == 3) {
+        if (pointed_address_info.perm == Perm_R) pointed_address_info = m_debugger->queryMemory(pointed_address_info.addr - 1);
+        if (R_SUCCEEDED(m_debugger->readMemory(std::addressof(module_path), sizeof(module_path), pointed_address_info.addr + pointed_address_info.size))) {
+            /* Truncate module name. */
+            module_path.path[PathLengthMax - 1] = 0;
+            /* Set default module name start. */
+            u32 NameStart = 0;
+            /* Ignore leading directories. */
+            for (size_t i = 0; i < std::min<size_t>(PathLengthMax, module_path.path_length) && module_path.path[i] != 0; ++i) {
+                if (module_path.path[i] == '/' || module_path.path[i] == '\\') {
+                    NameStart = i + 1;
+                }
+            }
+            *modulebase = pointed_address_info.addr;
+            return (char *)(module_path.path + NameStart);
+        } else {
+            return "FailR";
+        };
+    };
+    if (address >= metadata.heap_extents.base && address < (metadata.heap_extents.base + metadata.heap_extents.size))
+        return "Heap";
+    else if (address >= metadata.alias_extents.base && address < (metadata.alias_extents.base + metadata.alias_extents.size))
+        return "Alias";
+    else
+        return "Other";
+}
 void GuiCheats::drawEditRAMMenu()
 {
   // static u32 cursorBlinkCnt = 0;
@@ -1503,7 +1557,6 @@ void GuiCheats::drawEditRAMMenu2()
     Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.mainbackgroundColor);
   else
     Gui::drawRectangle(0, 0, Gui::g_framebuffer_width, Gui::g_framebuffer_height, currTheme.backgroundColor); //background
-  Gui::drawText(font24, 30, 10 , currTheme.textColor, "\uE132   Memory Explorer");
   Gui::drawRectangle(10, 70 , Gui::g_framebuffer_width - 10, 1, currTheme.textColor);//the line
 
   // Gui::drawTextAligned(font20, 100, line2, currTheme.textColor, "\uE149 \uE0A4", ALIGNED_LEFT); // the start bracket
@@ -1517,6 +1570,10 @@ void GuiCheats::drawEditRAMMenu2()
   u64 addr = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20; 
   u32 out;
   u64 address = m_EditorBaseAddr - (m_EditorBaseAddr % 16) - 0x20 + (m_selectedEntry - 1 - (m_selectedEntry / 5)) * 4 ;
+  u64 modulebase;
+  ss.str("");
+  ss << ModuleName(address, &modulebase) << "+" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << address + m_addressmod - modulebase << SegmentStr(m_debugger->queryMemory(address));
+  Gui::drawText(font14, 30, 10, currTheme.textColor, ss.str().c_str());
   ss.str("");
   ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address + m_addressmod) << " ] " << dataTypes[m_searchType];
   Gui::drawText(font24, 420, line1, currTheme.textColor, ss.str().c_str());
@@ -1559,21 +1616,39 @@ void GuiCheats::drawEditRAMMenu2()
   Gui::drawTextAligned(font20, 860, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
 
   // pointer display if address in range
-  if (address % 8 == 0)
+  if (address % 4 == 0)
   {
     u64 pointed_address;
     m_debugger->readMemory(&pointed_address, sizeof(u64), address);
     ss.str("");
-    if (pointed_address >= m_mainBaseAddr && pointed_address <= m_mainend)
-      ss << "Main + " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address - m_mainBaseAddr;
-    else if (pointed_address >= m_heapBaseAddr && pointed_address <= m_heapEnd)
-      ss << "Heap + " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address - m_heapBaseAddr;
+    MemoryInfo pointed_address_info = m_debugger->queryMemory(pointed_address);
+    std::string perm_str;
+    if (pointed_address_info.perm == Perm_Rx)
+        perm_str = "RX)";
+    else if (pointed_address_info.perm == Perm_Rw)
+        perm_str = "RW)";
+    else if (pointed_address_info.perm == Perm_R)
+        perm_str = "R)";
+    else
+        perm_str = ")";
+    if (pointed_address >= m_mainBaseAddr && pointed_address < m_mainend)
+        ss << "Main+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << pointed_address - m_mainBaseAddr << "(" << pointed_address_info.type << perm_str;
+    else if (pointed_address >= metadata.heap_extents.base && pointed_address < (metadata.heap_extents.base + metadata.heap_extents.size))
+        ss << "Heap+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << pointed_address - metadata.heap_extents.base << "(" << pointed_address_info.type << perm_str;
+    else if (pointed_address >= metadata.alias_extents.base && pointed_address < (metadata.alias_extents.base + metadata.alias_extents.size))
+        ss << "Alias+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << pointed_address - metadata.alias_extents.base << "(" << pointed_address_info.type << perm_str;
+    else if (pointed_address >= metadata.address_space_extents.base && pointed_address < (metadata.address_space_extents.base + metadata.address_space_extents.size)) {
+        if (pointed_address_info.type == 8 || pointed_address_info.type == 9 || pointed_address_info.type == 3 || pointed_address_info.type == 4) {
+            ss << ModuleName(pointed_address, &(pointed_address_info.addr)) << "+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << pointed_address - pointed_address_info.addr << "(" << pointed_address_info.type << perm_str;
+        } else
+            ss << "Other+" << std::uppercase << std::hex << std::setfill('0') << std::setw(8) << pointed_address - pointed_address_info.addr << "(" << pointed_address_info.type << perm_str;
+    }
     if (ss.str().size() != 0)
     {
-      Gui::drawTextAligned(font20, 30, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
-      ss.str("");
-      ss << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address;
-      Gui::drawTextAligned(font20, 360, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+        // ss << "  " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << pointed_address;
+        Gui::drawTextAligned(font14, 30, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
+        // ss.str("");
+        // Gui::drawTextAligned(font20, 360, line3, currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
     }
   };
 

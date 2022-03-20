@@ -366,7 +366,8 @@ private:
   bool *m_cheatDelete = nullptr;
 
   void drawSearchRAMMenu();
-
+  std::string SegmentStr(MemoryInfo mem_info);
+  std::string ModuleName(u64 address, u64 * modulebase);
   void drawEditRAMMenu();
   void draw_easymode();
   std::string buttonStr(u32 buttoncode);
