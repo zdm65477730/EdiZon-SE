@@ -97,6 +97,7 @@ bool dmntpresent() {
     return false;
 };
 DmntCheatProcessMetadata metadata;
+std::vector <MemoryInfo> m_nro;
 GuiCheats::GuiCheats() : Gui()
 {
   if (Config::getConfig()->deletebookmark)
@@ -309,6 +310,10 @@ GuiCheats::GuiCheats() : Gui()
         m_mainCodeEnd = meminfo.addr + meminfo.size;
       };
       mod++;
+    }
+
+    if (meminfo.type == MemType_ModuleCodeStatic && meminfo.perm == Perm_Rx) {
+        m_nro.push_back(meminfo);
     }
 
     m_memoryInfo.push_back(meminfo);
@@ -1458,10 +1463,14 @@ std::string GuiCheats::ModuleName(u64 address, u64 *modulebase) {
             return "FailR";
         };
     };
-    if (address >= metadata.heap_extents.base && address < (metadata.heap_extents.base + metadata.heap_extents.size))
+    if (address >= metadata.heap_extents.base && address < (metadata.heap_extents.base + metadata.heap_extents.size)){
+        *modulebase = metadata.heap_extents.base;
         return "Heap";
-    else if (address >= metadata.alias_extents.base && address < (metadata.alias_extents.base + metadata.alias_extents.size))
+    }
+    else if (address >= metadata.alias_extents.base && address < (metadata.alias_extents.base + metadata.alias_extents.size)){
+        *modulebase = metadata.alias_extents.base;
         return "Alias";
+    }
     else
         return "Other";
 }
@@ -1574,6 +1583,14 @@ void GuiCheats::drawEditRAMMenu2()
   ss.str("");
   ss << ModuleName(address, &modulebase) << "+" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << address + m_addressmod - modulebase << SegmentStr(m_debugger->queryMemory(address));
   Gui::drawText(font14, 30, 10, currTheme.textColor, ss.str().c_str());
+  if (SegmentStr(m_debugger->queryMemory(address)) == "(4RW)") {
+      ss.str("");
+      if (address + m_addressmod > m_mainBaseAddr)
+          ss << "Main+" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << address + m_addressmod - m_mainBaseAddr;
+      else
+          ss << "Main-" << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << m_mainBaseAddr - address + m_addressmod;
+      Gui::drawText(font14, 30, 40, currTheme.textColor, ss.str().c_str());
+  };
   ss.str("");
   ss << "[ " << std::uppercase << std::hex << std::setfill('0') << std::setw(10) << (address + m_addressmod) << " ] " << dataTypes[m_searchType];
   Gui::drawText(font24, 420, line1, currTheme.textColor, ss.str().c_str());
@@ -8656,27 +8673,106 @@ void GuiCheats::_writegameid()
   fputs(st, pfile);
   fclose(pfile);
 }
-void GuiCheats::_makecode()
-{
-  FILE *pfile;
-  pfile = fopen(EDIZON_DIR "/code.txt", "w");
-  if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
-    fputs(Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str(),pfile);
-  fputs("\n",pfile);
-  fputs(tidStr.c_str(),pfile);
-  fputs("\n", pfile);
-  fputs(buildIDStr.c_str(),pfile);
-  fputs("\n", pfile);
-  fputs(cheatpathStr.c_str(),pfile);
-  fputs("\n", pfile);
-  char st[100];
-  snprintf(st, 100, "%010lx\n%010lx\n%010lx\n",m_mainBaseAddr,m_mainCodeEnd,m_mainend);
-  fputs(st, pfile);
-  snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr-0x400, "00000000");
-  fputs(st, pfile);
-  snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr-0x400, "00000000");
-  fputs(st, pfile);
-  fclose(pfile);
+void GuiCheats::_makecode() {
+    u64 adjustment = 0;
+    auto findaddress = [&](u64 mainBaseAddr, MemoryInfo nro) {
+        auto meminfo = m_debugger->queryMemory(mainBaseAddr); // main
+        meminfo = m_debugger->queryMemory(meminfo.addr+meminfo.size); // main ro
+        meminfo = m_debugger->queryMemory(meminfo.addr+meminfo.size); // main rw
+        u64 offset = 0;
+        u32 inc_i = 4;
+        u32 data_size = 8;
+        u64 bufferSize = MAX_BUFFER_SIZE + data_size - inc_i;
+        u8 *buffer = new u8[bufferSize];
+        while (offset < meminfo.size) {
+            if (meminfo.size - offset < bufferSize)
+                bufferSize = meminfo.size - offset;
+            if R_SUCCEEDED (m_debugger->readMemory(buffer, bufferSize, meminfo.addr + offset)) {
+                for (u32 i = 0; i + data_size <= bufferSize; i += inc_i) {
+                  if (nro.addr <= *(u64 *)(buffer + i) && *(u64 *)(buffer + i) < nro.addr + nro.size) {
+                      adjustment = *(u64 *)(buffer + i) - nro.addr;
+                      return meminfo.addr + offset + i;
+                    }
+                }
+            } else
+                printf("read memory failed address = %lx\n", meminfo.addr + offset);
+            offset += MAX_BUFFER_SIZE;
+        };
+        return (u64)0;
+    };
+    FILE *pfile;
+    pfile = fopen(EDIZON_DIR "/code.txt", "w");
+    if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
+        fputs(Title::g_titles[m_debugger->getRunningApplicationTID()]->getTitleName().c_str(), pfile);
+    fputs("\n", pfile);
+    fputs(tidStr.c_str(), pfile);
+    fputs("\n", pfile);
+    fputs(buildIDStr.c_str(), pfile);
+    fputs("\n", pfile);
+    fputs(cheatpathStr.c_str(), pfile);
+    fputs("\n", pfile);
+    char st[100];
+    snprintf(st, 100, "%010lx\n%010lx\n%010lx\n", m_mainBaseAddr, m_mainCodeEnd, m_mainend);
+    fputs(st, pfile);
+    snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr - 0x400, "00000000");
+    fputs(st, pfile);
+    snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr - 0x400, "00000000");
+    fputs(st, pfile);
+    snprintf(st, 100, "%s\n%s %s %s\n", "[Heap]", "04100000", "00000000", "00000000");
+    fputs(st, pfile);
+    snprintf(st, 100, "%s\n%s %s %s\n", "[Alias]", "04200000", "00000000", "00000000");
+    fputs(st, pfile);
+    std::stringstream ss;
+    ss.str("");
+    ss << "Main  " << std::hex << std::setfill('0') << std::setw(10) << metadata.main_nso_extents.base << " " << std::hex << std::setfill('0') << std::setw(10) << metadata.main_nso_extents.base + metadata.main_nso_extents.size << "\n";
+    ss << "Heap  " << std::hex << std::setfill('0') << std::setw(10) << metadata.heap_extents.base << " " << std::hex << std::setfill('0') << std::setw(10) << metadata.heap_extents.base + metadata.heap_extents.size << "\n";
+    ss << "Alias " << std::hex << std::setfill('0') << std::setw(10) << metadata.alias_extents.base << " " << std::hex << std::setfill('0') << std::setw(10) << metadata.alias_extents.base + metadata.alias_extents.size << "\n";
+    ss << "Aslr  " << std::hex << std::setfill('0') << std::setw(10) << metadata.address_space_extents.base << " " << std::hex << std::setfill('0') << std::setw(10) << metadata.address_space_extents.base + metadata.address_space_extents.size << "\n\n";
+    fputs(ss.str().c_str(), pfile);
+
+    for (auto nro : m_nro) {
+        u64 base;
+        ss.str("");
+        ss << "module:\n"
+           << ModuleName(nro.addr, &base).c_str() << "  "
+           << std::hex << std::setfill('0') << std::setw(10) << nro.addr
+           << " " << std::hex << std::setfill('0') << std::setw(10) << nro.addr + nro.size << "\n"
+           << "[R0 = " << ModuleName(nro.addr, &base).c_str() << " base - Main]\n"
+           << "58000000 " << std::hex << std::setfill('0') << std::setw(8) << findaddress(m_mainBaseAddr, nro) - m_mainBaseAddr << "\n"
+           << "40010000 " << std::hex << std::setfill('0') << std::setw(16) << adjustment << "\n"
+           << "98100010\n"  // R0 has nro base
+           << "58020000 " << std::hex << std::setfill('0') << std::setw(8) << findaddress(m_mainBaseAddr, m_debugger->queryMemory(m_mainBaseAddr)) - m_mainBaseAddr << "\n"
+           << "40010000 " << std::hex << std::setfill('0') << std::setw(16) << adjustment << "\n"
+           << "98122010\n"  // R2 has m_mainBaseAddr
+           << "98100020\n";  // R0 has nro base - m_mainBaseAddr
+        fputs(ss.str().c_str(), pfile);
+
+        DmntCheatEntry cheatentry;
+        {
+            std::string label = (std::string) "R0 = " + ModuleName(nro.addr, &base).c_str() + " base - Main";
+            strcpy(cheatentry.definition.readable_name, label.c_str());
+        }
+        cheatentry.definition.opcodes[0] = 0x58000000;
+        cheatentry.definition.opcodes[1] = findaddress(m_mainBaseAddr, nro) - m_mainBaseAddr;
+        cheatentry.definition.opcodes[2] = 0x40010000;
+        cheatentry.definition.opcodes[3] = adjustment >> 32;
+        cheatentry.definition.opcodes[4] = adjustment;
+        cheatentry.definition.opcodes[5] = 0x98100010;
+        cheatentry.definition.opcodes[6] = 0x58020000;
+        cheatentry.definition.opcodes[7] = findaddress(m_mainBaseAddr, m_debugger->queryMemory(m_mainBaseAddr)) - m_mainBaseAddr;
+        cheatentry.definition.opcodes[8] = 0x40010000;
+        cheatentry.definition.opcodes[9] = adjustment >> 32;
+        cheatentry.definition.opcodes[10] = adjustment;
+        cheatentry.definition.opcodes[11] = 0x98122010;
+        cheatentry.definition.opcodes[12] = 0x98100020;
+        cheatentry.definition.num_opcodes = 13;
+        cheatentry.enabled = false;
+        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+        m_cheatCnt += 1;
+
+    }
+    fclose(pfile);
+    reloadcheats();
 }
 
 void GuiCheats::_moveLonelyCheats(u8 *buildID, u64 titleID)
