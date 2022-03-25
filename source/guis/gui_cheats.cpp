@@ -5371,9 +5371,9 @@ void GuiCheats::onInput(u32 kdown)
                       m_searchValue[1]._u64 = 0;
               } else if (kdown & KEY_R) {
                   if (m_searchType == SEARCH_TYPE_FLOAT_32BIT) {
-                      float t = 0 - m_searchValue[0]._f32;
-                      m_searchValue[0]._f32 = 0 - m_searchValue[1]._f32;
-                      m_searchValue[1]._f32 = t;
+                      // float t = 0 - m_searchValue[0]._f32;
+                      m_searchValue[0]._f32 = 0 - m_searchValue[0]._f32;
+                      m_searchValue[1]._f32 = 0 - m_searchValue[1]._f32;
                   } else if (m_searchType == SEARCH_TYPE_FLOAT_64BIT) {
                       m_searchValue[0]._f64 = 0 - m_searchValue[0]._f64;
                       m_searchValue[1]._f64 = 0 - m_searchValue[1]._f64;
