@@ -4207,9 +4207,12 @@ void GuiCheats::onInput(u32 kdown)
                   depth++;
                   continue;
               }
-              if (opcode == 7 && FSA == 0) {
+              if (opcode == 7) {
                   i++;
-                  offset[depth] = cheat.opcodes[i];
+                  if (FSA == 0)
+                      offset[depth] = cheat.opcodes[i];
+                  else
+                      offset[depth] = -(u64)cheat.opcodes[i];
                   // success = true;
                   no7 = false;
                   continue;
@@ -4301,8 +4304,12 @@ void GuiCheats::onInput(u32 kdown)
                           Gui::g_currMessageBox->hide();
                       })
                       ->show();
-              } else
+              } else {
+                  // add broken pointer chain for reference
+                  m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
+                  m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
                   (new Snackbar("Not able to extract pointer chain from cheat"))->show();
+              };
           }
 
           // pointercheck(); //disable for now;
