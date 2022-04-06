@@ -1440,7 +1440,7 @@ std::string GuiCheats::ModuleName(u64 address, u64 *modulebase) {
     u32 i = 0;
     while (pointed_address_info.type == 9 || pointed_address_info.type == 4) {
         pointed_address_info = m_debugger->queryMemory(pointed_address_info.addr - 1);
-        printf("addr = %lx type = %d i= %d\n", pointed_address_info.addr - 1, pointed_address_info.type, i);
+        // printf("addr = %lx type = %d i= %d\n", pointed_address_info.addr - 1, pointed_address_info.type, i);
         if (i++ == 10) break;
         // return "Not83";
     };
@@ -4135,9 +4135,9 @@ void GuiCheats::onInput(u32 kdown)
           u64 depth = 0;
           u64 address;
           bool no7 = true;
-
+          u8 opcode;
           for (u8 i = 0; i < cheat.num_opcodes; i++) {
-              u8 opcode = (cheat.opcodes[i] >> 28) & 0xF;
+              opcode = (cheat.opcodes[i] >> 28) & 0xF;
               u8 Register = (cheat.opcodes[i] >> 16) & 0xF;
               u8 FSA = (cheat.opcodes[i] >> 12) & 0xF;
               u8 T = (cheat.opcodes[i] >> 24) & 0xF;
@@ -4304,7 +4304,7 @@ void GuiCheats::onInput(u32 kdown)
                           Gui::g_currMessageBox->hide();
                       })
                       ->show();
-              } else {
+              } else if (opcode != 0) {
                   // add broken pointer chain for reference
                   m_memoryDumpBookmark->addData((u8 *)&address, sizeof(u64));
                   m_AttributeDumpBookmark->addData((u8 *)&bookmark, sizeof(bookmark_t));
@@ -8694,6 +8694,31 @@ void GuiCheats::_makecode() {
         };
         return (u64)0;
     };
+    auto findfree = [&](u64 EndAddr) {
+        u64 bufferSize = 0x1000;
+        u8 *buffer = new u8[bufferSize];
+        if R_SUCCEEDED (m_debugger->readMemory(buffer, bufferSize, EndAddr - bufferSize)) {
+            for (u64 i = 0; i < bufferSize; i += 8) {
+                if (*(u64 *)(buffer + bufferSize - 8 - i) != 0) {
+                    return EndAddr - i ;
+                };
+            }
+        } else {
+            printf("findfree failed %lx\n", EndAddr);
+        };
+        return EndAddr;
+    };
+    auto add_bookmark = [&](u64 Addr, char *label) {
+        DmntCheatEntry cheatentry;
+        strcpy(cheatentry.definition.readable_name, label);
+        cheatentry.definition.opcodes[0] = 0x04000000;
+        cheatentry.definition.opcodes[1] = Addr - m_mainBaseAddr;
+        cheatentry.definition.opcodes[2] = 00000000;
+        cheatentry.definition.num_opcodes = 3;
+        cheatentry.enabled = false;
+        dmntchtAddCheat(&(cheatentry.definition), cheatentry.enabled, &(cheatentry.cheat_id));
+        m_cheatCnt += 1;
+    };
     FILE *pfile;
     pfile = fopen(EDIZON_DIR "/code.txt", "w");
     if (Title::g_titles[m_debugger->getRunningApplicationTID()] != nullptr)
@@ -8708,9 +8733,11 @@ void GuiCheats::_makecode() {
     char st[100];
     snprintf(st, 100, "%010lx\n%010lx\n%010lx\n", m_mainBaseAddr, m_mainCodeEnd, m_mainend);
     fputs(st, pfile);
-    snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", m_mainCodeEnd - m_mainBaseAddr - 0x400, "00000000");
+    snprintf(st, 100, "%s\n%s %08lx %s\n", "[CodeEnd]", "04000000", findfree(m_mainCodeEnd) - m_mainBaseAddr, "00000000");
+    add_bookmark(findfree(m_mainCodeEnd), "CodeEnd");
     fputs(st, pfile);
-    snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", m_mainend - m_mainBaseAddr - 0x400, "00000000");
+    snprintf(st, 100, "%s\n%s %08lx %s\n", "[DataEnd]", "04000000", findfree(m_mainend) - m_mainBaseAddr, "00000000");
+    add_bookmark(findfree(m_mainend), "DataEnd");
     fputs(st, pfile);
     snprintf(st, 100, "%s\n%s %s %s\n", "[Heap]", "04100000", "00000000", "00000000");
     fputs(st, pfile);
