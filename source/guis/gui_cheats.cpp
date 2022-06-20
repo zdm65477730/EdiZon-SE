@@ -32,6 +32,7 @@
 static const std::vector<std::string> dataTypes = {"u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "f32", "f64", "ptr", "  "};
 static const std::vector<u8> dataTypeSizes = {1, 1, 2, 2, 4, 4, 8, 8, 4, 8, 8};
 static const std::vector<std::string> buttonNames = {"\uE0A0 ", "\uE0A1 ", "\uE0A2 ", "\uE0A3 ", "\uE0C4 ", "\uE0C5 ", "\uE0A4 ", "\uE0A5 ", "\uE0A6 ", "\uE0A7 ", "\uE0B3 ", "\uE0B4 ", "\uE0B1 ", "\uE0AF ", "\uE0B2 ", "\uE0B0 ", "\uE091 ", "\uE092 ", "\uE090 ", "\uE093 ", "\uE145 ", "\uE143 ", "\uE146 ", "\uE144 "};
+static const std::vector<std::string> buttonNames2 = {" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "};
 // static const std::vector<std::string> buttonNames = {"\uE0A0", "\uE0A1", "\uE0A2", "\uE0A3", "\uE0C4", "\uE0C5", "\uE0A4", "\uE0A5", "\uE0A6", "\uE0A7", "\uE0B3", "\uE0B4", "\uE0B1", "\uE0AF", "\uE0B2", "\uE0B0"};
 // static const std::vector<std::string> buttonNames = {"\uE0E0", "\uE0E1", "\uE0E2", "\uE0E3", "\uE104", "\uE105", "\uE0E4", "\uE0E5", "\uE0E6", "\uE0E7", "\uE0EF", "\uE0F0", "\uE0ED", "\uE0EB", "\uE0EE", "\uE0EC"};
 static const std::vector<u32> buttonCodes = {0x80000001,
@@ -76,6 +77,33 @@ static bool compareentry(MultiSearchEntry_t e1, MultiSearchEntry_t e2);
 static bool comparefromto(fromto_t e1, fromto_t e2);
 static bool comparefromtoP(fromtoP_t e1, fromtoP_t e2);
 u32 kheld;
+void removeSubstrs(std::string *s, std::string p)
+{
+  std::string::size_type n = p.length();
+  for (std::string::size_type i = s->find(p);
+       i != std::string::npos;
+       i = s->find(p))
+    s->erase(i, n);
+}
+std::string keyname2label(char *label, u32 keycode, bool add_key_hint = true)
+{
+  if ((keycode & 0xF0000000) != 0x80000000)
+    return "";
+  if (!add_key_hint)
+    keycode = 0;
+  char namestr[64] = "";
+  std::string tmpstr = label;
+  for (u32 i = 0; i < buttonCodes.size(); i++)
+  {
+    removeSubstrs(&tmpstr, buttonNames2[i]);
+
+    if ((keycode & buttonCodes[i]) == buttonCodes[i])
+      strcat(namestr, buttonNames2[i].c_str());
+  }
+  strcat(namestr, tmpstr.c_str());
+  snprintf(label, 64, namestr);
+  return "";
+};
 bool dmntpresent() {
     /* Get all process ids */
     u64 process_ids[0x50];
@@ -741,7 +769,7 @@ void GuiCheats::draw_easymode()
           break;
         // WIP
         ss.str("");
-        ss << "\uE070  " << buttonStr(m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
+        ss << "\uE070  " << keyname2label(m_cheats[line].definition.readable_name, m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
 
         Gui::drawRectangle(52, 300 + (line - cheatListOffset) * 40, 646, 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
         Gui::drawTextAligned(font14, 70, 305 + (line - cheatListOffset) * 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -1053,7 +1081,7 @@ void GuiCheats::draw()
           break;
         // WIP
         ss.str("");
-        ss << "\uE070  " << buttonStr(m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
+        ss << "\uE070  " << keyname2label(m_cheats[line].definition.readable_name, m_cheats[line].definition.opcodes[0]) << ((m_editCheat && line == m_selectedEntry) ? "Press button for conditional execute" : (m_cheatDelete[line] ? " Press \uE104 to delete" : (m_cheats[line].definition.readable_name)));
 
         Gui::drawRectangle(52, 300 + (line - cheatListOffset) * 40, 646, 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? currTheme.highlightColor : line % 2 == 0 ? currTheme.backgroundColor : currTheme.separatorColor);
         Gui::drawTextAligned(font14, 70, 305 + (line - cheatListOffset) * 40, (m_selectedEntry == line && m_menuLocation == CHEATS) ? COLOR_BLACK : currTheme.textColor, ss.str().c_str(), ALIGNED_LEFT);
@@ -4050,6 +4078,7 @@ void GuiCheats::onInput(u32 kdown)
                   m_cheats[m_selectedEntry].definition.opcodes[i] = m_cheats[m_selectedEntry].definition.opcodes[i + 1];
               }
               m_cheats[m_selectedEntry].definition.num_opcodes -= 2;
+              keyname2label(m_cheats[m_selectedEntry].definition.readable_name, 0x80000000, false);
           }
           // insert cheat
           for (u32 i = m_selectedEntry; i < m_cheatCnt; i++) {

@@ -4,3 +4,7 @@
 
 build/
 out/
+EdiZon.lst
+.vscode/configurationCache.log
+.vscode/dryrun.log
+.vscode/targets.log
