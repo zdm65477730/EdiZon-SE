@@ -40,13 +40,13 @@ void getCurrBatteryPercentage(char *buffer) {
   sprintf(buffer, "%d%%", percents);
 }
 s32 total_entries;
-HidsysUniquePadId unique_pad_ids[2] = {0};
+HidsysUniquePadId unique_pad_ids[4] = {0};
 void ledInit() {
   // hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, g_uniquePadIds, 2, &g_uniquePadCnt);
   // hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, g_uniquePadIds, 2, &g_uniquePadCnt);
     // PadState pad;
     // padInitializeDefault(&pad);
-  hidsysGetUniquePadIds(g_uniquePadIds, 2, &g_uniquePadCnt);
+  hidsysGetUniquePadIds(g_uniquePadIds, 4, &g_uniquePadCnt);
   hidsysGetUniquePadsFromNpad(HidNpadIdType_No1, unique_pad_ids, 2, &total_entries);
   memset(&g_patternOn, 0x00, sizeof(HidsysNotificationLedPattern));
   memset(&g_patternOff, 0x00, sizeof(HidsysNotificationLedPattern));
