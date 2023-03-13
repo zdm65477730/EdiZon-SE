@@ -46,7 +46,7 @@ void ledInit() {
   // hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, g_uniquePadIds, 2, &g_uniquePadCnt);
     // PadState pad;
     // padInitializeDefault(&pad);
-  hidsysGetUniquePadsFromNpad(HidNpadIdType_Handheld, g_uniquePadIds, 2, &g_uniquePadCnt);
+  hidsysGetUniquePadIds(g_uniquePadIds, 2, &g_uniquePadCnt);
   hidsysGetUniquePadsFromNpad(HidNpadIdType_No1, unique_pad_ids, 2, &total_entries);
   memset(&g_patternOn, 0x00, sizeof(HidsysNotificationLedPattern));
   memset(&g_patternOff, 0x00, sizeof(HidsysNotificationLedPattern));
@@ -71,10 +71,10 @@ void ledInit() {
 void setLedState(bool state) {
   for(u8 i = 0; i < g_uniquePadCnt; i++)
     // hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, g_uniquePadIds[i]);
-    hidsysSetNotificationLedPatternWithTimeout(state ? &g_patternOn : &g_patternOff, g_uniquePadIds[i], 50000000000ULL);
+    hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, g_uniquePadIds[i]);
   for (u8 i = 0; i < total_entries; i++)
     // hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, unique_pad_ids[i]);
-    hidsysSetNotificationLedPatternWithTimeout(state ? &g_patternOn : &g_patternOff, unique_pad_ids[i], 50000000000ULL);
+    hidsysSetNotificationLedPattern(state ? &g_patternOn : &g_patternOff, unique_pad_ids[i]);
 }
 
 void overclockSystem(bool enable) {

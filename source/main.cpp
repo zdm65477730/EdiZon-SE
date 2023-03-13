@@ -332,8 +332,8 @@ int main(int argc, char **argv)
   while (appletMainLoop())
   {
     hidScanInput();
-    kheld = hidKeysHeld(CONTROLLER_PLAYER_1)|hidKeysHeld(CONTROLLER_HANDHELD);
-    kdown = hidKeysDown(CONTROLLER_PLAYER_1)|hidKeysDown(CONTROLLER_HANDHELD);
+    kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD) | hidKeysHeld(CONTROLLER_PLAYER_2);
+    kdown = hidKeysDown(CONTROLLER_PLAYER_1) | hidKeysDown(CONTROLLER_HANDHELD) | hidKeysDown(CONTROLLER_PLAYER_2);
 
     if (Gui::g_nextGui != GUI_INVALID)
     {
