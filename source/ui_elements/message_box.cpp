@@ -39,14 +39,14 @@ void MessageBox::draw(Gui *gui) {
     gui->drawRectangle(250, Gui::g_framebuffer_height - 260, Gui::g_framebuffer_width - 500, 80, currTheme.selectedButtonColor);
     gui->drawRectangled(245, Gui::g_framebuffer_height - 265, Gui::g_framebuffer_width - 490, 90, currTheme.highlightColor);
     gui->drawRectangle(250, Gui::g_framebuffer_height - 260, Gui::g_framebuffer_width - 500, 80, currTheme.selectedButtonColor);
-    gui->drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height - 237, currTheme.selectedColor, "Okay", ALIGNED_CENTER);
+    gui->drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height - 237, currTheme.selectedColor, "确认", ALIGNED_CENTER);
   }
   else if (m_options == MessageBox::YES_NO) {
     gui->drawRectangle(250, Gui::g_framebuffer_height - 260, Gui::g_framebuffer_width - 500, 80, currTheme.selectedButtonColor);
     gui->drawRectangled(245 + ((Gui::g_framebuffer_width - 490) / 2) * m_selectedOption, Gui::g_framebuffer_height - 265, (Gui::g_framebuffer_width - 490) / 2, 90, currTheme.highlightColor);
     gui->drawRectangle(250, Gui::g_framebuffer_height - 260, (Gui::g_framebuffer_width - 500) / 2 - 6, 80, currTheme.selectedButtonColor);
     gui->drawRectangle(250 + ((Gui::g_framebuffer_width - 490) / 2), Gui::g_framebuffer_height - 260, (Gui::g_framebuffer_width - 500) / 2 - 6, 80, currTheme.selectedButtonColor);
-    gui->drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height - 237, currTheme.selectedColor, "No                                            Yes", ALIGNED_CENTER);
+    gui->drawTextAligned(font20, Gui::g_framebuffer_width / 2, Gui::g_framebuffer_height - 237, currTheme.selectedColor, "否                                            是", ALIGNED_CENTER);
   }
 
   if (m_progress >= 0) {
@@ -60,46 +60,46 @@ void MessageBox::draw(Gui *gui) {
 
 void MessageBox::onInput(u32 kdown) {
   if (m_options == MessageBox::OKAY) {
-    if (kdown & KEY_A || kdown & KEY_B) {
+    if (kdown & HidNpadButton_A || kdown & HidNpadButton_B) {
       this->hide();
     }
   }
   else if (m_options == MessageBox::YES_NO) {
-    if (kdown & KEY_LEFT)
+    if (kdown & HidNpadButton_AnyLeft)
       m_selectedOption = fmax(0, m_selectedOption - 1);
 
-    if (kdown & KEY_RIGHT)
+    if (kdown & HidNpadButton_AnyRight)
       m_selectedOption = fmin(1, m_selectedOption + 1);
 
-    if (kdown & KEY_A) {
+    if (kdown & HidNpadButton_A) {
       m_selectionAction(m_selectedOption);
     }
 
-    if (kdown & KEY_B) {
+    if (kdown & HidNpadButton_B) {
       m_selectionAction(0);
       this->hide();
     }
   }
 }
 
-void MessageBox::onTouch(touchPosition &touch) {
+void MessageBox::onTouch(const HidTouchState &touch) {
   if (m_options == MessageBox::OKAY) {
-    if (touch.px > 250 && touch.py > Gui::g_framebuffer_height - 260 && touch.px < Gui::g_framebuffer_width - 250 && touch.py < Gui::g_framebuffer_height - 180) {
+    if (touch.x > 250 && touch.y > Gui::g_framebuffer_height - 260 && touch.x < Gui::g_framebuffer_width - 250 && touch.y < Gui::g_framebuffer_height - 180) {
       m_selectionAction(0);
       this->hide();
     }
   } else if (m_options == MessageBox::YES_NO) {
-    if (touch.px > 250 && touch.py > Gui::g_framebuffer_height - 260 && touch.px < 250 + (Gui::g_framebuffer_width - 500) / 2 && touch.py < Gui::g_framebuffer_height - 180) {
+    if (touch.x > 250 && touch.y > Gui::g_framebuffer_height - 260 && touch.x < 250 + (Gui::g_framebuffer_width - 500) / 2 && touch.y < Gui::g_framebuffer_height - 180) {
       m_selectionAction(0);
       this->hide();
-    } else if (touch.px > 250 + (Gui::g_framebuffer_width - 500) / 2 && touch.py > Gui::g_framebuffer_height - 260 && touch.px < Gui::g_framebuffer_width - 250 && touch.py < Gui::g_framebuffer_height - 180) {
+    } else if (touch.x > 250 + (Gui::g_framebuffer_width - 500) / 2 && touch.y > Gui::g_framebuffer_height - 260 && touch.x < Gui::g_framebuffer_width - 250 && touch.y < Gui::g_framebuffer_height - 180) {
       m_selectionAction(1);
       this->hide();
     }
   }
 }
 
-void MessageBox::onGesture(touchPosition startPosition, touchPosition endPosition, bool finish) {
+void MessageBox::onGesture(const HidTouchState &startPosition, const HidTouchState &endPosition, bool finish) {
 
 }
 

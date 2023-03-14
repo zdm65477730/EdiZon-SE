@@ -35,7 +35,7 @@ VERSION_MINOR := 8
 VERSION_MICRO := 37
 NIGHTLY		  := 
 
-APP_TITLE	:=	EdiZon SE
+APP_TITLE	?=	EdiZon
 APP_AUTHOR	:=	Tomvita
 
 ifeq ($(NIGHTLY), 1)
@@ -44,7 +44,7 @@ else
 	APP_VERSION	:=	${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
 endif
 
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	$(APP_TITLE)
 OUTDIR		:=	out
 BUILD		:=	build
 SOURCES		:=	source source/widgets source/guis source/scripting source/ui_elements source/helpers libs/lua/source libs/nanojpeg/source libs/minizip/source
@@ -91,7 +91,7 @@ LIBDIRS	:= $(CURDIR)/libs/nxpy $(PORTLIBS) $(LIBNX)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(OUTDIR)/EdiZon
+export OUTPUT	:=	$(CURDIR)/$(OUTDIR)/$(APP_TITLE)
 export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -149,7 +149,7 @@ ifeq ($(strip $(NO_ICON)),)
 endif
 
 ifeq ($(strip $(NO_NACP)),)
-	export NROFLAGS += --nacp=$(CURDIR)/$(OUTDIR)/EdiZon.nacp
+	export NROFLAGS += --nacp=$(OUTPUT).nacp
 endif
 
 ifneq ($(APP_TITLEID),)
@@ -176,7 +176,7 @@ $(BUILD):
 #--------------------------------------------------------------------------------
 run: $(BUILD)
 	@echo Starting nxlink
-	@nxlink $(OUTPUT).nro -s -p "EdiZon/EdiZon.nro"
+	@nxlink $(OUTPUT).nro -s -p "$(APP_TITLE)/$(APP_TITLE).nro"
 	
 #---------------------------------------------------------------------------------
 clean:

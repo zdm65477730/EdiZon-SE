@@ -33,7 +33,7 @@ bool isNumber(const std::string &line) {
 void WidgetValue::onInput(u32 kdown) {
   u64 incrementValue = m_stepSize * g_stepSizeMultiplier;
 
-  if (kdown & KEY_DLEFT) {
+  if (kdown & HidNpadButton_Left) {
     if (static_cast<s64>(m_currValue - incrementValue) >= m_minValue)
         Widget::setIntegerValue(Widget::m_interpreter->evaluateEquation(m_writeEquation, m_currValue) - incrementValue);
     else if(m_currValue < m_minValue)
@@ -42,7 +42,7 @@ void WidgetValue::onInput(u32 kdown) {
       Widget::setIntegerValue(Widget::m_interpreter->evaluateEquation(m_writeEquation, m_minValue));
   }
 
-  if (kdown & KEY_DRIGHT) {
+  if (kdown & HidNpadButton_Right) {
     if (static_cast<s64>(m_currValue + incrementValue) <= m_maxValue)
       Widget::setIntegerValue(Widget::m_interpreter->evaluateEquation(m_writeEquation, m_currValue) + incrementValue);
     else if(m_currValue > m_maxValue)
@@ -51,11 +51,11 @@ void WidgetValue::onInput(u32 kdown) {
       Widget::setIntegerValue(Widget::m_interpreter->evaluateEquation(m_writeEquation, m_maxValue));
   }
 
-  if (kdown & KEY_A) {
+  if (kdown & HidNpadButton_A) {
     u8 maxDigits = static_cast<u8>(std::floor(std::log10(m_maxValue)) + 1);
 
     char out_number[maxDigits + 1];
-    Gui::requestKeyboardInput("Input value", "Enter a number for this value to be set to.", std::to_string(m_currValue).c_str(), SwkbdType_NumPad, out_number, maxDigits);
+    Gui::requestKeyboardInput("输入数值", "输入要设置的数值。", std::to_string(m_currValue).c_str(), SwkbdType_NumPad, out_number, maxDigits);
 
     if (isNumber(std::string(out_number)))
       Widget::setIntegerValue(
@@ -68,11 +68,11 @@ void WidgetValue::onInput(u32 kdown) {
   m_currValue = Widget::m_interpreter->evaluateEquation(m_readEquation, Widget::getIntegerValue());
 }
 
-void WidgetValue::onTouch(touchPosition &touch) {
+void WidgetValue::onTouch(const HidTouchState &touch) {
   u8 maxDigits = static_cast<u8>(std::floor(std::log10(m_maxValue)) + 1);
 
   char out_number[maxDigits + 1];
-  Gui::requestKeyboardInput("Input value", "Enter a number for this value to be set to.", std::to_string(m_currValue).c_str(), SwkbdType_NumPad, out_number, maxDigits);
+  Gui::requestKeyboardInput("输入数值", "输入要设置的数值。", std::to_string(m_currValue).c_str(), SwkbdType_NumPad, out_number, maxDigits);
 
   if (isNumber(std::string(out_number)))
     Widget::setIntegerValue(
