@@ -250,8 +250,6 @@ void redirectStdio()
 }
 int main(int argc, char **argv)
 {
-  void *haddr;
-
   serviceInitialize();
 
   redirectStdio();
