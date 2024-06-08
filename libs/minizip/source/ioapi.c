@@ -143,7 +143,7 @@ static voidpf ZCALLBACK fopen_file_func (voidpf opaque, const char* filename, in
     return file;
 }
 
-static voidpf ZCALLBACK fopen64_file_func (voidpf opaque, const void* filename, int mode)
+static voidpf ZCALLBACK fopen64_file_func (voidpf opaque, const char* filename, int mode)
 {
     FILE* file = NULL;
     const char* mode_fopen = NULL;
