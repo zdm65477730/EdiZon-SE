@@ -6,7 +6,7 @@
 
 #define MHz *1E6
 
-static HidsysUniquePadId g_uniquePadIds[2]; // HidsysUniquePadId was u64 change for new libnx
+static HidsysUniquePadId g_uniquePadIds[4]; // HidsysUniquePadId was u64 change for new libnx
 static s32 g_uniquePadCnt;
 static HidsysNotificationLedPattern g_patternOn, g_patternOff;
 
@@ -47,7 +47,7 @@ void ledInit() {
     // PadState pad;
     // padInitializeDefault(&pad);
   hidsysGetUniquePadIds(g_uniquePadIds, 4, &g_uniquePadCnt);
-  hidsysGetUniquePadsFromNpad(HidNpadIdType_No1, unique_pad_ids, 2, &total_entries);
+  hidsysGetUniquePadsFromNpad(HidNpadIdType_No1, unique_pad_ids, 4, &total_entries);
   memset(&g_patternOn, 0x00, sizeof(HidsysNotificationLedPattern));
   memset(&g_patternOff, 0x00, sizeof(HidsysNotificationLedPattern));
 
