@@ -5893,7 +5893,7 @@ void GuiCheats::searchMemoryMTarget(Debugger *debugger, searchValue_t searchValu
     {
         u64 target{0};
         u32 index{0};  // in bytes
-    } PACKED MT_map_t;
+    } NX_PACKED MT_map_t;
     std::map<u64, u32> mymap;                    // target, source vector
     std::map<u64, std::vector<MT_block_t>> myMT; // target, source index for access to MTfile
     u64 ptrcount = 0;

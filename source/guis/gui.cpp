@@ -624,7 +624,7 @@ AccountUid Gui::requestPlayerSelection() {
   struct UserReturnData{
       u64 result;
       AccountUid UID;
-  } PACKED;
+  } NX_PACKED;
 
   struct UserReturnData outdata;
 
