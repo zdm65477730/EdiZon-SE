@@ -77,6 +77,7 @@ There are a few things that affects your switch environment.
   2. Download and install devkitA64. It comes bundled with the [devkitPro](https://devkitpro.org) toolchain.
   3. Use the pacman package manager that comes with devkitPro to download and install libNX, portlibs (`switch-portlibs`) and freetype2 (`switch-freetype`).
   4. The rest of the compilation works using the `make` command.
+  5. You need to revert this from libnx or update the source yourself due to this https://github.com/switchbrew/libnx/commit/637dd12b2df58c469d4e87a48aa3ebf0bc359766
 
 # Discord
 
