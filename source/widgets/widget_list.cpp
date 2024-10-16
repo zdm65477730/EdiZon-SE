@@ -24,7 +24,7 @@ void WidgetList::draw(Gui *gui, u16 x, u16 y) {
       ptrdiff_t pos = find(m_intListItemValues.begin(), m_intListItemValues.end(), intValue) - m_intListItemValues.begin();
       ss << m_listItemNames[pos];
     } else {
-      ss << "Unknown value: " << intValue;
+      ss << "未知值：" << intValue;
     }
   } else if (m_widgetDataType == STRING) {
     std::string strValue = Widget::getStringValue();
@@ -32,7 +32,7 @@ void WidgetList::draw(Gui *gui, u16 x, u16 y) {
       ptrdiff_t pos = find(m_strListItemValues.begin(), m_strListItemValues.end(), strValue) - m_strListItemValues.begin();
       ss << m_listItemNames[pos];
     } else {
-      ss << "Unknown value: " << strValue;
+      ss << "未知值：" << strValue;
     }
   }
 
@@ -40,9 +40,9 @@ void WidgetList::draw(Gui *gui, u16 x, u16 y) {
 }
 
 void WidgetList::onInput(u32 kdown) {
-  if (kdown & KEY_A && Gui::g_currListSelector == nullptr) {
-    (new ListSelector("Choose item", "\uE0E0 - Select      \uE0E1 - Back", m_listItemNames))->setInputAction([&](u32 k, u16 selectedItem){
-      if(k & KEY_A) {
+  if (kdown & HidNpadButton_A && Gui::g_currListSelector == nullptr) {
+    (new ListSelector("选择项目", "\uE0E0 - 选择      \uE0E1 - 返回", m_listItemNames))->setInputAction([&](u32 k, u16 selectedItem){
+      if(k & HidNpadButton_A) {
         if (m_widgetDataType == INT)
           Widget::setIntegerValue(m_intListItemValues[selectedItem]);
         else if (m_widgetDataType == STRING)
@@ -53,9 +53,9 @@ void WidgetList::onInput(u32 kdown) {
   }
 }
 
-void WidgetList::onTouch(touchPosition &touch) {
-  (new ListSelector("Choose item", "\uE0E0 - Select      \uE0E1 - Back", m_listItemNames))->setInputAction([&](u32 k, u16 selectedItem){
-    if(k & KEY_A) {
+void WidgetList::onTouch(const HidTouchState &touch) {
+  (new ListSelector("选择项目", "\uE0E0 - 选择      \uE0E1 - 返回", m_listItemNames))->setInputAction([&](u32 k, u16 selectedItem){
+    if(k & HidNpadButton_A) {
       if (m_widgetDataType == INT)
         Widget::setIntegerValue(m_intListItemValues[selectedItem]);
       else if (m_widgetDataType == STRING)

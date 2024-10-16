@@ -22,8 +22,8 @@ public:
 
   void draw(Gui *gui);
   void onInput(u32 kdown);
-  void onTouch(touchPosition &touch);
-  void onGesture(touchPosition startPosition, touchPosition endPosition, bool finish);
+  void onTouch(const HidTouchState &touch);
+  void onGesture(const HidTouchState &startPosition, const HidTouchState &endPosition, bool finish);
   
   void setProgress(s8 progress);
 

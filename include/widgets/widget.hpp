@@ -11,11 +11,11 @@
 #include "guis/gui.hpp"
 #include "scripting/interpreter.hpp"
 
-#define WIDGET_WIDTH      900
-#define WIDGET_HEIGHT     65
-#define WIDGET_SEPARATOR  10
+#define WIDGET_WIDTH      900U
+#define WIDGET_HEIGHT     65U
+#define WIDGET_SEPARATOR  10U
 #define WIDGETS_PER_PAGE  6.0F
-#define X_OFFSET          150
+#define X_OFFSET          150U
 
 typedef enum WidgetDataType {
   INT,
@@ -43,11 +43,11 @@ public:
 
   static void drawWidgets(Gui *gui, WidgetItems &widgets, u16 start, u16 end);
   static void handleInput(u32 kdown, WidgetItems &widgets);
-  static void handleTouch(touchPosition &touch, WidgetItems &widgets);
+  static void handleTouch(const HidTouchState &touch, WidgetItems &widgets);
 
   virtual void draw(Gui *gui, u16 x, u16 y) = 0;
   virtual void onInput(u32 kdown) = 0;
-  virtual void onTouch(touchPosition &touch) = 0;
+  virtual void onTouch(const HidTouchState &touch) = 0;
 
   s64 getIntegerValue();
   std::string getStringValue();

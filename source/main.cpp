@@ -102,7 +102,7 @@ void update()
       currGui->update();
     mutexUnlock(&mutexCurrGui);
 
-    if (kheld & (KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
+    if (kheld & (HidNpadButton_AnyLeft | HidNpadButton_AnyRight | HidNpadButton_AnyUp | HidNpadButton_AnyDown))
       inputTicker++;
     else
       inputTicker = 0;
@@ -250,8 +250,6 @@ void redirectStdio()
 }
 int main(int argc, char **argv)
 {
-  void *haddr;
-
   serviceInitialize();
 
   redirectStdio();
@@ -296,7 +294,7 @@ int main(int argc, char **argv)
 
   Config::readConfig(); 
   initTitles();
-  // while (!(kheld & KEY_ZL))
+  // while (!(kheld & HidNpadButton_ZL))
   // {
   //   hidScanInput();
   //   kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD);
@@ -308,9 +306,9 @@ int main(int argc, char **argv)
   //   Gui::drawTextAligned(font20, Gui::g_framebuffer_width - 50, Gui::g_framebuffer_height - 50, currTheme.textColor, "\uE0E1 Back", ALIGNED_RIGHT);
   //   Gui::endDraw();
   // }
-  // if (kheld & KEY_ZR)
+  // if (kheld & HidNpadButton_ZR)
   //   m_edizon_dir = "/switch/EdiZon1";
-  // if (kheld & KEY_L)
+  // if (kheld & HidNpadButton_L)
   //   m_edizon_dir = "/switch/EdiZon2";
   // printf("%s\n", m_edizon_dir.c_str());
 
@@ -329,11 +327,13 @@ int main(int argc, char **argv)
   updateThreadRunning = true;
   std::thread updateThread(update);
 
+  padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+  padInitializeDefault(&Gui::g_pad);
   while (appletMainLoop())
   {
-    hidScanInput();
-    kheld = hidKeysHeld(CONTROLLER_PLAYER_1) | hidKeysHeld(CONTROLLER_HANDHELD) | hidKeysHeld(CONTROLLER_PLAYER_2);
-    kdown = hidKeysDown(CONTROLLER_PLAYER_1) | hidKeysDown(CONTROLLER_HANDHELD) | hidKeysDown(CONTROLLER_PLAYER_2);
+    padUpdate(&Gui::g_pad);
+    kheld = padGetButtons(&Gui::g_pad);
+    kdown = padGetButtonsDown(&Gui::g_pad);
 
     if (Gui::g_nextGui != GUI_INVALID)
     {
@@ -386,7 +386,9 @@ int main(int argc, char **argv)
           currGui = new GuiSysmodule();
           break;
         case GUI_INVALID:
-          [[fallthrough]] default : break;
+          [[fallthrough]];
+        default :
+          ;
         }
         if (nextGuiStart == Gui::g_nextGui)
           Gui::g_nextGui = GUI_INVALID;
@@ -410,7 +412,7 @@ int main(int argc, char **argv)
           else
             currGui->onInput(kheld);
         }
-        else if (kdown || hidKeysUp(CONTROLLER_P1_AUTO))
+        else if (kdown || padGetButtonsUp(&Gui::g_pad))
         {
           if (Gui::g_currMessageBox != nullptr)
             Gui::g_currMessageBox->onInput(kdown);
@@ -427,19 +429,24 @@ int main(int argc, char **argv)
       inputTicker = 0;
     }
 
-    static touchPosition touchPosStart, touchPosCurr, touchPosOld;
+    static HidTouchState touchPosStart, touchPosCurr, touchPosOld;
     static u8 touchCount, touchCountOld;
     static bool touchHappend = false;
 
-    touchCount = hidTouchCount();
+    //touchCount = hidTouchCount();
+    HidTouchScreenState states;
+    hidGetTouchScreenStates(&states, 1);
+    touchCount = states.count;
 
     if (touchCount > 0)
-      hidTouchRead(&touchPosCurr, 0);
+      //hidTouchRead(&touchPosCurr, 0);
+      touchPosCurr = states.touches[0];
 
     if (touchCount > 0 && touchCountOld == 0)
-      hidTouchRead(&touchPosStart, 0);
+      //hidTouchRead(&touchPosStart, 0);
+      touchPosStart = states.touches[0];
 
-    if (abs(static_cast<s16>(touchPosStart.px - touchPosCurr.px)) < 10 && abs(static_cast<s16>(touchPosStart.py - touchPosCurr.py)) < 10)
+    if (abs(static_cast<s16>(touchPosStart.x - touchPosCurr.x)) < 10 && abs(static_cast<s16>(touchPosStart.y - touchPosCurr.y)) < 10)
     {
       if (touchCount == 0 && touchCountOld > 0)
       {

@@ -51,6 +51,7 @@ public:
 
   static inline bool g_splashDisplayed = false;
   static inline bool g_requestExit = false;
+  static inline PadState g_pad{};
 
   static inline Snackbar *g_currSnackbar = nullptr;
   static inline ListSelector *g_currListSelector = nullptr;
@@ -62,8 +63,8 @@ public:
   virtual void update();
   virtual void draw() = 0;
   virtual void onInput(u32 kdown) = 0;
-  virtual void onTouch(touchPosition &touch) = 0;
-  virtual void onGesture(touchPosition startPosition, touchPosition endPosition, bool finish) = 0;
+  virtual void onTouch(const HidTouchState &touch) = 0;
+  virtual void onGesture(const HidTouchState &startPosition, const HidTouchState &endPosition, bool finish) = 0;
 
   static void resizeImage(u8* in, u8* out, size_t src_width, size_t src_height, size_t dest_width, size_t dest_height);
   static std::vector<std::string> split(const std::string& s, const char& c);

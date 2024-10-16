@@ -72,8 +72,8 @@ public:
   void update();
   void draw();
   void onInput(u32 kdown);
-  void onTouch(touchPosition &touch);
-  void onGesture(touchPosition startPosition, touchPosition endPosition, bool finish);
+  void onTouch(const HidTouchState &touch);
+  void onGesture(const HidTouchState &startPosition, const HidTouchState &endPosition, bool finish);
 
 private:
   Debugger *m_debugger;
@@ -148,7 +148,7 @@ private:
   {
     bool main:1,l1:1,l2:1,l3:1,l4:1,l5:1,l6:1,l7:1;
   };
-  
+
   MultiSearch_t m_multisearch;
 
   struct PSsetup_t
@@ -248,7 +248,7 @@ private:
   bool freeze();
   bool unfreeze();
   bool autoexitcheck();
-  void testlz(); 
+  void testlz();
   struct PointerSearch_state
   {
     u64 depth = 0;                                                       // depth and index[depth] is where the search is at, pointersearch2 will increment depth and call itself with nexttarget
@@ -403,7 +403,7 @@ private:
   void prep_pointersearch(Debugger *debugger, std::vector<MemoryInfo> memInfos);
 
   u64 get_main_offset32(u64 address);
-  
+
   void refresh_fromto();
 
   void prep_backjump_stack(u64 address);
