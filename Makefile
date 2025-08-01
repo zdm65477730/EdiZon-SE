@@ -75,7 +75,7 @@ CXXFLAGS	:= $(CFLAGS) -fexceptions -std=gnu++17
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-no-as-needed,-Map,$(notdir $*.map)
 
-LIBS	:= -lpython3.5 -lnx -lcurl -lmbedtls -lmbedx509 -lmbedcrypto -lz -lstdc++fs -lfreetype
+LIBS	:= -lpython3.5 -lnx -lcurl -lmbedtls -lmbedx509 -lmbedcrypto -lz -lstdc++fs `freetype-config --libs`
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
